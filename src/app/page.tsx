@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { streamers } from '@/data/streamers';
+import { CONFIG } from '@/data/config';
 import { StreamerCard } from '@/components/Cards/StreamerCard';
 import { CollectionHub } from '@/components/UI/CollectionHub';
 const WalletMultiButton = dynamic(
@@ -245,7 +246,7 @@ export default function Home() {
                 <div className="flex gap-8">
                     <span className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse" />
-                        NETWORK: SOLANA_DEVNET
+                        NETWORK: {CONFIG.NETWORK.toUpperCase().replace('-', '_')}
                     </span>
                     <span className="text-resistance-accent">THREAT_LEVEL: OMEGA</span>
                 </div>
