@@ -49,27 +49,44 @@ function ResistanceCore() {
 }
 
 function DataStreams() {
-    const points = useMemo(() => {
-        const p = [];
-        for (let i = 0; i < 100; i++) {
-            p.push(new THREE.Vector3(
-                (Math.random() - 0.5) * 50,
-                (Math.random() - 0.5) * 50,
-                (Math.random() - 0.5) * 50
-            ));
+    const meshRef = useRef<THREE.InstancedMesh>(null!);
+    const count = 100;
+    const dummy = useMemo(() => new THREE.Object3D(), []);
+
+    const particles = useMemo(() => {
+        const temp = [];
+        for (let i = 0; i < count; i++) {
+            const x = (Math.random() - 0.5) * 50;
+            const y = (Math.random() - 0.5) * 50;
+            const z = (Math.random() - 0.5) * 50;
+            temp.push({ x, y, z });
         }
-        return p;
+        return temp;
     }, []);
 
+    useFrame((state) => {
+        // Optional: Slow vertical movement for "streaming" effect
+        particles.forEach((p, i) => {
+            dummy.position.set(p.x, p.y + Math.sin(state.clock.elapsedTime * 0.5 + i) * 2, p.z);
+            dummy.scale.y = 1 + Math.sin(state.clock.elapsedTime + i) * 0.5; // Dynamic pulsing
+            dummy.updateMatrix();
+            meshRef.current.setMatrixAt(i, dummy.matrix);
+        });
+        meshRef.current.instanceMatrix.needsUpdate = true;
+    });
+
     return (
-        <group>
-            {points.map((pos, i) => (
-                <mesh key={i} position={pos}>
-                    <boxGeometry args={[0.05, 10, 0.05]} />
-                    <meshStandardMaterial color="#00f3ff" emissive="#00f3ff" emissiveIntensity={5} transparent opacity={0.1} />
-                </mesh>
-            ))}
-        </group>
+        <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
+            <boxGeometry args={[0.05, 10, 0.05]} />
+            <meshStandardMaterial
+                color="#00f3ff"
+                emissive="#00f3ff"
+                emissiveIntensity={2}
+                transparent
+                opacity={0.3}
+                blending={THREE.AdditiveBlending}
+            />
+        </instancedMesh>
     );
 }
 

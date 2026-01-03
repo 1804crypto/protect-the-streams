@@ -301,7 +301,7 @@ export const useAudioSystem = () => {
 
         if (audioCtx.current.state === 'suspended') {
             audioCtx.current.resume().then(() => {
-                console.log("AudioContext resumed successfully.");
+                // AudioContext resumed
             });
         }
 

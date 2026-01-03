@@ -3,6 +3,7 @@
 import { useEffect, useCallback } from 'react';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { useCollectionStore } from './useCollectionStore';
+import { toast } from '@/hooks/useToastStore';
 
 export const useTransactionRecovery = () => {
     const { connection } = useConnection();
@@ -15,7 +16,9 @@ export const useTransactionRecovery = () => {
         let pendingTxs = JSON.parse(pendingTxsString);
         if (pendingTxs.length === 0) return;
 
-        console.log(`[Heartbeat] Checking ${pendingTxs.length} pending transactions...`);
+        if (pendingTxs.length === 0) return;
+
+        // console.log(`[Heartbeat] Checking ${pendingTxs.length} pending transactions...`);
 
         const updatedPending = [...pendingTxs];
         let hasChanges = false;
@@ -29,12 +32,14 @@ export const useTransactionRecovery = () => {
                     const err = status.value.err;
 
                     if (err) {
+                        toast.error('Transaction Failed', `Signature: ${tx.signature.slice(0, 8)}...`);
                         console.error(`[Recovery] Transaction ${tx.signature} failed:`, err);
                         const index = updatedPending.findIndex(p => p.signature === tx.signature);
                         if (index > -1) updatedPending.splice(index, 1);
                         hasChanges = true;
                     } else if (confirmationStatus === 'confirmed' || confirmationStatus === 'finalized') {
-                        console.log(`[Recovery] Transaction confirmed! Granting item: ${tx.itemId}`);
+                        // console.log(`[Recovery] Transaction confirmed! Granting item: ${tx.itemId}`);
+                        toast.success('Purchase Verified!', `Received item: ${tx.itemId}`);
 
                         // Grant the item
                         addItem(tx.itemId, 1);
@@ -51,7 +56,7 @@ export const useTransactionRecovery = () => {
                     // If tx is very old (e.g., > 30 mins) and still not found, remove it
                     const age = Date.now() - tx.timestamp;
                     if (age > 1800000) { // 30 mins
-                        console.warn(`[Recovery] Transaction ${tx.signature} timed out.`);
+                        // console.warn(`[Recovery] Transaction ${tx.signature} timed out.`);
                         const index = updatedPending.findIndex(p => p.signature === tx.signature);
                         if (index > -1) updatedPending.splice(index, 1);
                         hasChanges = true;
@@ -59,6 +64,7 @@ export const useTransactionRecovery = () => {
                 }
             } catch (error) {
                 console.error(`[Recovery] Error checking status for ${tx.signature}:`, error);
+                // toast.error('Recovery Error', 'Failed to check transaction status.');
             }
         }
 

@@ -116,7 +116,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
     };
 
     return (
-        <div className="relative w-full aspect-video bg-black/60 border-2 border-white/5 overflow-hidden group no-select rounded-lg shadow-2xl">
+        <div className="relative w-full aspect-square md:aspect-video bg-black/60 border-2 border-white/5 overflow-hidden group no-select rounded-lg shadow-2xl">
             {/* Background Texture */}
             <div className="absolute inset-0 bg-[url('/grid_pattern.png')] opacity-20" />
 
@@ -169,6 +169,9 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
                     whileHover={{ scale: 1.3 }}
                     onClick={() => onSectorClick?.(sector)}
                 >
+                    {/* Invisible Hit Area for better touch targets */}
+                    <div className="absolute inset-0 -m-4 md:-m-2 z-[-1] rounded-full" />
+
                     <div className={`w-4 h-4 md:w-5 md:h-5 border-2 rotate-45 transition-all duration-500 relative ${sector.cleared
                         ? 'bg-neon-green border-neon-green shadow-[0_0_15px_#39ff14]'
                         : 'bg-black border-red-500/40 hover:border-red-500 shadow-[0_0_5px_rgba(255,0,60,0.2)]'}`}>

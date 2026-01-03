@@ -8,6 +8,7 @@ import {
     LAMPORTS_PER_SOL
 } from '@solana/web3.js';
 import { useState } from 'react';
+import { toast } from '@/hooks/useToastStore';
 
 // For this implementation, we will use a SOL transfer as a proxy for $PTS
 // to ensure it works without complex SPL-token-setup on Devnet immediately.
@@ -71,16 +72,18 @@ export const usePtsTransaction = () => {
             localStorage.setItem('pts_pending_txs', JSON.stringify(updatedPending));
             // ------------------------------------------
 
-            console.log("Transaction confirmed:", signature);
+            // console.log("Transaction confirmed:", signature);
+            toast.success('Uplink Established', 'Item securely acquired.');
             setTxStatus('CONFIRMED');
             setIsProcessing(false);
             return true;
         } catch (error: any) {
             console.error("Uplink failure:", error);
+            toast.error('Uplink Failed', error.message || 'Transaction could not be processed.');
 
             // Specific check for user rejection
             if (error.name === 'WalletSendTransactionError' && error.message.includes('User rejected')) {
-                console.warn("Transaction rejected by user.");
+                toast.warning('Uplink Cancelled', 'Transaction rejected by user.');
             }
 
             setTxStatus('ERROR');

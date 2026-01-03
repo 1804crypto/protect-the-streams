@@ -10,6 +10,7 @@ import { clusterApiUrl } from '@solana/web3.js';
 
 // Default styles that can be overridden by your app
 import '@solana/wallet-adapter-react-ui/styles.css';
+import { toast } from '@/hooks/useToastStore';
 
 export const SolanaProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
     // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
@@ -29,9 +30,10 @@ export const SolanaProvider: FC<{ children: React.ReactNode }> = ({ children }) 
                 onError={(error) => {
                     // Suppress WalletNotReadyError - this is normal when no wallet is installed
                     if (error.name === 'WalletNotReadyError') {
-                        console.log('Wallet not ready. Please connect a Solana wallet.');
+                        toast.warning('Wallet Not Ready', 'Please install or unlock a Solana wallet.');
                         return;
                     }
+                    toast.error('Wallet Error', error.message || 'Connection failed.');
                     console.error('Wallet error:', error);
                 }}
             >

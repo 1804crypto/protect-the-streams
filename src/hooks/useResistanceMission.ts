@@ -193,73 +193,33 @@ export const useResistanceMission = (streamer: Streamer) => {
         setDefenseBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
     }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, defenseBoost]);
 
-    // Use an item in battle
-    const useBattleItem = useCallback((itemId: string) => {
-        if (!isTurn || isComplete) return false;
 
-        const item = items[itemId];
-        if (!item) return false;
 
-        // Check if player has the item
-        if (getItemCount(itemId) <= 0) {
-            addLog(`NO_ITEM: ${item.name} not in inventory!`);
-            return false;
+    // Centralized Enemy Turn Trigger
+    useEffect(() => {
+        if (!isTurn && !isComplete && enemy.hp > 0) {
+            const timer = setTimeout(() => {
+                handleEnemyTurn();
+            }, 1500);
+            return () => clearTimeout(timer);
         }
+    }, [isTurn, isComplete, enemy.hp, handleEnemyTurn]);
 
-        // Consume the item
-        if (!consumeItem(itemId)) return false;
-
-        addLog(`ITEM_USED: ${item.icon} ${item.name}`);
-
-        switch (item.effect) {
-            case 'heal':
-                setPlayer(prev => {
-                    const newHp = Math.min(prev.maxHp, prev.hp + item.value);
-                    addLog(`Restored ${Math.min(item.value, prev.maxHp - prev.hp)} HP.`);
-                    return { ...prev, hp: newHp };
-                });
-                break;
-
-            case 'restorePP':
-                setMovePP(prev => {
-                    const newPP = { ...prev };
-                    streamer.moves.forEach(m => {
-                        newPP[m.name] = Math.min(m.pp, (prev[m.name] || 0) + item.value);
-                    });
-                    addLog(`Restored PP to all moves.`);
-                    return newPP;
-                });
-                break;
-
-            case 'boostAttack':
-                setAttackBoost({ multiplier: item.value, turnsLeft: 3 });
-                addLog(`Attack boosted by ${Math.round((item.value - 1) * 100)}% for 3 turns!`);
-                break;
-
-            case 'boostDefense':
-                setDefenseBoost({ multiplier: item.value, turnsLeft: 3 });
-                addLog(`Defense boosted for 3 turns!`);
-                break;
-        }
-
-        // Using item takes a turn
-        setIsTurn(false);
-        setTurns(prev => prev + 1);
-
-        // Enemy turn
-        setTimeout(handleEnemyTurn, 1000);
-
-        return true;
-    }, [isTurn, isComplete, getItemCount, consumeItem, streamer.moves, handleEnemyTurn]);
-
-    const calculateRank = (): 'S' | 'A' | 'B' | 'F' => {
+    const calculateRank = useCallback((): 'S' | 'A' | 'B' | 'F' => {
         if (result === 'FAILURE') return 'F';
         const hpPercent = (player.hp / player.maxHp) * 100;
         if (hpPercent > 80 && turns < 10) return 'S';
         if (hpPercent > 50 || turns < 15) return 'A';
         return 'B';
-    };
+    }, [result, player.hp, player.maxHp, turns]);
 
+    const calculateXP = useCallback((rank: 'S' | 'A' | 'B' | 'F') => {
+        const baseXP = isBoss ? 150 : 50;
+        const rankMult = rank === 'S' ? 1.5 : rank === 'A' ? 1.2 : 1;
+        return Math.floor(baseXP * rankMult);
+    }, [isBoss]);
+
+    // Action Executors
     const executeMove = useCallback((move: Move) => {
         if (!isTurn || isComplete) return;
 
@@ -272,6 +232,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         // Deduct PP
         setMovePP(prev => ({ ...prev, [move.name]: prev[move.name] - 1 }));
 
+        // Commit Player Turn
         setIsTurn(false);
         setTurns(prev => prev + 1);
         addLog(`${player.name.toUpperCase()} uses ${move.name.toUpperCase()}!`);
@@ -287,8 +248,10 @@ export const useResistanceMission = (streamer: Streamer) => {
             setTimeout(() => setEffectivenessFlash(null), 500);
         }
 
-        // Damage Calculation with type effectiveness and attack boost
+        // Damage Calculation
         let damage = 0;
+        let newEnemyHp = enemy.hp; // Track local var for immediate logic
+
         if (move.power > 0) {
             const isCrit = Math.random() < 0.10;
             const critMult = isCrit ? 1.5 : 1;
@@ -296,7 +259,7 @@ export const useResistanceMission = (streamer: Streamer) => {
             const relevantStatValue = (player.stats as any)[move.type.toLowerCase() as any] || 50;
             const baseDamage = Math.floor(move.power * (relevantStatValue / 100) * (0.8 + Math.random() * 0.4));
 
-            // Apply type effectiveness, attack boost, and crit
+            // Apply modifiers
             damage = Math.floor(baseDamage * effectiveness * (attackBoost.turnsLeft > 0 ? attackBoost.multiplier : 1) * critMult);
 
             if (isCrit) {
@@ -308,8 +271,10 @@ export const useResistanceMission = (streamer: Streamer) => {
                 triggerGlitch(0.5);
             }
 
+            // Apply Damage
             setEnemy(prev => {
-                const newHp = Math.max(0, prev.hp - damage);
+                const nextHp = Math.max(0, prev.hp - damage);
+                newEnemyHp = nextHp; // specific update for this closure
 
                 setLastDamageAmount(damage);
                 setLastDamageDealer('player');
@@ -317,7 +282,7 @@ export const useResistanceMission = (streamer: Streamer) => {
 
                 // Boss Phase Check
                 if (isBoss && bossEntity.phases) {
-                    const hpRatio = newHp / prev.maxHp;
+                    const hpRatio = nextHp / prev.maxHp;
                     const nextPhaseIndex = bossEntity.phases.findIndex((p, i) => hpRatio <= p.threshold && i >= currentBossPhase);
                     if (nextPhaseIndex !== -1 && nextPhaseIndex >= currentBossPhase) {
                         const phase = bossEntity.phases[nextPhaseIndex];
@@ -331,13 +296,13 @@ export const useResistanceMission = (streamer: Streamer) => {
                     }
                 }
 
-                if (newHp === 0) {
+                if (nextHp === 0) {
                     if (isBoss) {
                         setIsComplete(true);
                         setResult('SUCCESS');
                         addLog(`FINAL_UPLINK_SECURED: Sector ${streamer.name.toUpperCase()} liberated.`);
                     } else {
-                        // Progress to next stage
+                        // Progress to next stage (handled via timeout to allow animations)
                         setTimeout(() => {
                             const isNextBoss = stage + 1 >= 3;
                             setStage(s => s + 1);
@@ -351,7 +316,7 @@ export const useResistanceMission = (streamer: Streamer) => {
                             });
                             if (isNextBoss) triggerGlitch(1);
                             addLog(`STAGE_${stage + 1} DETECTED: New threat approaching...`);
-                            setIsTurn(true);
+                            setIsTurn(true); // Grant turn back to player for new enemy
                         }, 1000);
                     }
                 }
@@ -361,25 +326,22 @@ export const useResistanceMission = (streamer: Streamer) => {
                     setTimeout(() => setIsEnemyTakingDamage(false), 500);
                 }
 
-                // Add to charge bar
-                setCharge(prev => Math.min(100, prev + Math.floor(damage / 5)));
-
-                return { ...prev, hp: newHp };
+                return { ...prev, hp: nextHp };
             });
+
+            // Charge Update
+            setCharge(prev => Math.min(100, prev + Math.floor(damage / 5)));
             addLog(`Inflicted ${damage} disruption to ${enemy.name}.`);
+
         } else {
+            // Support Move
             addLog(`${move.description}`);
             if (move.name.includes("HEALING") || move.name.includes("UP")) {
                 setPlayer(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + 30) }));
                 addLog("Signal integrity restored (+30 HP).");
             }
         }
-
-        // Enemy Turn
-        if (enemy.hp > damage && !isComplete) {
-            setTimeout(handleEnemyTurn, 1500);
-        }
-    }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, handleEnemyTurn, attackBoost, movePP]);
+    }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, attackBoost, movePP, currentBossPhase, streamer.name]);
 
     const executeUltimate = useCallback(() => {
         if (charge < 100 || !isTurn || isComplete) return;
@@ -423,24 +385,70 @@ export const useResistanceMission = (streamer: Streamer) => {
         });
 
         addLog(`Catastrophic damage inflicted: ${damage}.`);
+    }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel]);
 
-        if (enemy.hp > damage && !isComplete) {
-            setTimeout(handleEnemyTurn, 1000);
+    const useBattleItem = useCallback((itemId: string) => {
+        if (!isTurn || isComplete) return false;
+
+        const item = items[itemId];
+        if (!item) return false;
+
+        if (getItemCount(itemId) <= 0) {
+            addLog(`NO_ITEM: ${item.name} not in inventory!`);
+            return false;
         }
-    }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel, enemy.hp, handleEnemyTurn]);
 
+        if (!consumeItem(itemId)) return false;
+
+        addLog(`ITEM_USED: ${item.icon} ${item.name}`);
+
+        switch (item.effect) {
+            case 'heal':
+                setPlayer(prev => {
+                    const newHp = Math.min(prev.maxHp, prev.hp + item.value);
+                    addLog(`Restored ${Math.min(item.value, prev.maxHp - prev.hp)} HP.`);
+                    return { ...prev, hp: newHp };
+                });
+                break;
+            case 'restorePP':
+                setMovePP(prev => {
+                    const newPP = { ...prev };
+                    streamer.moves.forEach(m => {
+                        newPP[m.name] = Math.min(m.pp, (prev[m.name] || 0) + item.value);
+                    });
+                    addLog(`Restored PP to all moves.`);
+                    return newPP;
+                });
+                break;
+            case 'boostAttack':
+                setAttackBoost({ multiplier: item.value, turnsLeft: 3 });
+                addLog(`Attack boosted by ${Math.round((item.value - 1) * 100)}% for 3 turns!`);
+                break;
+            case 'boostDefense':
+                setDefenseBoost({ multiplier: item.value, turnsLeft: 3 });
+                addLog(`Defense boosted for 3 turns!`);
+                break;
+        }
+
+        setIsTurn(false);
+        setTurns(prev => prev + 1);
+        return true;
+    }, [isTurn, isComplete, getItemCount, consumeItem, streamer.moves]);
+
+    // Completion Handler: now passes correct XP
     useEffect(() => {
         if (result === 'SUCCESS' && !hasMarkedComplete) {
             const rank = calculateRank();
-            markMissionComplete(streamer.id, rank);
+            const xp = calculateXP(rank);
+
+            markMissionComplete(streamer.id, rank, xp);
             setHasMarkedComplete(true);
 
-            // Reset difficulty if it was increased by AUTHORITY_SWEEP
             if (difficultyMultiplier > 1) {
                 updateDifficulty(1);
             }
         }
-    }, [result, streamer.id, markMissionComplete, hasMarkedComplete, calculateRank, difficultyMultiplier, updateDifficulty]);
+    }, [result, streamer.id, markMissionComplete, hasMarkedComplete, calculateRank, calculateXP, difficultyMultiplier, updateDifficulty]);
 
     return {
         player,
