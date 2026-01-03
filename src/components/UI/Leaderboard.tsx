@@ -1,148 +1,179 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Shield, Zap, X, Crown, TrendingUp } from 'lucide-react';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 
 interface LeaderboardEntry {
-    rank: number;
-    name: string;
-    score: number;
-    title: string;
+    rank?: number;
+    username: string;
+    resistance_score: number;
+    faction: string;
     isUser?: boolean;
 }
 
-const MOCK_LEADERS: LeaderboardEntry[] = [
-    { rank: 1, name: "Neon_Ghost", score: 154200, title: "Grand Arbiter" },
-    { rank: 2, name: "Cypher_Queen", score: 142800, title: "Elite Infiltrator" },
-    { rank: 3, name: "Void_Walker", score: 129500, title: "Sector General" },
-    { rank: 4, name: "Binary_Rebel", score: 98000, title: "Tactical Lead" },
-    { rank: 5, name: "Synth_Stalker", score: 85400, title: "Digital Scout" },
-];
-
 export const Leaderboard = ({ onClose }: { onClose: () => void }) => {
     const { totalResistanceScore } = useCollectionStore();
+    const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [userProfile, setUserProfile] = useState<any>(null);
 
-    const leaderboardData = useMemo(() => {
-        const userEntry: LeaderboardEntry = {
-            rank: 0, // Will calculate
-            name: "YOU",
-            score: totalResistanceScore,
-            title: totalResistanceScore > 10000 ? "Sector General" : totalResistanceScore > 5000 ? "Elite Infiltrator" : "Resistance Cadet",
-            isUser: true
-        };
+    // 1. Fetch Leaders
+    const fetchLeaderboard = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('leaderboard')
+            .select('*')
+            .limit(10);
 
-        const all = [...MOCK_LEADERS, userEntry].sort((a, b) => b.score - a.score);
-        return all.map((entry, index) => ({ ...entry, rank: index + 1 }));
-    }, [totalResistanceScore]);
+        if (error) {
+            toast.error("Failed to fetch global signal.");
+        } else {
+            setLeaders(data || []);
+        }
+        setLoading(false);
+    };
+
+    // 2. Profile Sync (Simplified for Demo - in reality would use Auth/Wallet)
+    const syncProfile = async () => {
+        const username = `REBEL_${Math.floor(Math.random() * 9000) + 1000}`;
+        // For MVP, we use a local storage ID as a pseudo-auth
+        let localId = localStorage.getItem('pts_pseudo_id');
+        if (!localId) {
+            localId = crypto.randomUUID();
+            localStorage.setItem('pts_pseudo_id', localId);
+        }
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .upsert({
+                id: localId,
+                username: username,
+                resistance_score: totalResistanceScore,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'id' })
+            .select()
+            .single();
+
+        if (!error) {
+            setUserProfile(data);
+            fetchLeaderboard();
+        }
+    };
+
+    useEffect(() => {
+        syncProfile();
+    }, []);
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl"
+            className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl"
         >
             <motion.div
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="relative w-full max-w-2xl bg-zinc-900 border border-resistance-accent/30 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(255,51,102,0.2)]"
+                className="relative w-full max-w-2xl bg-zinc-900 border border-neon-blue/30 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,243,255,0.2)]"
             >
                 {/* Header */}
-                <div className="p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-resistance-accent/10 to-transparent">
+                <div className="p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-neon-blue/10 to-transparent">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-resistance-accent/20 rounded-lg">
-                            <Trophy className="text-resistance-accent" size={24} />
+                        <div className="p-2 bg-neon-blue/20 rounded-lg">
+                            <Trophy className="text-neon-blue" size={24} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black italic tracking-tighter text-white uppercase">Resistance_Leaderboard</h2>
-                            <p className="text-[10px] font-mono text-resistance-accent/60 tracking-widest uppercase">Global_Uplink_Active</p>
+                            <h2 className="text-xl font-black italic tracking-tighter text-white uppercase">Global_Resistance_Board</h2>
+                            <p className="text-[10px] font-mono text-neon-blue/60 tracking-widest uppercase">Supabase_Uplink_Active</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
                         className="p-2 text-white/40 hover:text-white transition-colors"
-                        title="Close Leaderboard"
                     >
                         <X size={24} />
                     </button>
                 </div>
 
                 {/* Main Stats */}
-                <div className="grid grid-cols-3 gap-4 p-6 bg-black/40 border-b border-white/5">
+                <div className="grid grid-cols-2 gap-4 p-6 bg-black/40 border-b border-white/5">
                     <div className="space-y-1">
-                        <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Global_Rank</span>
-                        <div className="text-2xl font-black italic text-resistance-accent">
-                            #{leaderboardData.find(e => e.isUser)?.rank}
-                        </div>
-                    </div>
-                    <div className="space-y-1">
-                        <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Total_Contribution</span>
-                        <div className="text-2xl font-black italic text-white flex items-center gap-1">
+                        <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Your_Signal_Strength</span>
+                        <div className="text-2xl font-black italic text-neon-blue flex items-center gap-1">
                             {totalResistanceScore.toLocaleString()} <Zap size={16} className="text-yellow-400" />
                         </div>
                     </div>
-                    <div className="space-y-1">
-                        <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Current_Tier</span>
-                        <div className="text-sm font-bold text-resistance-accent uppercase tracking-tighter truncate">
-                            {leaderboardData.find(e => e.isUser)?.title}
+                    <div className="space-y-1 text-right">
+                        <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Active_Uplinks</span>
+                        <div className="text-2xl font-black italic text-white">
+                            {leaders.length}
                         </div>
                     </div>
                 </div>
 
                 {/* List */}
-                <div className="p-4 max-h-[400px] overflow-y-auto custom-scrollbar">
-                    <div className="space-y-2">
-                        {leaderboardData.map((entry) => (
-                            <motion.div
-                                key={entry.name}
-                                initial={{ x: -20, opacity: 0 }}
-                                animate={{ x: 0, opacity: 1 }}
-                                className={`flex items-center justify-between p-4 rounded-xl border transition-all ${entry.isUser
-                                        ? 'bg-resistance-accent/10 border-resistance-accent shadow-[0_0_20px_rgba(255,51,102,0.1)]'
-                                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-8 h-8 flex items-center justify-center font-black italic text-lg ${entry.rank === 1 ? 'text-yellow-400' :
-                                            entry.rank === 2 ? 'text-zinc-400' :
-                                                entry.rank === 3 ? 'text-amber-600' : 'text-white/40'
-                                        }`}>
-                                        {entry.rank === 1 ? <Crown size={20} /> : entry.rank}
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`font-black italic uppercase ${entry.isUser ? 'text-resistance-accent' : 'text-white'}`}>
-                                                {entry.name}
-                                            </span>
-                                            {entry.isUser && (
-                                                <span className="px-1.5 py-0.5 bg-resistance-accent text-white text-[8px] font-bold rounded uppercase">You</span>
-                                            )}
+                <div className="p-4 max-h-[400px] overflow-y-auto custom-scrollbar min-h-[300px]">
+                    {loading ? (
+                        <div className="h-full flex items-center justify-center opacity-20">
+                            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {leaders.map((entry, index) => {
+                                const isMe = userProfile && entry.username === userProfile.username;
+                                return (
+                                    <motion.div
+                                        key={entry.username}
+                                        initial={{ x: -20, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isMe
+                                                ? 'bg-neon-blue/10 border-neon-blue shadow-[0_0_20px_rgba(0,243,255,0.1)]'
+                                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-8 h-8 flex items-center justify-center font-black italic text-lg ${index === 0 ? 'text-yellow-400' : 'text-white/40'}`}>
+                                                {index === 0 ? <Crown size={20} /> : index + 1}
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`font-black italic uppercase ${isMe ? 'text-neon-blue' : 'text-white'}`}>
+                                                        {entry.username}
+                                                    </span>
+                                                    {isMe && (
+                                                        <span className="px-1.5 py-0.5 bg-neon-blue text-black text-[8px] font-bold rounded uppercase">You</span>
+                                                    )}
+                                                </div>
+                                                <div className="text-[9px] font-mono text-white/40 uppercase tracking-widest">
+                                                    Faction_{entry.faction || 'NONE'}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="text-[9px] font-mono text-white/40 uppercase tracking-widest">
-                                            {entry.title}
+                                        <div className="text-right">
+                                            <div className="font-black italic text-white flex items-center justify-end gap-1">
+                                                {entry.resistance_score.toLocaleString()} <Shield size={12} className="text-neon-blue" />
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="font-black italic text-white flex items-center justify-end gap-1">
-                                        {entry.score.toLocaleString()} <Shield size={12} className="text-resistance-accent" />
-                                    </div>
-                                    <div className="flex items-center justify-end gap-1 text-[9px] text-green-400 font-mono">
-                                        <TrendingUp size={10} /> +2.4%
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
                 <div className="p-4 bg-black/60 text-center">
-                    <p className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">
-                        Syncing_with_Solana_Mainnet_Uplink...
-                    </p>
+                    <button
+                        onClick={syncProfile}
+                        className="text-[10px] font-mono text-neon-blue hover:text-white uppercase tracking-[0.2em] transition-all"
+                    >
+                        [ RE-SYNC_NEURAL_UPLINK ]
+                    </button>
                 </div>
             </motion.div>
         </motion.div>

@@ -2,33 +2,36 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { streamers } from '@/data/streamers';
+import { streamers, Streamer } from '@/data/streamers';
 import { CONFIG } from '@/data/config';
 import { StreamerCard } from '@/components/Cards/StreamerCard';
 import { CollectionHub } from '@/components/UI/CollectionHub';
-const WalletMultiButton = dynamic(
-    () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
-    { ssr: false }
-);
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMintStreamer } from '@/hooks/useMintStreamer';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 
 const Scene = dynamic(() => import('@/components/Three/Scene'), { ssr: false });
+const WalletMultiButton = dynamic(
+    () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
+    { ssr: false }
+);
+
 import { ResistanceMap } from '@/components/UI/ResistanceMap';
 import { MissionTerminal } from '@/components/UI/MissionTerminal';
 import { TutorialModal } from '@/components/UI/TutorialModal';
 import { ToastSystem } from '@/components/UI/ToastSystem';
-import { Streamer } from '@/data/streamers';
-
+import { PvPTerminal } from '@/components/UI/PvPTerminal';
+import { FactionSelection } from '@/components/UI/FactionSelection';
 
 export default function Home() {
     const { mint, loading, status, error } = useMintStreamer();
     const { isMuted, toggleMute, playHover, playClick, playSuccess } = useAudioSystem();
     const [isHubOpen, setIsHubOpen] = useState(false);
     const [activeMissionStreamer, setActiveMissionStreamer] = useState<Streamer | null>(null);
+    const [activePvPStreamer, setActivePvPStreamer] = useState<Streamer | null>(null);
     const [mounted, setMounted] = useState(false);
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+    const [isFactionOpen, setIsFactionOpen] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -83,6 +86,13 @@ export default function Home() {
                             className="px-4 py-2 border border-neon-blue/40 text-[10px] font-bold tracking-widest hover:bg-neon-blue/10 transition-all hidden md:block"
                         >
                             [INTEL_RECOVERY]
+                        </button>
+
+                        <button
+                            onClick={() => { playClick(); setIsFactionOpen(true); }}
+                            className="px-4 py-2 border border-neon-purple/40 text-[10px] font-bold tracking-widest hover:bg-neon-purple/10 transition-all hidden md:block text-neon-purple"
+                        >
+                            [JOIN_FACTION]
                         </button>
 
                         <button
@@ -237,12 +247,26 @@ export default function Home() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.1 }}
                                 viewport={{ once: true }}
-                                onClick={() => { playClick(); mint(streamer.id); }}
+                                className="relative group"
                             >
                                 <StreamerCard
                                     streamer={streamer}
                                     onHover={playHover}
                                 />
+                                <div className="absolute inset-x-0 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex justify-center gap-2">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); playClick(); mint(streamer.id); }}
+                                        className="px-3 py-1 bg-neon-blue text-black text-[10px] font-black uppercase"
+                                    >
+                                        MINT
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); playClick(); setActivePvPStreamer(streamer); }}
+                                        className="px-3 py-1 bg-neon-pink text-white text-[10px] font-black uppercase"
+                                    >
+                                        PVP
+                                    </button>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
@@ -269,6 +293,19 @@ export default function Home() {
                     />
                 )}
 
+                {/* PvP Terminal Instance */}
+                {activePvPStreamer && (
+                    <PvPTerminal
+                        streamer={activePvPStreamer}
+                        matchId="global_queue"
+                        isOpen={!!activePvPStreamer}
+                        onClose={() => setActivePvPStreamer(null)}
+                    />
+                )}
+
+                {/* Faction Selection Instance */}
+                <FactionSelection isOpen={isFactionOpen} onClose={() => setIsFactionOpen(false)} />
+
                 {/* Tutorial Modal */}
                 <TutorialModal isOpen={isTutorialOpen} onClose={() => setIsTutorialOpen(false)} />
 
@@ -281,3 +318,4 @@ export default function Home() {
         </AnimatePresence>
     );
 }
+

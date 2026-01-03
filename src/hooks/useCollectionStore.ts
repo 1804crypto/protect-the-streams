@@ -20,6 +20,7 @@ interface CollectionState {
     difficultyMultiplier: number;
     streamerNatures: Record<string, NatureType>;
     totalResistanceScore: number;
+    userFaction: 'RED' | 'PURPLE' | 'NONE';
 
     // Actions
     secureAsset: (id: string) => void;
@@ -27,6 +28,7 @@ interface CollectionState {
     useItem: (itemId: string) => boolean;
     updateDifficulty: (mult: number) => void;
     updateResistanceScore: (points: number) => void;
+    setFaction: (faction: 'RED' | 'PURPLE') => void;
     markMissionComplete: (id: string, rank?: 'S' | 'A' | 'B' | 'F', xpGained?: number) => void;
 }
 
@@ -40,6 +42,7 @@ const useStore = create<CollectionState>()(
             difficultyMultiplier: 1,
             streamerNatures: {},
             totalResistanceScore: 0,
+            userFaction: 'NONE',
 
             secureAsset: (id: string) => {
                 const { securedIds, streamerNatures } = get();
@@ -79,6 +82,8 @@ const useStore = create<CollectionState>()(
             updateResistanceScore: (points: number) => set((state) => ({
                 totalResistanceScore: state.totalResistanceScore + points
             })),
+
+            setFaction: (faction: 'RED' | 'PURPLE') => set({ userFaction: faction }),
 
             markMissionComplete: (id: string, rank = 'B', xpGained = 50) => {
                 const { completedMissions, addItem, updateResistanceScore } = get();
