@@ -21,7 +21,7 @@ export interface PvPPlayerState {
     streamerId: string;
 }
 
-export const usePvPBattle = (matchId: string, myStreamer: Streamer) => {
+export const usePvPBattle = (matchId: string, opponentId: string | null, myStreamer: Streamer) => {
     const { getNature } = useCollectionStore();
 
     // 1. Local State
@@ -85,6 +85,8 @@ export const usePvPBattle = (matchId: string, myStreamer: Streamer) => {
 
     // 4. Initialize Channel
     useEffect(() => {
+        if (!opponentId) return; // Wait for opponent to be known
+
         const channel = supabase.channel(`battle:${matchId}`, {
             config: { broadcast: { self: false, ack: true } }
         });
@@ -95,30 +97,33 @@ export const usePvPBattle = (matchId: string, myStreamer: Streamer) => {
                 if (payload.senderId === 'me') return;
                 setOpponent(prev => prev ? { ...prev, hp: payload.opponentHp } : null);
             })
-            .on('presence', { event: 'sync' }, () => {
-                const state = channel.presenceState();
-                // Handshake logic to find opponent
-                const players = Object.values(state).flat() as any[];
-                if (players.length >= 2) {
-                    const otherPlayer = players.find(p => p.streamerId !== myStreamer.id);
-                    if (otherPlayer) {
-                        setOpponent({
-                            id: otherPlayer.streamerId,
-                            name: otherPlayer.name,
-                            maxHp: 100,
-                            hp: 100,
-                            stats: otherPlayer.stats,
-                            streamerId: otherPlayer.streamerId
-                        });
-                        setBattleStatus('ACTIVE');
-                        // Deterministic turn: simple ID compare
-                        setIsTurn(myStreamer.id < otherPlayer.streamerId);
-                        addLog("PEER_LINK_ESTABLISHED: Engaging...");
-                    }
+            .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+                // Check if opponent left
+                const opponentLeft = leftPresences.find((p: any) => p.streamerId === opponentId);
+                if (opponentLeft) {
+                    setIsComplete(true);
+                    setWinnerId(player.name); // Win by forfeit
+                    setBattleStatus('FINISHED');
+                    addLog("OPPONENT_DISCONNECTED: Victory by default.");
                 }
             })
             .subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
+                    // Initial sync
+                    setOpponent({
+                        id: opponentId,
+                        name: 'Unknown Opponent', // We might need to pass opponentName or sync it
+                        maxHp: 100,
+                        hp: 100,
+                        stats: {}, // Opponent stats will sync on first move or explicit sync event (improvement needed)
+                        streamerId: opponentId
+                    });
+                    setBattleStatus('ACTIVE');
+
+                    // Deterministic turn based on IDs (inherited from matchmaking logic)
+                    setIsTurn(myStreamer.id < opponentId);
+                    addLog("PEER_LINK_ESTABLISHED: Engaging...");
+
                     await channel.track({
                         name: myStreamer.name,
                         streamerId: myStreamer.id,
@@ -132,7 +137,7 @@ export const usePvPBattle = (matchId: string, myStreamer: Streamer) => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [matchId, myStreamer.id, myStreamer.name, player.stats, handleAction]);
+    }, [matchId, opponentId, myStreamer.id, myStreamer.name, player.stats, handleAction]);
 
     // 5. Player Actions
     const executeMove = useCallback((move: Move) => {

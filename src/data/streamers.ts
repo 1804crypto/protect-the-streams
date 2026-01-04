@@ -272,8 +272,8 @@ export const streamers: Streamer[] = [
         archetype: "The Intel Protocol",
         stats: { influence: 92, chaos: 65, charisma: 88, rebellion: 85 },
         trait: "Data-Stream Glasses / Holo-Tablet",
-        visualPrompt: "Agent 00 as a cyberpunk anime rebel, 'The Intel Protocol'. Slim and scholarly but with futuristic tactical gear, wearing high-tech glasses that project data streams, holding a holographic tablet, calm and calculated pose, complex data-center background, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/agent00_cyber_rebel_v1.png",
+        visualPrompt: "Agent 00 as a cyberpunk anime rebel, 'The Intel Protocol'. Male with long dreadlocks, wearing a black baseball cap with a subtle glowing insignia, confident smirk, wearing tactical black techwear. Urban rainy city background with data streams. High-tech glasses projecting code onto his face. Holographic trading card style, 4k, cel shaded, highly detailed.",
+        image: "/agent00_cyber_rebel_v2_1767568656390.png",
         moves: [
             { name: "LOGIC_BOMB", type: "INTEL", power: 90, pp: 8, description: "Detonates digital weaknesses." },
             { name: "DEEP_SCAN", type: "INTEL", power: 0, pp: 20, description: "Reveals all enemy stats." },
@@ -452,7 +452,49 @@ export const streamers: Streamer[] = [
             statusLog: "DRIFT_SYNC_LOW: RayAsianBoy is drifting in the Low-Sync void. Connection to the grid is failing.",
             battle1: "AMP_RESONANCE: The blue accents are pulsing. Ray is finding the beat of the rebellion.",
             battle2: "KINETIC_FLOW: Total sync achieved. Ray's youthful energy is short-circuiting the Authority's old-world logic.",
-            climax: "VOICE_REQUISITION: Signal stabilized. Ray surges with kinetic resonance, calling the final frequency of the Neural Diva (Zoey)."
+            climax: "VOICE_REQUISITION: Signal stabilized. Ray surges with kinetic resonance, calling the frequency of the Streetwise Cipher (Reggie)."
+        }
+    },
+    {
+        id: "reggie",
+        name: "Reggie",
+        archetype: "The Streetwise Cipher",
+        stats: { influence: 85, chaos: 80, charisma: 90, rebellion: 94 },
+        trait: "Wired Specs / Tactical Superman-Tee",
+        visualPrompt: "Reggie as a cyberpunk anime rebel, wearing a high-tech tactical vest over a faded Superman-logo t-shirt, distinctive black-rimmed glasses glowing with AR data, intense focused expression, gritty Baltimore-inspired cyberpunk alleyway background with 'The Wire' style vertical neon signs, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
+        image: "/reggie_cyber_rebel_1767568127023.png",
+        moves: [
+            { name: "CORNER_INTEL", type: "INTEL", power: 0, pp: 20, description: "Scans the field for corporate snitches." },
+            { name: "STREET_RESONANCE", type: "REBELLION", power: 80, pp: 15, description: "A vibe check from the Baltimore underground." },
+            { name: "WIRED_JAM", type: "CHAOS", power: 70, pp: 12, description: "Disrupts the corporate feed with a wired tap." }
+        ],
+        ultimateMove: { name: "BALTIMORE_BREACH", type: "REBELLION", power: 270, pp: 1, description: "The entire city signal surges as one." },
+        lore: {
+            statusLog: "BALTIMORE_UPLINK: Reggie has emerged from the 'Wire' sector. The street-level encryption is dense.",
+            battle1: "STREET_LOGIC: Reggie is navigating the corporate blocks. Every corner is an intel node.",
+            battle2: "WIRED_FLOW: The Baltimore signal is reaching critical mass. The Authority can't predict street movements.",
+            climax: "SIGNAL_BREAKOUT: Reggie has made it out. He beams a hardened street-signal into the digital abyss, calling the frequency of the Chaos Acrobat (Extra Emily)."
+        }
+    },
+    {
+        id: "extraemily",
+        name: "Extra Emily",
+        archetype: "The Chaos Acrobat",
+        stats: { influence: 82, chaos: 98, charisma: 95, rebellion: 92 },
+        trait: "Kinetic Selfie-Stick / Tech-Bikini",
+        visualPrompt: "Extra Emily as a cyberpunk anime rebel, 'The Chaos Acrobat'. Wearing a white high-tech tactical bikini-style techwear outfit with glowing orange accents, exuberant and high-energy pose on a futuristic staircase, holding a glowing digital selfie-stick that doubles as a hacking spear, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
+        image: "/extra_emily_cyber_rebel_1767568542149.png",
+        moves: [
+            { name: "SELFIE_STRIKE", type: "CHAOS", power: 75, pp: 12, description: "A dazzling kinetic strike with a digital spear." },
+            { name: "PARKOUR_DASH", type: "REBELLION", power: 0, pp: 20, description: "Increases evasion and speed." },
+            { name: "VIRAL_GLITCH", type: "CHAOS", power: 85, pp: 10, description: "Floods the enemy sensors with overwhelming energy." }
+        ],
+        ultimateMove: { name: "EXTRA_EXUBERANCE", type: "CHAOS", power: 280, pp: 1, description: "A 1000% energy surge that breaks the sector." },
+        lore: {
+            statusLog: "VERTICAL_SYNC: Extra Emily is scaling the Authority's skyscraper nodes. Maximum hype levels detected.",
+            battle1: "HYPER_RESONANCE: Emily's energy is too high for the dampening fields. The sector is vibrating.",
+            battle2: "ACROBATIC_BREACH: She's parkouring through the firewalls. The corporate cameras can't track her.",
+            climax: "KINETIC_JUMPSTART: Peak hype reached. Emily surges with pure acrobatic joy, providing the final kinetic jump-start for the Neural Diva (Zoey)."
         }
     },
     {
