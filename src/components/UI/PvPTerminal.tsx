@@ -30,8 +30,18 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isO
         executeMove
     } = usePvPBattle(matchedRoomId || 'waiting', opponentId, streamer);
 
-    const { playClick, playMoveSound, playDamage, playUltimate } = useAudioSystem();
+    const { playClick, playMoveSound, playDamage, playUltimate, playScanning } = useAudioSystem();
     const [isAttacking, setIsAttacking] = useState(false);
+
+    useEffect(() => {
+        let stopScanning: (() => void) | undefined;
+        if (matchStatus === 'SEARCHING') {
+            stopScanning = playScanning();
+        }
+        return () => {
+            if (stopScanning) stopScanning();
+        };
+    }, [matchStatus, playScanning]);
 
     useEffect(() => {
         if (battleStatus === 'ACTIVE') {

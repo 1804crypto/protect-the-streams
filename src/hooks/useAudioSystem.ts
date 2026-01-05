@@ -340,6 +340,46 @@ export const useAudioSystem = () => {
         playNoise(0.05, 0.02);
     }, [isMuted, playNoise]);
 
+    const playScanning = useCallback(() => {
+        if (isMuted || !audioCtx.current) return () => { };
+
+        const osc = audioCtx.current.createOscillator();
+        const gain = audioCtx.current.createGain();
+        const lfo = audioCtx.current.createOscillator();
+        const lfoGain = audioCtx.current.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.current.currentTime);
+
+        lfo.type = 'square';
+        lfo.frequency.setValueAtTime(2, audioCtx.current.currentTime); // 2Hz pulse
+
+        lfoGain.gain.setValueAtTime(400, audioCtx.current.currentTime);
+
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+
+        gain.gain.setValueAtTime(0, audioCtx.current.currentTime);
+        gain.gain.linearRampToValueAtTime(0.03, audioCtx.current.currentTime + 0.1);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.current.destination);
+
+        osc.start();
+        lfo.start();
+
+        return () => {
+            if (!audioCtx.current) return;
+            try {
+                gain.gain.linearRampToValueAtTime(0, audioCtx.current.currentTime + 0.1);
+                setTimeout(() => {
+                    osc.stop();
+                    lfo.stop();
+                }, 150);
+            } catch (e) { }
+        };
+    }, [isMuted]);
+
     const playMoveSound = useCallback((type: string) => {
         if (isMuted || !audioCtx.current) return;
 
@@ -406,6 +446,7 @@ export const useAudioSystem = () => {
         playMoveSound,
         // Stingers
         playVictory,
-        playDefeat
+        playDefeat,
+        playScanning
     };
 };
