@@ -22,6 +22,8 @@ import { TutorialModal } from '@/components/UI/TutorialModal';
 import { ToastSystem } from '@/components/UI/ToastSystem';
 import { PvPTerminal } from '@/components/UI/PvPTerminal';
 import { FactionSelection } from '@/components/UI/FactionSelection';
+import { OperatorComms } from '@/components/UI/OperatorComms';
+import { useOperatorStore } from '@/hooks/useOperatorStore';
 
 export default function Home() {
     const { mint, loading, status, error } = useMintStreamer();
@@ -33,6 +35,8 @@ export default function Home() {
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
     const [isFactionOpen, setIsFactionOpen] = useState(false);
 
+    const { triggerDialogue } = useOperatorStore();
+
     useEffect(() => {
         setMounted(true);
         // Check for first visit
@@ -40,7 +44,12 @@ export default function Home() {
         if (!hasSeenTutorial) {
             setIsTutorialOpen(true);
         }
-    }, []);
+
+        // Trigger Operator Onboarding
+        setTimeout(() => {
+            triggerDialogue('onboarding');
+        }, 2000);
+    }, [triggerDialogue]);
 
     useEffect(() => {
         if (status && status.includes("Secured")) {
@@ -311,6 +320,9 @@ export default function Home() {
 
                 {/* Notification System */}
                 <ToastSystem />
+
+                {/* Operator Comms System */}
+                <OperatorComms />
 
                 {/* Grid Overlay */}
                 <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(0,243,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,1)_1px,transparent_1px)] bg-[size:50px_50px] z-[1]" />

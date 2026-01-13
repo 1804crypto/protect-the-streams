@@ -6,6 +6,7 @@ import { Streamer, natures } from '@/data/streamers';
 import { useResistanceMission } from '@/hooks/useResistanceMission';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
+import { useOperatorStore } from '@/hooks/useOperatorStore';
 import { items } from '@/data/items';
 
 interface MissionTerminalProps {
@@ -166,6 +167,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
         playBossIntro, playExpGain, playMiss, playCritical
     } = useAudioSystem();
     const { getMissionRecord, inventory } = useCollectionStore();
+    const { triggerDialogue } = useOperatorStore();
     const missionRecord = getMissionRecord(streamer.id);
     const [showItems, setShowItems] = useState(false);
     const [particles, setParticles] = useState<{ id: number, x: number, y: number, color: string }[]>([]);
@@ -189,11 +191,17 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
         if (isOpen) {
             forceUnmute();
             addLog("AUDIO_UPLINK: Syncing neural frequencies...");
+
+            // Trigger Operator Brief
+            setTimeout(() => {
+                triggerDialogue('mission_brief');
+            }, 1000);
+
             if (streamer.lore?.statusLog) {
                 setCurrentLore(streamer.lore.statusLog);
             }
         }
-    }, [isOpen, streamer.lore, forceUnmute]);
+    }, [isOpen, streamer.lore, forceUnmute, triggerDialogue, addLog]);
 
     // Handle Stage Progression Lore
     useEffect(() => {
@@ -244,6 +252,16 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
             setTimeout(() => setScreenFlash(null), 300);
         }
     }, [isTurn, isComplete, playTurnStart]);
+
+    // Handle Health-based Narrative Triggers
+    useEffect(() => {
+        if (player.hp < 30 && !isComplete) {
+            triggerDialogue('danger_warnings');
+        }
+        if (enemy.hp < 30 && enemy.hp > 0 && !isComplete) {
+            triggerDialogue('encouragement');
+        }
+    }, [player.hp, enemy.hp, isComplete, triggerDialogue]);
 
     // Handle Boss Intro
     useEffect(() => {
