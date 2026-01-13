@@ -92,6 +92,12 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
         'tylil': { x: 10, y: 15 },
         'rakai': { x: 35, y: 40 },
         'fantum': { x: 65, y: 40 },
+        'bendadonnn': { x: 92, y: 30 },
+        'plaqueboymax': { x: 5, y: 60 },
+        'rayasianboy': { x: 20, y: 92 },
+        'reggie': { x: 80, y: 92 },
+        'extraemily': { x: 95, y: 60 },
+        'zoey': { x: 50, y: 5 },
     };
 
     const sectors = streamers.map((s) => ({

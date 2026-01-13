@@ -28,8 +28,8 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean) => {
                 const state = channel.presenceState();
                 const peers = Object.values(state).flat() as any[];
 
-                // Filter out self
-                const others = peers.filter(p => p.streamerId !== streamerId);
+                // Filter out self and only find those actively searching
+                const others = peers.filter(p => p.streamerId !== streamerId && p.status === 'SEARCHING');
 
                 if (others.length > 0) {
                     // Match found logic
