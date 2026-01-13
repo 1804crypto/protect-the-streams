@@ -157,7 +157,8 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
         currentBossPhase,
         showPhaseBanner,
         lastDamageAmount,
-        lastDamageDealer
+        lastDamageDealer,
+        addLog
     } = useResistanceMission(streamer);
     const {
         playVoiceLine, playClick, playItemUse, playMoveSound,
@@ -181,13 +182,18 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
     const [damagePopups, setDamagePopups] = useState<{ id: number, amount: number, target: 'player' | 'enemy' }[]>([]);
     const [impactFlash, setImpactFlash] = useState<string | null>(null);
     const [screenFlash, setScreenFlash] = useState<string | null>(null);
+    const [statsKey, setStatsKey] = useState(0); // Used to force re-render flashes
 
     // Trigger Initial Lore on mount
     useEffect(() => {
-        if (isOpen && streamer.lore?.statusLog) {
-            setCurrentLore(streamer.lore.statusLog);
+        if (isOpen) {
+            forceUnmute();
+            addLog("AUDIO_UPLINK: Syncing neural frequencies...");
+            if (streamer.lore?.statusLog) {
+                setCurrentLore(streamer.lore.statusLog);
+            }
         }
-    }, [isOpen, streamer.lore]);
+    }, [isOpen, streamer.lore, forceUnmute]);
 
     // Handle Stage Progression Lore
     useEffect(() => {
@@ -208,14 +214,16 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
     }, [currentLore, loreQueue]);
 
     useEffect(() => {
-        if (lastDamageAmount) {
+        if (lastDamageAmount !== null) {
             setDamagePopups(prev => [...prev, {
                 id: Date.now() + Math.random(),
                 amount: lastDamageAmount,
                 target: lastDamageDealer!
             }]);
 
-            if (lastDamageAmount > 50) {
+            if (lastDamageAmount === 0) {
+                playMiss();
+            } else if (lastDamageAmount > 50) {
                 setImpactFlash('bg-white');
                 setTimeout(() => setImpactFlash(null), 100);
                 playCritical();
@@ -224,8 +232,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                 setTimeout(() => setImpactFlash(null), 50);
                 playDamage();
             }
-        } else if (lastDamageAmount === 0 && lastDamageDealer) {
-            playMiss();
+            setStatsKey(prev => prev + 1);
         }
     }, [lastDamageAmount, lastDamageDealer, playDamage, playCritical, playMiss]);
 
@@ -482,6 +489,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                     ))}
                                     {effectivenessFlash && (
                                         <motion.div
+                                            key={`eff-${effectivenessFlash}-${Date.now()}`}
                                             initial={{ opacity: 1 }}
                                             animate={{ opacity: 0 }}
                                             className={`absolute inset-0 z-50 ${effectivenessFlash === 'super' ? 'bg-neon-green/20' : 'bg-red-500/20'}`}
@@ -501,9 +509,10 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                     </AnimatePresence>
 
                                     {/* Impact Flash */}
-                                    <AnimatePresence>
+                                    <AnimatePresence mode="wait">
                                         {impactFlash && (
                                             <motion.div
+                                                key={`impact-${statsKey}`}
                                                 initial={{ opacity: 1 }}
                                                 animate={{ opacity: 0 }}
                                                 className={`absolute inset-0 z-[120] ${impactFlash} pointer-events-none`}
@@ -512,9 +521,10 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                     </AnimatePresence>
 
                                     {/* Screen Flash (Ambient) */}
-                                    <AnimatePresence>
+                                    <AnimatePresence mode="wait">
                                         {screenFlash && (
                                             <motion.div
+                                                key={`screen-${statsKey}`}
                                                 initial={{ opacity: 1 }}
                                                 animate={{ opacity: 0 }}
                                                 style={{ backgroundColor: screenFlash }}
@@ -630,6 +640,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                                 key={move.name}
                                                 disabled={!isTurn || isComplete || isOutOfPP}
                                                 onClick={() => {
+                                                    forceUnmute();
                                                     playClick();
                                                     playMoveSound(move.type);
                                                     if (move.power > 50) playVoiceLine(streamer.name);
@@ -684,6 +695,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                         <button
                                             disabled={charge < 100 || !isTurn || isComplete}
                                             onClick={() => {
+                                                forceUnmute();
                                                 playClick();
                                                 playUltimate();
                                                 triggerGlitch(2);
@@ -730,6 +742,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                                         key={itemId}
                                                         disabled={count <= 0 || !isTurn || isComplete}
                                                         onClick={() => {
+                                                            forceUnmute();
                                                             const item = items[itemId];
                                                             if (item) {
                                                                 const type = item.effect === 'heal' ? 'heal' :

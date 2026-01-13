@@ -478,7 +478,8 @@ export const useResistanceMission = (streamer: Streamer) => {
         currentBossPhase,
         showPhaseBanner,
         lastDamageAmount,
-        lastDamageDealer
+        lastDamageDealer,
+        addLog
     };
 };
 
