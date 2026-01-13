@@ -19,14 +19,14 @@ const ParticleEffect = ({ x, y, color }: { x: number, y: number, color: string }
         <motion.div
             initial={{ x, y, opacity: 1, scale: 1 }}
             animate={{
-                x: x + (Math.random() - 0.5) * 150,
-                y: y + (Math.random() - 0.5) * 150,
+                x: x + (Math.random() - 0.5) * 200,
+                y: y + (Math.random() - 0.5) * 200,
                 opacity: 0,
-                scale: 0,
-                rotate: Math.random() * 360
+                scale: [1, 2, 0],
+                rotate: Math.random() * 720
             }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className={`absolute left-0 top-0 w-1.5 h-1.5 ${color} z-30 pointer-events-none rounded-full blur-[1px]`}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className={`absolute left-0 top-0 w-2 h-2 ${color} z-30 pointer-events-none rounded-sm blur-[0.5px] border border-white/20 shadow-[0_0_10px_currentColor]`}
         />
     );
 };
@@ -159,7 +159,11 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
         lastDamageAmount,
         lastDamageDealer
     } = useResistanceMission(streamer);
-    const { playVoiceLine, playClick, playItemUse, playMoveSound, playDamage, playUltimate, forceUnmute } = useAudioSystem();
+    const {
+        playVoiceLine, playClick, playItemUse, playMoveSound,
+        playDamage, playUltimate, forceUnmute, playTurnStart,
+        playBossIntro, playExpGain, playMiss, playCritical
+    } = useAudioSystem();
     const { getMissionRecord, inventory } = useCollectionStore();
     const missionRecord = getMissionRecord(streamer.id);
     const [showItems, setShowItems] = useState(false);
@@ -175,7 +179,8 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
     const [critText, setCritText] = useState<string | null>(null);
     const [itemEffects, setItemEffects] = useState<{ id: number, type: 'heal' | 'boost_atk' | 'boost_def' }[]>([]);
     const [damagePopups, setDamagePopups] = useState<{ id: number, amount: number, target: 'player' | 'enemy' }[]>([]);
-    const [impactFlash, setImpactFlash] = useState(false);
+    const [impactFlash, setImpactFlash] = useState<string | null>(null);
+    const [screenFlash, setScreenFlash] = useState<string | null>(null);
 
     // Trigger Initial Lore on mount
     useEffect(() => {
@@ -211,12 +216,46 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
             }]);
 
             if (lastDamageAmount > 50) {
-                setImpactFlash(true);
-                setTimeout(() => setImpactFlash(false), 50);
+                setImpactFlash('bg-white');
+                setTimeout(() => setImpactFlash(null), 100);
+                playCritical();
+            } else {
+                setImpactFlash(lastDamageDealer === 'enemy' ? 'bg-resistance-accent/30' : 'bg-white/20');
+                setTimeout(() => setImpactFlash(null), 50);
+                playDamage();
             }
-            playDamage();
+        } else if (lastDamageAmount === 0 && lastDamageDealer) {
+            playMiss();
         }
-    }, [lastDamageAmount, lastDamageDealer, playDamage]);
+    }, [lastDamageAmount, lastDamageDealer, playDamage, playCritical, playMiss]);
+
+    // Handle Turn Starts
+    useEffect(() => {
+        if (isTurn && !isComplete) {
+            playTurnStart();
+            setScreenFlash('rgba(0, 243, 255, 0.05)');
+            setTimeout(() => setScreenFlash(null), 300);
+        }
+    }, [isTurn, isComplete, playTurnStart]);
+
+    // Handle Boss Intro
+    useEffect(() => {
+        if (stage === 3) {
+            playBossIntro();
+            setImpactFlash('bg-resistance-accent/50');
+            setTimeout(() => setImpactFlash(null), 1000);
+        }
+    }, [stage, playBossIntro]);
+
+    // Handle XP Gain SFX
+    useEffect(() => {
+        if (resultStep === 1) {
+            const interval = setInterval(() => {
+                playExpGain();
+            }, 100);
+            setTimeout(() => clearInterval(interval), 1000);
+        }
+    }, [resultStep, playExpGain]);
 
     // Get mission record to show XP/Level progress
     const record = getMissionRecord(streamer.id);
@@ -376,7 +415,10 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                     animate={!isTurn ? {
                                         x: [0, -20, 20, -15, 15, 0],
                                         scale: [1, 1.05, 0.98, 1.02, 1],
-                                        filter: isEnemyTakingDamage ? ["brightness(4) contrast(2)", "brightness(1) contrast(1)"] : "none"
+                                        filter: isEnemyTakingDamage
+                                            ? ["brightness(4) contrast(2) hue-rotate(90deg)", "brightness(1) contrast(1) hue-rotate(0deg)"]
+                                            : "none",
+                                        skewX: isEnemyTakingDamage ? ["0deg", "10deg", "-10deg", "0deg"] : "0deg"
                                     } : {
                                         y: [0, -5, 0],
                                         filter: isEnemyTakingDamage ? "brightness(3) sepia(1) hue-rotate(-50deg)" : "none"
@@ -403,9 +445,10 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                         animate={isTurn ? {
                                             rotate: [15, 13, 17, 15],
                                             scale: [1, 1.02, 0.98, 1],
-                                            filter: isTakingDamage ? "brightness(3) sepia(1) hue-rotate(-50deg)" : "none"
+                                            filter: isTakingDamage ? "brightness(3) sepia(1) hue-rotate(-50deg)" : "none",
+                                            skewX: isTakingDamage ? ["0deg", "5deg", "-5deg", "0deg"] : "0deg"
                                         } : {
-                                            filter: isTakingDamage ? ["brightness(4) contrast(2)", "brightness(1) contrast(1)"] : "none"
+                                            filter: isTakingDamage ? ["brightness(4) contrast(2) grayscale(1)", "brightness(1) contrast(1) grayscale(0)"] : "none"
                                         }}
                                         transition={{ duration: 4, repeat: Infinity }}
                                         className="relative w-[220px] h-[220px] lg:w-[450px] lg:h-[450px]"
@@ -461,9 +504,21 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                     <AnimatePresence>
                                         {impactFlash && (
                                             <motion.div
-                                                initial={{ opacity: 0.8 }}
+                                                initial={{ opacity: 1 }}
                                                 animate={{ opacity: 0 }}
-                                                className="absolute inset-0 z-[120] bg-white pointer-events-none"
+                                                className={`absolute inset-0 z-[120] ${impactFlash} pointer-events-none`}
+                                            />
+                                        )}
+                                    </AnimatePresence>
+
+                                    {/* Screen Flash (Ambient) */}
+                                    <AnimatePresence>
+                                        {screenFlash && (
+                                            <motion.div
+                                                initial={{ opacity: 1 }}
+                                                animate={{ opacity: 0 }}
+                                                style={{ backgroundColor: screenFlash }}
+                                                className="absolute inset-0 z-[10] pointer-events-none"
                                             />
                                         )}
                                     </AnimatePresence>

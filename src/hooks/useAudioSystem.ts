@@ -204,6 +204,61 @@ export const useAudioSystem = () => {
         });
     }, [isMuted, playSfx]);
 
+    const playMiss = useCallback(() => {
+        if (isMuted || !audioCtx.current) return;
+        // High frequency swish
+        const osc = audioCtx.current.createOscillator();
+        const gain = audioCtx.current.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.current.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.current.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.05, audioCtx.current.currentTime);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.current.currentTime + 0.2);
+        osc.connect(gain);
+        gain.connect(audioCtx.current.destination);
+        osc.start();
+        osc.stop(audioCtx.current.currentTime + 0.2);
+    }, [isMuted]);
+
+    const playCritical = useCallback(() => {
+        if (isMuted || !audioCtx.current) return;
+        playDamage();
+        setTimeout(() => playDamage(), 50);
+        playSfx(400, 'sawtooth', 0.3, 0.1, 200);
+        playNoise(0.3, 0.2);
+    }, [isMuted, playDamage, playSfx, playNoise]);
+
+    const playBossIntro = useCallback(() => {
+        if (isMuted || !audioCtx.current) return;
+        // Dramatic riser
+        const osc = audioCtx.current.createOscillator();
+        const gain = audioCtx.current.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(40, audioCtx.current.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, audioCtx.current.currentTime + 1.5);
+        gain.gain.setValueAtTime(0, audioCtx.current.currentTime);
+        gain.gain.linearRampToValueAtTime(0.15, audioCtx.current.currentTime + 1.2);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.current.currentTime + 1.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.current.destination);
+        osc.start();
+        osc.stop(audioCtx.current.currentTime + 1.5);
+
+        setTimeout(() => {
+            playUltimate();
+        }, 1200);
+    }, [isMuted, playUltimate]);
+
+    const playTurnStart = useCallback(() => {
+        if (isMuted || !audioCtx.current) return;
+        playSfx(1000, 'sine', 0.05, 0.03);
+    }, [isMuted, playSfx]);
+
+    const playExpGain = useCallback(() => {
+        if (isMuted || !audioCtx.current) return;
+        playSfx(880, 'sine', 0.05, 0.04);
+    }, [isMuted, playSfx]);
+
     // === ENHANCED AMBIENT SYSTEM ===
     useEffect(() => {
         if (!isMuted && audioCtx.current) {
@@ -444,6 +499,11 @@ export const useAudioSystem = () => {
         playChargeUp,
         playUltimate,
         playMoveSound,
+        playMiss,
+        playCritical,
+        playBossIntro,
+        playTurnStart,
+        playExpGain,
         // Stingers
         playVictory,
         playDefeat,
