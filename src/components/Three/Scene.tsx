@@ -50,28 +50,28 @@ function ResistanceCore() {
     return (
         <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
             <mesh ref={meshRef} position={[0, 0, 0]} castShadow>
-                <octahedronGeometry args={[2.5, 0]} />
+                <tetrahedronGeometry args={[2.8, 0]} />
                 <MeshDistortMaterial
                     color="#00f3ff"
                     speed={4}
                     distort={0.4}
                     radius={1}
                     emissive="#00f3ff"
-                    emissiveIntensity={2 + (1 - integrity) * 5}
+                    emissiveIntensity={12 + (1 - integrity) * 20}
                     wireframe
-                    opacity={0.8}
+                    opacity={0.9}
                     transparent
                 />
             </mesh>
 
             {/* Inner Core Solid */}
             <mesh position={[0, 0, 0]}>
-                <octahedronGeometry args={[1.5, 0]} />
+                <tetrahedronGeometry args={[1.2, 0]} />
                 <meshStandardMaterial
                     color={isCritical ? "#ff003c" : "#00f3ff"}
                     emissive={isCritical ? "#ff003c" : "#00f3ff"}
-                    emissiveIntensity={isCritical ? 10 : 4}
-                    roughness={0.1}
+                    emissiveIntensity={isCritical ? 30 : 15}
+                    roughness={0}
                     metalness={1}
                 />
             </mesh>
@@ -158,10 +158,10 @@ function SceneContent() {
             />
 
             {/* Lighting Architecture */}
-            <ambientLight intensity={0.2} />
-            <pointLight position={[15, 15, 15]} intensity={2} color={integrity < 0.4 ? "#ff003c" : "#00f3ff"} />
-            <pointLight position={[-15, -15, -15]} intensity={2} color="#ff003c" />
-            <spotLight position={[0, 20, 0]} angle={0.3} penumbra={1} intensity={5} color={integrity < 0.3 ? "#ff003c" : "#00f3ff"} castShadow />
+            <ambientLight intensity={1.5} />
+            <pointLight position={[15, 15, 15]} intensity={50} color={integrity < 0.4 ? "#ff003c" : "#00f3ff"} />
+            <pointLight position={[-15, -15, -15]} intensity={30} color="#ff003c" />
+            <spotLight position={[0, 20, 0]} angle={0.3} penumbra={1} intensity={100} color={integrity < 0.3 ? "#ff003c" : "#00f3ff"} castShadow />
 
             {/* Environmental Elements */}
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={integrity < 0.3 ? 5 : 1.5} />

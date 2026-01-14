@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabaseClient';
-import { Streamer, Move } from '@/data/streamers';
-import { BattleItem } from '@/data/items';
+import { Streamer, Move, streamers as localStreamers } from '@/data/streamers';
+import { BattleItem, items as localItems } from '@/data/items';
 
 interface GameDataState {
     streamers: Streamer[];
@@ -15,8 +15,8 @@ interface GameDataState {
 }
 
 export const useGameDataStore = create<GameDataState>((set) => ({
-    streamers: [],
-    items: {},
+    streamers: localStreamers,
+    items: localItems,
     isLoading: false,
     error: null,
     isInitialized: false,
@@ -91,28 +91,30 @@ export const useGameDataStore = create<GameDataState>((set) => ({
 
             // Process Items
             const processedItems: Record<string, BattleItem> = {};
-            itemsData.forEach(i => {
-                processedItems[i.id] = {
-                    id: i.id,
-                    name: i.name,
-                    description: i.description,
-                    effect: i.effect as any,
-                    value: Number(i.value),
-                    rarity: i.rarity as any,
-                    icon: i.icon
-                };
-            });
+            if (itemsData && itemsData.length > 0) {
+                itemsData.forEach(i => {
+                    processedItems[i.id] = {
+                        id: i.id,
+                        name: i.name,
+                        description: i.description,
+                        effect: i.effect as any,
+                        value: Number(i.value),
+                        rarity: i.rarity as any,
+                        icon: i.icon
+                    };
+                });
+            }
 
             set({
-                streamers: processedStreamers,
-                items: processedItems,
+                streamers: processedStreamers.length > 0 ? processedStreamers : localStreamers,
+                items: Object.keys(processedItems).length > 0 ? processedItems : localItems,
                 isLoading: false,
                 isInitialized: true
             });
 
         } catch (err: any) {
             console.error("Failed to fetch game data:", err);
-            set({ error: err.message, isLoading: false });
+            set({ error: err.message, isLoading: false, isInitialized: true }); // Set initialized even on error to stop spinner
         }
     }
 }));

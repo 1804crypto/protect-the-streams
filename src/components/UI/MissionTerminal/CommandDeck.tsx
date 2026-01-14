@@ -92,7 +92,7 @@ export const CommandDeck: React.FC<CommandDeckProps> = ({
 
                 <button
                     onClick={onToggleInventory}
-                    disabled={!isTurn || isComplete}
+                    disabled={isComplete}
                     className={`w-full py-4 border font-black uppercase text-[10px] tracking-widest transition-all rounded-md ${showItems ? 'bg-neon-yellow/10 border-neon-yellow text-neon-yellow shadow-[0_0_20px_rgba(243,255,0,0.2)]' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
                         }`}
                 >

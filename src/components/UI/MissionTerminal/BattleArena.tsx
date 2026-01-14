@@ -160,19 +160,28 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                         filter: isEnemyTakingDamage ? "brightness(3) sepia(1) hue-rotate(-50deg)" : "none"
                     }}
                     transition={{ duration: !isTurn ? 0.4 : 3, repeat: isTurn ? Infinity : 0 }}
-                    className="relative z-20 w-[280px] h-[280px] lg:w-[400px] lg:h-[400px]"
+                    className="relative z-20 w-[240px] h-[240px] lg:w-[380px] lg:h-[380px] group"
                 >
+                    {/* Enemy Card Background */}
+                    <div className={`absolute inset-0 rounded-[20px] lg:rounded-[40px] border-4 lg:border-[12px] ${isBoss ? 'border-resistance-accent shadow-[0_0_80px_rgba(255,0,60,0.6)] bg-gradient-to-br from-black via-resistance-accent/10 to-black' : 'border-white/20 bg-black/60 shadow-[0_0_40px_rgba(255,255,255,0.1)]'} overflow-hidden`}>
+                        {/* Static Overlay for enemy */}
+                        <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
+                    </div>
+
                     <img
                         src={enemy.image || "/authority_sentinel_cipher_unit_1766789046162.png"}
                         alt="Enemy Boss"
-                        className={`w-full h-full object-contain filter drop-shadow-[0_0_30px_rgba(255,0,60,0.5)] ${isBoss ? 'brightness-125' : ''}`}
+                        className={`absolute inset-0 w-full h-full object-contain p-4 lg:p-8 filter drop-shadow-[0_0_30px_rgba(255,0,60,0.3)] ${isBoss ? 'brightness-125' : ''}`}
                     />
+
                     {/* Reflection beneath */}
-                    <img
-                        src={enemy.image || "/authority_sentinel_cipher_unit_1766789046162.png"}
-                        alt="Reflection"
-                        className="absolute top-full left-0 w-full h-1/2 object-contain scale-y-[-0.4] opacity-10 blur-md grayscale -mt-8"
-                    />
+                    <div className="absolute top-full left-0 w-full h-1/2 opacity-10 blur-md grayscale -mt-8 pointer-events-none overflow-hidden">
+                        <img
+                            src={enemy.image || "/authority_sentinel_cipher_unit_1766789046162.png"}
+                            alt="Reflection"
+                            className="w-full h-full object-contain scale-y-[-0.6]"
+                        />
+                    </div>
                 </motion.div>
 
                 {/* Player Avatar */}

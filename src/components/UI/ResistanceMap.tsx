@@ -249,9 +249,9 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
                     <div className="absolute inset-0 -m-4 md:-m-2 z-[-1] rounded-full" />
 
                     <div className={`w-4 h-4 md:w-5 md:h-5 border-2 rotate-45 transition-all duration-500 relative ${sector.control === 'RED' ? 'bg-red-600 border-red-400 shadow-[0_0_15px_#ff003c]' :
-                            sector.control === 'PURPLE' ? 'bg-purple-600 border-purple-400 shadow-[0_0_15px_#a855f7]' :
-                                sector.cleared ? 'bg-neon-green border-neon-green shadow-[0_0_15px_#39ff14]' :
-                                    'bg-black border-red-500/40 hover:border-red-500 shadow-[0_0_5px_rgba(255,0,60,0.2)]'
+                        sector.control === 'PURPLE' ? 'bg-purple-600 border-purple-400 shadow-[0_0_15px_#a855f7]' :
+                            sector.cleared ? 'bg-neon-green border-neon-green shadow-[0_0_15px_#39ff14]' :
+                                'bg-black border-red-500/40 hover:border-red-500 shadow-[0_0_5px_rgba(255,0,60,0.2)]'
                         }`}>
                         {!sector.cleared && sector.control === 'NONE' && (
                             <motion.div
@@ -301,10 +301,10 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
                     onClick={() => isHQUnlocked && onSectorClick?.(ceoStreamer)}
                     className={`w-16 h-16 border-4 rotate-45 flex items-center justify-center transition-all duration-700 relative ${isHQUnlocked
                         ? 'bg-resistance-accent/20 border-resistance-accent shadow-[0_0_40px_#ff003c] cursor-pointer hover:scale-110'
-                        : 'bg-black/80 border-white/10 grayscale opacity-60'
+                        : 'bg-neon-blue/5 border-neon-blue/20 shadow-[0_0_20px_rgba(0,243,255,0.1)] opacity-80'
                         }`}
                 >
-                    <div className={`w-6 h-6 rotate-45 animate-pulse ${isHQUnlocked ? 'bg-resistance-accent shadow-[0_0_20px_#ff003c]' : 'bg-white/20'}`} />
+                    <div className={`w-6 h-6 rotate-45 animate-pulse ${isHQUnlocked ? 'bg-resistance-accent shadow-[0_0_20px_#ff003c]' : 'bg-neon-blue/20 shadow-[0_0_10px_rgba(0,243,255,0.3)]'}`} />
 
                     {/* Decorative Rings */}
                     <div className="absolute inset-0 border border-white/5 animate-spin-slow pointer-events-none" />
