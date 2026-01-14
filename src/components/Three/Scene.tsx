@@ -1,19 +1,50 @@
 "use client";
 
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment, Float, MeshDistortMaterial, Stars } from '@react-three/drei';
-import { Suspense, useRef, useMemo } from 'react';
+import { Suspense, useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
+import { useVisualEffects } from '@/hooks/useVisualEffects';
 
 function ResistanceCore() {
     const meshRef = useRef<THREE.Mesh>(null!);
+    const { integrity, glitchIntensity, isCritical } = useVisualEffects();
+
+    // Smoothly interpolate colors based on health integrity
+    const baseColor = useMemo(() => new THREE.Color("#00f3ff"), []);
+    const criticalColor = useMemo(() => new THREE.Color("#ff003c"), []);
+    const currentColor = useMemo(() => new THREE.Color(), []);
 
     useFrame((state) => {
         const t = state.clock.getElapsedTime();
-        meshRef.current.rotation.x = Math.cos(t / 4) / 2;
-        meshRef.current.rotation.y = Math.sin(t / 2) / 2;
-        meshRef.current.rotation.z = Math.sin(t / 1.5) / 2;
+
+        // React to integrity: Shift toward red when health is low
+        currentColor.lerpColors(criticalColor, baseColor, integrity);
+        if (meshRef.current.material) {
+            (meshRef.current.material as any).color.copy(currentColor);
+            (meshRef.current.material as any).emissive.copy(currentColor);
+            (meshRef.current.material as any).distort = THREE.MathUtils.lerp(
+                (meshRef.current.material as any).distort,
+                0.4 + (1 - integrity) * 0.4 + glitchIntensity,
+                0.1
+            );
+        }
+
+        // Physical reaction: Core rotates faster during glitches
+        const speedMult = 1 + glitchIntensity * 5;
+        meshRef.current.rotation.x = Math.cos(t / 4) / 2 * speedMult;
+        meshRef.current.rotation.y = Math.sin(t / 2) / 2 * speedMult;
+        meshRef.current.rotation.z = Math.sin(t / 1.5) / 2 * speedMult;
         meshRef.current.position.y = Math.sin(t / 1.5) / 5;
+
+        // Critical jitter
+        if (isCritical) {
+            meshRef.current.position.x = (Math.random() - 0.5) * 0.05;
+            meshRef.current.position.z = (Math.random() - 0.5) * 0.05;
+        } else {
+            meshRef.current.position.x = 0;
+            meshRef.current.position.z = 0;
+        }
     });
 
     return (
@@ -26,7 +57,7 @@ function ResistanceCore() {
                     distort={0.4}
                     radius={1}
                     emissive="#00f3ff"
-                    emissiveIntensity={2}
+                    emissiveIntensity={2 + (1 - integrity) * 5}
                     wireframe
                     opacity={0.8}
                     transparent
@@ -37,9 +68,9 @@ function ResistanceCore() {
             <mesh position={[0, 0, 0]}>
                 <octahedronGeometry args={[1.5, 0]} />
                 <meshStandardMaterial
-                    color="#ff003c"
-                    emissive="#ff003c"
-                    emissiveIntensity={4}
+                    color={isCritical ? "#ff003c" : "#00f3ff"}
+                    emissive={isCritical ? "#ff003c" : "#00f3ff"}
+                    emissiveIntensity={isCritical ? 10 : 4}
                     roughness={0.1}
                     metalness={1}
                 />
@@ -50,6 +81,7 @@ function ResistanceCore() {
 
 function DataStreams() {
     const meshRef = useRef<THREE.InstancedMesh>(null!);
+    const { integrity, glitchIntensity } = useVisualEffects();
     const count = 100;
     const dummy = useMemo(() => new THREE.Object3D(), []);
 
@@ -65,10 +97,11 @@ function DataStreams() {
     }, []);
 
     useFrame((state) => {
-        // Optional: Slow vertical movement for "streaming" effect
+        const t = state.clock.elapsedTime;
         particles.forEach((p, i) => {
-            dummy.position.set(p.x, p.y + Math.sin(state.clock.elapsedTime * 0.5 + i) * 2, p.z);
-            dummy.scale.y = 1 + Math.sin(state.clock.elapsedTime + i) * 0.5; // Dynamic pulsing
+            const speed = 0.5 + (1 - integrity);
+            dummy.position.set(p.x, p.y + Math.sin(t * speed + i) * 2, p.z);
+            dummy.scale.y = 1 + Math.sin(t + i) * 0.5 + glitchIntensity * 2;
             dummy.updateMatrix();
             meshRef.current.setMatrixAt(i, dummy.matrix);
         });
@@ -79,9 +112,9 @@ function DataStreams() {
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
             <boxGeometry args={[0.05, 10, 0.05]} />
             <meshStandardMaterial
-                color="#00f3ff"
-                emissive="#00f3ff"
-                emissiveIntensity={2}
+                color={integrity < 0.3 ? "#ff003c" : "#00f3ff"}
+                emissive={integrity < 0.3 ? "#ff003c" : "#00f3ff"}
+                emissiveIntensity={2 + glitchIntensity * 10}
                 transparent
                 opacity={0.3}
                 blending={THREE.AdditiveBlending}
@@ -91,9 +124,32 @@ function DataStreams() {
 }
 
 function SceneContent() {
+    const { shakeIntensity, integrity, lastImpactTime } = useVisualEffects();
+    const cameraRef = useRef<THREE.PerspectiveCamera>(null!);
+    const { scene } = useThree();
+
+    useFrame((state) => {
+        // Handle Camera Shake on Impact
+        const timeSinceImpact = (Date.now() - lastImpactTime) / 1000;
+        if (timeSinceImpact < 0.5) {
+            const decay = 1 - (timeSinceImpact / 0.5);
+            const shake = shakeIntensity * decay * 0.2;
+            cameraRef.current.position.x = (Math.random() - 0.5) * shake;
+            cameraRef.current.position.y = (Math.random() - 0.5) * shake;
+        } else {
+            cameraRef.current.position.x = THREE.MathUtils.lerp(cameraRef.current.position.x, 0, 0.1);
+            cameraRef.current.position.y = THREE.MathUtils.lerp(cameraRef.current.position.y, 0, 0.1);
+        }
+
+        // Red tint to background fog on low integrity
+        const fogColor = integrity < 0.3 ? new THREE.Color("#1a0000") : new THREE.Color("#050505");
+        scene.fog?.color.lerp(fogColor, 0.05);
+        (scene.background as THREE.Color)?.lerp(fogColor, 0.05);
+    });
+
     return (
         <>
-            <PerspectiveCamera makeDefault position={[0, 0, 12]} fov={50} />
+            <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 0, 12]} fov={50} />
             <OrbitControls
                 enableZoom={false}
                 enablePan={false}
@@ -103,12 +159,12 @@ function SceneContent() {
 
             {/* Lighting Architecture */}
             <ambientLight intensity={0.2} />
-            <pointLight position={[15, 15, 15]} intensity={2} color="#00f3ff" />
+            <pointLight position={[15, 15, 15]} intensity={2} color={integrity < 0.4 ? "#ff003c" : "#00f3ff"} />
             <pointLight position={[-15, -15, -15]} intensity={2} color="#ff003c" />
-            <spotLight position={[0, 20, 0]} angle={0.3} penumbra={1} intensity={5} color="#00f3ff" castShadow />
+            <spotLight position={[0, 20, 0]} angle={0.3} penumbra={1} intensity={5} color={integrity < 0.3 ? "#ff003c" : "#00f3ff"} castShadow />
 
             {/* Environmental Elements */}
-            <Stars radius={100} depth={50} count={7000} factor={4} saturation={0} fade speed={1.5} />
+            <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={integrity < 0.3 ? 5 : 1.5} />
             <DataStreams />
             <ResistanceCore />
 
@@ -121,11 +177,11 @@ function SceneContent() {
 
 export default function Scene() {
     return (
-        <div className="w-full h-full bg-[#050505]">
+        <div className="w-full h-full">
             <Canvas
                 shadows
-                dpr={[1, 2]}
-                gl={{ antialias: true, alpha: false, stencil: false, depth: true }}
+                dpr={[1, 1.5]}
+                gl={{ antialias: true, alpha: false, stencil: false, depth: true, powerPreference: "high-performance" }}
             >
                 <color attach="background" args={['#050505']} />
                 <fog attach="fog" args={['#050505', 10, 50]} />

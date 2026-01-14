@@ -9,7 +9,7 @@ import { useCollectionStore } from '@/hooks/useCollectionStore';
 
 export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
     const { purchaseItem, isProcessing, txStatus, setTxStatus } = usePtsTransaction();
-    const { addItem } = useCollectionStore();
+    const addItem = useCollectionStore(state => state.addItem);
     const [selectedItem, setSelectedItem] = useState<StoreItem | null>(null);
 
     const handlePurchase = async (item: StoreItem) => {

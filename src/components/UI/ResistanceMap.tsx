@@ -5,18 +5,48 @@ import { motion } from 'framer-motion';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
 import { streamers } from '@/data/streamers';
 import { MapEventOverlay, MapEventType } from './MapEventOverlay';
+import { DataStream } from './DataStream';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 import { BlackMarket } from './BlackMarket';
 import { ShoppingCart } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
 
 export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }> = ({ onSectorClick }) => {
-    const { completedMissions, addItem, updateDifficulty } = useCollectionStore();
+    const completedMissions = useCollectionStore(state => state.completedMissions);
+    const addItem = useCollectionStore(state => state.addItem);
+    const updateDifficulty = useCollectionStore(state => state.updateDifficulty);
     const { playEvent, playMapAmbient } = useAudioSystem();
     const [activeEvent, setActiveEvent] = useState<{ type: MapEventType, title: string, message: string, reward?: string } | null>(null);
     const [revealedBosses, setRevealedBosses] = useState<string[]>([]);
     const [isMarketOpen, setIsMarketOpen] = useState(false);
 
+    // Global Faction War State
+    const [sectorControl, setSectorControl] = useState<Record<string, 'RED' | 'PURPLE' | 'NONE'>>({});
+
     useEffect(() => {
+        // Fetch Initial Sector Control
+        const fetchControl = async () => {
+            const { data } = await supabase.from('sector_control').select('*');
+            if (data) {
+                const map: Record<string, any> = {};
+                data.forEach(row => map[row.streamer_id] = row.controlling_faction);
+                setSectorControl(map);
+            }
+        };
+        fetchControl();
+
+        // Subscribe to Global War Updates (REALTIME)
+        const channel = supabase
+            .channel('global_faction_war')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'sector_control' }, (payload) => {
+                const updated = payload.new as any;
+                setSectorControl(prev => ({
+                    ...prev,
+                    [updated.streamer_id]: updated.controlling_faction
+                }));
+            })
+            .subscribe();
+
         // Load revealed bosses
         const saved = localStorage.getItem('pts_revealed_bosses');
         if (saved) setRevealedBosses(JSON.parse(saved));
@@ -73,38 +103,69 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
             if (Math.random() > 0.7) playMapAmbient();
         }, 10000);
 
-        return () => clearInterval(ambientInterval);
-    }, []);
+        return () => {
+            clearInterval(ambientInterval);
+            supabase.removeChannel(channel);
+        };
+    }, [completedMissions, revealedBosses, addItem, updateDifficulty, playEvent, playMapAmbient]);
 
     // Hand-curated coordinates for a more "strategic" look
     const sectorCoords: Record<string, { x: number, y: number }> = {
-        'ishowspeed': { x: 25, y: 30 },
-        'kaicenat': { x: 75, y: 30 },
-        'adinross': { x: 15, y: 50 },
-        'druski': { x: 85, y: 50 },
-        'jazzygunz': { x: 25, y: 70 },
-        'xqc': { x: 50, y: 20 },
-        'hasanabi': { x: 75, y: 70 },
-        'sneako': { x: 50, y: 80 },
-        'agent00': { x: 35, y: 55 },
-        'dukedennis': { x: 65, y: 55 },
-        'ddg': { x: 80, y: 15 },
-        'tylil': { x: 10, y: 15 },
-        'rakai': { x: 35, y: 40 },
-        'fantum': { x: 65, y: 40 },
-        'bendadonnn': { x: 92, y: 30 },
-        'plaqueboymax': { x: 5, y: 60 },
-        'rayasianboy': { x: 20, y: 92 },
-        'reggie': { x: 80, y: 92 },
-        'extraemily': { x: 95, y: 60 },
-        'zoey': { x: 50, y: 5 },
+        // AMP Sector (Top Left)
+        'kaicenat': { x: 28, y: 25 },
+        'dukedennis': { x: 20, y: 32 },
+        'fanum': { x: 32, y: 38 },
+        'agent00': { x: 38, y: 28 },
+
+        // W/L Community & Chaos (Bottom Left)
+        'adinross': { x: 15, y: 65 },
+        'ishowspeed': { x: 25, y: 78 },
+        'caseoh': { x: 12, y: 48 },
+
+        // Content Creator Sector (Top Right)
+        'zoey': { x: 72, y: 25 },
+        'rakai': { x: 82, y: 35 },
+        'reggie': { x: 72, y: 38 },
+        'plaqueboymax': { x: 88, y: 22 },
+        'sneako': { x: 92, y: 32 },
+        'hasanabi': { x: 62, y: 22 },
+
+        // Featured Streamers (Bottom Right)
+        'ddg': { x: 75, y: 75 },
+        'rayasianboy': { x: 78, y: 65 },
+        'extraemily': { x: 88, y: 72 },
+
+        // Wildcards (Strategic Positions)
+        'xqc': { x: 50, y: 18 },       // Top Center (The React Core)
+        'tylil': { x: 50, y: 82 },     // Bottom Center (Lane Defense)
+        'jynxzi': { x: 45, y: 55 },    // Mid (Network Hub)
+        'bendadonnn': { x: 58, y: 55 },    // Mid (Oddball)
     };
 
-    const sectors = streamers.map((s) => ({
-        ...s,
-        cleared: completedMissions.some(m => m.id === s.id),
-        ...(sectorCoords[s.id] || { x: 50, y: 50 }),
-    }));
+    const sectors = streamers.map((s, index) => {
+        const curated = sectorCoords[s.id];
+        const control = sectorControl[s.id] || 'NONE';
+        if (curated) return {
+            ...s,
+            cleared: completedMissions.some(m => m.id === s.id),
+            ...curated,
+            control
+        };
+
+        // Fallback: Deterministic placement around the edges if not curated
+        const angle = (index * (360 / streamers.length)) * (Math.PI / 180);
+        const radius = 35 + (index % 3) * 5;
+        const x = 50 + Math.cos(angle) * radius;
+        const y = 50 + Math.sin(angle) * radius;
+
+        return {
+            ...s,
+            cleared: completedMissions.some(m => m.id === s.id),
+            x,
+            y,
+            control
+        };
+    });
 
     const isHQUnlocked = completedMissions.length >= streamers.length;
     const ceoStreamer = {
@@ -120,11 +181,12 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
         visualPrompt: "Corporate Overlord",
         ultimateMove: { name: "THE_FINAL_CLEANSE", type: "CHAOS", power: 500, pp: 1, description: "Complete system reset." }
     };
-
     return (
         <div className="relative w-full aspect-square md:aspect-video bg-black/60 border-2 border-white/5 overflow-hidden group no-select rounded-lg shadow-2xl">
             {/* Background Texture */}
             <div className="absolute inset-0 bg-[url('/grid_pattern.png')] opacity-20" />
+
+            <DataStream />
 
             {/* Grid Background */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -172,16 +234,26 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
                     key={sector.id}
                     style={{ left: `${sector.x}%`, top: `${sector.y}%` }}
                     className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer z-20 group/node"
-                    whileHover={{ scale: 1.3 }}
+                    animate={{
+                        y: [sector.y + "%", (parseFloat(sector.y.toString()) + 0.5) + "%", sector.y + "%"],
+                    }}
+                    transition={{
+                        duration: 3 + Math.random() * 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                    }}
+                    whileHover={{ scale: 1.2 }}
                     onClick={() => onSectorClick?.(sector)}
                 >
                     {/* Invisible Hit Area for better touch targets */}
                     <div className="absolute inset-0 -m-4 md:-m-2 z-[-1] rounded-full" />
 
-                    <div className={`w-4 h-4 md:w-5 md:h-5 border-2 rotate-45 transition-all duration-500 relative ${sector.cleared
-                        ? 'bg-neon-green border-neon-green shadow-[0_0_15px_#39ff14]'
-                        : 'bg-black border-red-500/40 hover:border-red-500 shadow-[0_0_5px_rgba(255,0,60,0.2)]'}`}>
-                        {!sector.cleared && (
+                    <div className={`w-4 h-4 md:w-5 md:h-5 border-2 rotate-45 transition-all duration-500 relative ${sector.control === 'RED' ? 'bg-red-600 border-red-400 shadow-[0_0_15px_#ff003c]' :
+                            sector.control === 'PURPLE' ? 'bg-purple-600 border-purple-400 shadow-[0_0_15px_#a855f7]' :
+                                sector.cleared ? 'bg-neon-green border-neon-green shadow-[0_0_15px_#39ff14]' :
+                                    'bg-black border-red-500/40 hover:border-red-500 shadow-[0_0_5px_rgba(255,0,60,0.2)]'
+                        }`}>
+                        {!sector.cleared && sector.control === 'NONE' && (
                             <motion.div
                                 animate={{ opacity: [0, 1, 0] }}
                                 transition={{ duration: 2, repeat: Infinity }}
@@ -191,10 +263,20 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
                     </div>
 
                     <div className="mt-2 text-[6px] md:text-[7px] font-mono font-black tracking-widest bg-black/95 px-2 py-1 border border-white/10 group-hover/node:border-neon-blue transition-colors rounded-sm shadow-xl flex flex-col items-center min-w-[60px]">
-                        <span className={sector.cleared ? 'text-neon-green' : 'text-red-500/60 group-hover/node:text-red-500'}>
-                            {sector.id.toUpperCase()}
+                        <span className={
+                            sector.control === 'RED' ? 'text-red-400' :
+                                sector.control === 'PURPLE' ? 'text-purple-400' :
+                                    sector.cleared ? 'text-neon-green' :
+                                        'text-red-500/60 group-hover/node:text-red-500'
+                        }>
+                            {sector.name.toUpperCase()}
                         </span>
-                        {!sector.cleared && (
+                        {sector.control !== 'NONE' && (
+                            <span className={`text-[4px] font-bold mt-0.5 ${sector.control === 'RED' ? 'text-red-500' : 'text-purple-500'}`}>
+                                [CONTROL: {sector.control}]
+                            </span>
+                        )}
+                        {!sector.cleared && sector.control === 'NONE' && (
                             <span className="text-[4px] text-red-500/30 font-bold mt-0.5 group-hover/node:text-red-500/80 animate-pulse">
                                 {revealedBosses.includes(sector.id) ? `BOSS: ${sector.archetype.split('_')[0]} UNKNOWN` : 'THREAT_DETECTED'}
                             </span>
@@ -263,12 +345,20 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
                 <div className="font-mono text-[8px] space-y-2 bg-black/90 p-3 border border-white/10 rounded-sm pointer-events-auto shadow-2xl backdrop-blur-md">
                     <div className="text-[7px] text-white/40 mb-2 font-black tracking-widest border-b border-white/5 pb-1 uppercase">Tactical_Grid_Legend</div>
                     <div className="flex items-center gap-3">
+                        <div className="w-2.5 h-2.5 bg-red-600 border border-red-400 rotate-45 shadow-[0_0:5px_#ff003c]" />
+                        <span className="text-red-400 font-black">RED DOMINATED</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-2.5 h-2.5 bg-purple-600 border border-purple-400 rotate-45 shadow-[0_0:5px_#a855f7]" />
+                        <span className="text-purple-400 font-black">PURPLE DOMINATED</span>
+                    </div>
+                    <div className="flex items-center gap-3">
                         <div className="w-2.5 h-2.5 bg-neon-green border border-neon-green rotate-45 shadow-[0_0:5px_#39ff14]" />
-                        <span className="text-white/80 font-black">LIBERATED</span>
+                        <span className="text-neon-green font-black">STRIKE TEAM SECURED</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="w-2.5 h-2.5 bg-black border border-red-500/50 rotate-45" />
-                        <span className="text-white/40 font-black tracking-tighter">OCCUPIED_CORE</span>
+                        <span className="text-white/40 font-black tracking-tighter">CORPORATE_HEGEMONY</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="w-2.5 h-2.5 bg-resistance-accent border border-resistance-accent rotate-45 shadow-[0_0:5px_#ff003c]" />

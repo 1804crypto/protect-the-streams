@@ -4,7 +4,7 @@ export interface Move {
     name: string;
     type: MoveType;
     power: number;
-    pp: number;  // Power Points - max uses per battle
+    pp: number;
     description: string;
 }
 
@@ -19,7 +19,15 @@ export interface QuantumLore {
     statusLog: string;
     battle1: string;
     battle2: string;
-    climax: string; // The transfer point to the next streamer
+    climax: string;
+}
+
+export interface Narrative {
+    role: 'LEADER' | 'RESISTANCE' | 'DOUBLE_AGENT' | 'UNKNOWN';
+    codename: string;
+    originStory: string;
+    mission: string;
+    connection: string;
 }
 
 export interface Streamer {
@@ -33,20 +41,20 @@ export interface Streamer {
     moves: Move[];
     ultimateMove: Move;
     lore?: QuantumLore;
+    narrative: Narrative;
 }
 
-// Nature System - Each nature boosts one stat and reduces another
 export type NatureType =
-    | 'AGGRESSIVE'   // +chaos, -charisma
-    | 'DIPLOMATIC'   // +charisma, -rebellion
-    | 'CUNNING'      // +influence, -chaos
-    | 'DEFIANT'      // +rebellion, -influence
-    | 'DISRUPTIVE'   // +chaos, -influence
-    | 'CHARISMATIC'  // +charisma, -chaos
-    | 'INFLUENTIAL'  // +influence, -rebellion
-    | 'REBELLIOUS'   // +rebellion, -charisma
-    | 'BALANCED'     // no modifier
-    | 'VOLATILE';    // +chaos, +rebellion, -influence, -charisma
+    | 'AGGRESSIVE'
+    | 'DIPLOMATIC'
+    | 'CUNNING'
+    | 'DEFIANT'
+    | 'DISRUPTIVE'
+    | 'CHARISMATIC'
+    | 'INFLUENTIAL'
+    | 'REBELLIOUS'
+    | 'BALANCED'
+    | 'VOLATILE';
 
 export interface NatureModifier {
     name: NatureType;
@@ -71,17 +79,10 @@ export const natures: Record<NatureType, NatureModifier> = {
 
 export const NATURE_TYPES = Object.keys(natures) as NatureType[];
 
-/**
- * Get a random nature for a newly secured streamer
- */
 export const getRandomNature = (): NatureType => {
     return NATURE_TYPES[Math.floor(Math.random() * NATURE_TYPES.length)];
 };
 
-/**
- * Apply nature modifiers to stats
- * Boost gives +10%, Nerf gives -10%
- */
 export const applyNatureToStats = (baseStats: StreamerStats, nature: NatureType): StreamerStats => {
     const modifier = natures[nature];
     const modifiedStats = { ...baseStats };
@@ -99,424 +100,467 @@ export const applyNatureToStats = (baseStats: StreamerStats, nature: NatureType)
 
 export const streamers: Streamer[] = [
     {
-        id: "ishowspeed",
-        name: "IShowSpeed",
-        archetype: "The Kinetic Spark",
-        stats: { influence: 95, chaos: 99, charisma: 88, rebellion: 92 },
-        trait: "Lightning Arcs / Tactical Cleats",
-        visualPrompt: "IShowSpeed as a cyberpunk anime rebel, wearing futuristic tactical armor with lightning arc patterns, tactical cleats, glowing neon blue eyes, dynamic action pose, digital background, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/ishowspeed_cyber_rebel_fixed_1766629797273.png",
+        id: 'kaicenat',
+        name: 'Kai Cenat',
+        archetype: 'THE_LEADER',
+        stats: { influence: 98, chaos: 85, charisma: 99, rebellion: 90 },
+        trait: 'CHARISMATIC',
+        visualPrompt: 'Kai in Vibranium AMP Suit',
+        image: '/kaicenat_cyber_rebel_fixed_1766629818577.png',
         moves: [
-            { name: "SUI_STRIKE", type: "REBELLION", power: 80, pp: 10, description: "A high-speed kinetic lunge." },
-            { name: "BARK_OVERLOAD", type: "CHAOS", power: 60, pp: 15, description: "Deafening frequency blast." },
-            { name: "BACKFLIP_EVADE", type: "INTEL", power: 0, pp: 20, description: "Increases evasion stats." }
+            { name: 'Rally Cry', type: 'CHARISMA', power: 40, pp: 20, description: 'Boosts team morale' },
+            { name: 'Motion', type: 'CHARISMA', power: 80, pp: 10, description: 'Calls the masses' },
+            { name: 'W Spam', type: 'REBELLION', power: 55, pp: 15, description: 'Overwhelms with chat energy' },
+            { name: 'AMP Energy', type: 'CHAOS', power: 70, pp: 8, description: 'Unleashes chaotic power' }
         ],
-        ultimateMove: { name: "LIGHTNING_BOLT", type: "REBELLION", power: 250, pp: 1, description: "A massive surge of kinetic energy." },
-        lore: {
-            statusLog: "REBELLION_INIT: The Kinetic Spark is trapped in the Algorithmic Vortex. We must jump-start the system.",
-            battle1: "SYSTEM_SHOCK: The Spark ignites! The first layer of the corporate firewall is melting.",
-            battle2: "RESONANCE_UP: Speed's energy is pulsing at 1.21 Gigawatts. The Authority is losing visual on this sector.",
-            climax: "SIGNAL_TRANSFER: Kinetic surge complete. Speed’s legacy acts as a battery, firing a beam of raw energy into the command center of the AMP General (Kai Cenat)."
+        ultimateMove: { name: 'Mafiathon Overload', type: 'REBELLION', power: 160, pp: 1, description: 'Breaks the Sentinel encryption' },
+        narrative: {
+            role: 'LEADER',
+            codename: 'KINGPIN',
+            originStory: 'First to realize the TROLLS were synthetic AI designed by Sentinel INC to suppress creativity. He stole the "Amp-Key" from their HQ.',
+            mission: 'Unite the scattered streamers and dismantle Sentinel INC\'s mainframe.',
+            connection: 'Directly recruits Duke Dennis and Fanum; suspects Adin\'s loyalty.'
         }
     },
     {
-        id: "kaicenat",
-        name: "Kai Cenat",
-        archetype: "The AMP General",
-        stats: { influence: 98, chaos: 92, charisma: 96, rebellion: 94 },
-        trait: "Neon Camo Puffer / Crown Headset",
-        visualPrompt: "Kai Cenat as a cyberpunk anime rebel, wearing a neon camo puffer jacket and a crown-shaped AR headset, confident pose, vibrant city background, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/kaicenat_cyber_rebel_fixed_1766629818577.png",
+        id: 'adinross',
+        name: 'Adin Ross',
+        archetype: 'DOUBLE_AGENT',
+        stats: { influence: 92, chaos: 70, charisma: 88, rebellion: 40 },
+        trait: 'CUNNING',
+        visualPrompt: 'Adin in Sentinel Corporate Armor with hidden Resistance patch',
+        image: '/adinross_cyber_rebel_fixed_final_1766629974082.png',
         moves: [
-            { name: "AMP_UP", type: "CHARISMA", power: 0, pp: 20, description: "Boosts squad morale." },
-            { name: "STREAM_SNIPE", type: "INTEL", power: 70, pp: 12, description: "Calculated digital strike." },
-            { name: "GIVEAWAY_FRENZY", type: "CHAOS", power: 90, pp: 8, description: "Massive localized disruption." }
+            { name: 'Fake Out', type: 'DISRUPT', power: 60, pp: 15, description: 'Confuses the enemy' },
+            { name: 'Insider Info', type: 'INTEL', power: 0, pp: 5, description: 'Boosts accuracy' },
+            { name: 'Spin Zone', type: 'CHAOS', power: 50, pp: 18, description: 'Creates confusion' },
+            { name: 'Brand Deal', type: 'CHARISMA', power: 65, pp: 10, description: 'Corporate influence' }
         ],
-        ultimateMove: { name: "AMP_TAKEOVER", type: "CHARISMA", power: 260, pp: 1, description: "Total control of the digital field." },
-        lore: {
-            statusLog: "RECEIVING_RELAY: The AMP General has caught the Kinetic Spark. Mobilizing the tactical frontline.",
-            battle1: "STRATEGIC_BREACH: Kai's army-bots are bypassing the security nodes. The plan is in motion.",
-            battle2: "COMMAND_OVERRIDE: The sector is secured. The general's aura is amplifying the signal to multiversal levels.",
-            climax: "GHOST_UPLOAD: Strategy secured. Kai uplinks the tactical map to the shadows, activating the High-Stakes Ghost (Adin Ross)."
+        ultimateMove: { name: 'Trojan Horse', type: 'INTEL', power: 140, pp: 1, description: 'Backstabs the target' },
+        narrative: {
+            role: 'DOUBLE_AGENT',
+            codename: 'BRAND RISK',
+            originStory: 'Captured early by Sentinel INC. Offered a deal: his platform in exchange for surveillance on Kai.',
+            mission: 'Feed false info to Kai while secretly planting Sentinel trackers. His conflict grows as he sees the Resistance winning.',
+            connection: 'Childhood friend of Speed; uses this bond to infiltrate the inner circle.'
         }
     },
     {
-        id: "adinross",
-        name: "Adin Ross",
-        archetype: "The High-Stakes Ghost",
-        stats: { influence: 90, chaos: 85, charisma: 94, rebellion: 80 },
-        trait: "Tech-Noir Suit / Holographic Chips",
-        visualPrompt: "Adin Ross as a cyberpunk anime rebel, wearing a sleek tech-noir suit, surrounded by floating holographic poker chips, mysterious lighting, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/adinross_cyber_rebel_fixed_final_1766629974082.png",
+        id: 'ishowspeed',
+        name: 'IShowSpeed',
+        archetype: 'CHAOS_BRINGER',
+        stats: { influence: 90, chaos: 99, charisma: 85, rebellion: 95 },
+        trait: 'VOLATILE',
+        visualPrompt: 'Cyborg Speed with glitch effects',
+        image: '/ishowspeed_cyber_rebel_fixed_1766629797273.png',
         moves: [
-            { name: "ALL_IN", type: "REBELLION", power: 120, pp: 5, description: "Risky high-damage gamble." },
-            { name: "CHIP_FLICK", type: "INTEL", power: 40, pp: 20, description: "Precision distraction." },
-            { name: "GHOST_SIGNAL", type: "CHAOS", power: 50, pp: 15, description: "Jam enemy communications." }
+            { name: 'Bark', type: 'CHAOS', power: 70, pp: 15, description: 'Sonic disruption' },
+            { name: 'Backflip', type: 'DISRUPT', power: 50, pp: 20, description: 'Dodges next attack' },
+            { name: 'Ronaldo Cry', type: 'CHARISMA', power: 60, pp: 12, description: 'Summons fan power' },
+            { name: 'Speed Run', type: 'REBELLION', power: 75, pp: 8, description: 'Blitz attack' }
         ],
-        ultimateMove: { name: "GHOST_SIGNAL", type: "CHAOS", power: 240, pp: 1, description: "Vanishes and strikes from the void." },
-        lore: {
-            statusLog: "SHADOW_LINK: Receiving the General's uplink. The Ghost is entering the grid. High stakes, higher rewards.",
-            battle1: "PHANTOM_STRIKE: Adin vanishes from the Authority's sensors. The gamble is paying off.",
-            battle2: "SPECTRAL_SURGE: The Ghost-Line is stabilized. We're siphoning enough power to break the corporate vault.",
-            climax: "INFILTRATION_READY: The Ghost has opened the back door. Handing off the master key to the Social Infiltrator (Druski)."
+        ultimateMove: { name: 'World Cup Breaker', type: 'CHAOS', power: 150, pp: 1, description: 'Overloads server capacity' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'GLITCH',
+            originStory: 'His energy signature is so erratic that Sentinel INC\'s prediction algorithms crash when trying to track him.',
+            mission: 'Serve as the ultimate distraction while Kai executes the plan.',
+            connection: 'Often paired with Kai; unaware of Adin\'s betrayal but feels "static" around him.'
         }
     },
     {
-        id: "druski",
-        name: "Druski",
-        archetype: "The Social Infiltrator",
-        stats: { influence: 88, chaos: 70, charisma: 98, rebellion: 85 },
-        trait: "Flickering Pixel-Suit / Glitch Briefcase",
-        visualPrompt: "Druski as a cyberpunk anime rebel, wearing a suit with flickering pixel patterns, holding a glowing digital briefcase, expressive face, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/druski_cyber_rebel_fixed_final_1766629987768.png",
+        id: 'xqc',
+        name: 'xQc',
+        archetype: 'THE_REACT_CORE',
+        stats: { influence: 85, chaos: 92, charisma: 75, rebellion: 85 },
+        trait: 'DISRUPTIVE',
+        visualPrompt: 'xQc in Crystallized Juice Armor',
+        image: '/xqc_cyber_rebel_v1.png',
         moves: [
-            { name: "COULD_A_BEEN", type: "CHARISMA", power: 0, pp: 20, description: "Confusion through comedy." },
-            { name: "DATA_LEAK", type: "INTEL", power: 80, pp: 10, description: "Exposes corporate weakness." },
-            { name: "FAKE_ID_SWIPE", type: "CHAOS", power: 60, pp: 15, description: "Bypasses firewalls." }
+            { name: 'Stutter Step', type: 'CHAOS', power: 65, pp: 10, description: 'Rapid fire incoherent data' },
+            { name: 'The Juice', type: 'DISRUPT', power: 85, pp: 5, description: 'Toxic spill' },
+            { name: 'Slam Desk', type: 'REBELLION', power: 55, pp: 15, description: 'Rage damage' },
+            { name: 'React Andy', type: 'INTEL', power: 45, pp: 20, description: 'Analyzes weakness' }
         ],
-        ultimateMove: { name: "MAIN_CHARACTER_MOMENT", type: "CHARISMA", power: 220, pp: 1, description: "Forces the world to glitch around him." },
-        lore: {
-            statusLog: "INFILTRATION_LOG: Druski has bypassed the 'Main Stage' sub-reality security. Deep cover established.",
-            battle1: "SOCIAL_GLITCH: The Authority's social metrics are collapsing. Druski's humor is too viral for their filters.",
-            battle2: "COMIC_BREACH: The inner sanctum is open. Druski is extracting the corporate secret sauces.",
-            climax: "RESONANCE_DATA_HANDOFF: Data extraction complete. Druski synthesizes the chaos into a rhythmic weave, uplinking to the Resonance Weaver (JazzyGunz)."
+        ultimateMove: { name: 'Cheeto Storm', type: 'CHAOS', power: 130, pp: 1, description: 'Blinds all sensors' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'JUICER',
+            originStory: 'Discovered a frequency in the static that revealed Sentinel\'s subliminal messaging.',
+            mission: 'Decode Sentinel\'s encryption using his specialized syntax processing.',
+            connection: 'Recruited by Hasan for his raw processing power; constantly argues with him.'
         }
     },
     {
-        id: "jazzygunz",
-        name: "JazzyGunz",
-        archetype: "The Resonance Weaver",
-        stats: { influence: 82, chaos: 65, charisma: 90, rebellion: 96 },
-        trait: "Stealth Suit / Sonic Harp",
-        visualPrompt: "JazzyGunz as a cyberpunk anime rebel, wearing a futuristic stealth suit with glowing accents, wielding a sonic energy harp, cinematic lighting, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/jazzygunz_reconstructed_rebel_fixed_1766786271015.png",
+        id: 'dukedennis',
+        name: 'Duke Dennis',
+        archetype: 'THE_VETERAN',
+        stats: { influence: 80, chaos: 40, charisma: 95, rebellion: 70 },
+        trait: 'CHARISMATIC',
+        visualPrompt: 'Duke in 1987 tactical gear',
+        image: '/duke_dennis_anime_upgrade.png',
         moves: [
-            { name: "SONIC_BOOM", type: "CHAOS", power: 85, pp: 10, description: "Powerful acoustic shockwave." },
-            { name: "STEALTH_BEAT", type: "REBELLION", power: 70, pp: 12, description: "Silent tactical vibration." },
-            { name: "HEALING_TEMPO", type: "CHARISMA", power: 0, pp: 15, description: "Restores squad frequency." }
+            { name: 'Rizzler', type: 'CHARISMA', power: 60, pp: 15, description: 'Charms the opponent' },
+            { name: 'Veteran Wisdom', type: 'INTEL', power: 50, pp: 10, description: 'Analyzes weakness' },
+            { name: 'Court Vision', type: 'DISRUPT', power: 55, pp: 12, description: 'Strategic play' },
+            { name: 'Dunk Force', type: 'REBELLION', power: 70, pp: 8, description: 'Power slam' }
         ],
-        ultimateMove: { name: "SYMPHONIC_ERUPTION", type: "CHAOS", power: 240, pp: 1, description: "A multi-layered frequency collapse." },
-        lore: {
-            statusLog: "SONIC_UPLLINK: JazzyGunz has entered the Silence Sector. The static dissonance is heavy.",
-            battle1: "HARMONIC_PULSE: The sonic harp is cutting through the corporate white noise. Resonance is building.",
-            battle2: "FREQUENCY_SHATTER: The Silence Sector's walls are cracking. Pure sound is reclaiming the grid.",
-            climax: "CHAOS_BRIDGE_FORMED: Symphonic resonance reached. Jazzy weaves a bridge of pure energy into the void of the Chaos Overlord (xQc)."
+        ultimateMove: { name: 'The Big Drop', type: 'DISRUPT', power: 120, pp: 1, description: 'Gravity wave' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'DEEBLOCK',
+            originStory: 'Oldest known active resistor. Has files on Sentinel dating back to the dial-up era.',
+            mission: 'Train the younger generation (Kai, Fanum) in tactical warfare.',
+            connection: 'Kai\'s mentor; the only one who suspects a mole might exist.'
         }
     },
     {
-        id: "xqc",
-        name: "xQc",
-        archetype: "The Chaos Overlord",
-        stats: { influence: 94, chaos: 99, charisma: 85, rebellion: 95 },
-        trait: "Anti-Signal Crown / Static Cloak",
-        visualPrompt: "xQc as a cyberpunk anime rebel, 'The Chaos Overlord'. Extremely thin, wild blonde hair glowing with static energy, wearing a scavenged holographic pilot suit, surrounded by flickering monitors and twitch emotes as digital artifacts, erratic and high-energy pose, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/xqc_cyber_rebel_v1.png",
+        id: 'fanum',
+        name: 'Fanum',
+        archetype: 'THE_SUPPLIER',
+        stats: { influence: 75, chaos: 60, charisma: 85, rebellion: 50 },
+        trait: 'DIPLOMATIC',
+        visualPrompt: 'Fanum driving a heavily modified armored truck',
+        image: '/fantum_cyber_rebel_fixed.png',
         moves: [
-            { name: "JUICE_SURGE", type: "CHAOS", power: 90, pp: 8, description: "Explosive surge of chaotic energy." },
-            { name: "CHAT_SPAM", type: "CHAOS", power: 65, pp: 15, description: "Disorients with visual noise." },
-            { name: "STALL_PROTOCOL", type: "INTEL", power: 0, pp: 10, description: "Bypasses the current turn." }
+            { name: 'Tax Collection', type: 'DISRUPT', power: 40, pp: 20, description: 'Steals enemy buffs' },
+            { name: 'Meal Prep', type: 'REBELLION', power: 0, pp: 5, description: 'Heals team' },
+            { name: 'Fanum Tax', type: 'CHAOS', power: 65, pp: 12, description: 'Takes a bite' },
+            { name: 'Supply Drop', type: 'INTEL', power: 35, pp: 18, description: 'Resource boost' }
         ],
-        ultimateMove: { name: "THE_GREAT_JUICER", type: "CHAOS", power: 300, pp: 1, description: "System-wide entropy event." },
-        lore: {
-            statusLog: "ENTROPY_DETECTED: The Chaos Overlord is drifting in a juice-less vacuum. Signal quality: ERR_CRITICAL.",
-            battle1: "STATIC_STORM: xQc's erratic signal is confusing the Authority's predictors. Chaos is the only constant.",
-            battle2: "JUICE_REGAINED: The sub-reality is bending to the Overlord's will. The static is becoming a weapon.",
-            climax: "SYSTEM_OVERLOAD: Critical juice mass reached. xQc overloads the local grid, sparking the frequency of the Propaganda Weaver (HasanAbi)."
+        ultimateMove: { name: 'Cannon Event', type: 'DISRUPT', power: 110, pp: 1, description: 'Ineviditable impact' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'TAXMAN',
+            originStory: 'Controlled the underground supply lines before Kai recruited him.',
+            mission: 'Keep the Resistance fed and equipped with stolen Sentinel tech.',
+            connection: 'Provides Agent 00 with gadgets; loyal to Kai.'
         }
     },
     {
-        id: "hasanabi",
-        name: "HasanAbi",
-        archetype: "The Propaganda Weaver",
-        stats: { influence: 96, chaos: 70, charisma: 95, rebellion: 90 },
-        trait: "Red-Star Visor / Policy Matrix",
-        visualPrompt: "HasanAbi as a cyberpunk anime rebel, 'The Propaganda Weaver'. Towering physique, wearing a tactical red-star vest over a sleek black suit, holding a holographic megaphone, intensely debating, social-uprising background, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/hasanabi_cyber_rebel_v2_1766941126053.png",
+        id: 'agent00',
+        name: 'Agent 00',
+        archetype: 'THE_SPY',
+        stats: { influence: 70, chaos: 50, charisma: 75, rebellion: 60 },
+        trait: 'CUNNING',
+        visualPrompt: 'Agent 00 in stealth tuxedo',
+        image: '/agent00_cyber_rebel_v2_1767568656390.png',
         moves: [
-            { name: "UNION_STRIKE", type: "REBELLION", power: 85, pp: 10, description: "A strike backed by the collective." },
-            { name: "POLICY_JAM", type: "INTEL", power: 60, pp: 15, description: "Disrupts algorithmic logic." },
-            { name: "STAKEHOLD_LECTURE", type: "CHARISMA", power: 0, pp: 20, description: "Drains enemy morale." }
+            { name: 'Recon', type: 'INTEL', power: 0, pp: 20, description: 'Reveals enemy stats' },
+            { name: 'Gadget Use', type: 'INTEL', power: 70, pp: 10, description: 'Tech attack' },
+            { name: 'Stealth Strike', type: 'DISRUPT', power: 60, pp: 12, description: 'Silent takedown' },
+            { name: 'Espionage', type: 'CHARISMA', power: 45, pp: 15, description: 'Infiltration' }
         ],
-        ultimateMove: { name: "THE_HIMBO_REVOLUTION", type: "REBELLION", power: 260, pp: 1, description: "Inspires a total system takeover." },
-        lore: {
-            statusLog: "DISSIDENT_SIGNAL: HasanAbi is broadcasting from the Grey Depths. The Ban-Hammer's shadow is heavy.",
-            battle1: "COLLECTIVE_SURGE: The workers of the grid are rising. Hasan's policy matrix is rewriting the sector's code.",
-            battle2: "LECTURE_OVERRIDE: The Authority's logic is being systematically dismantled. The revolution will be streamed.",
-            climax: "UPLINK_OF_DISSENT: Hegemony broken. Hasan ignites a signal of pure dissent that provides the startup energy for the Contrarian Engine (Sneako)."
+        ultimateMove: { name: '00 Protocol', type: 'INTEL', power: 100, pp: 1, description: 'Precision strike' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'DOUBLE O',
+            originStory: 'Former Sentinel security analyst who went rogue after finding the "Streamer Nullification" files.',
+            mission: 'Infiltrate Sentinel substations to map their network.',
+            connection: 'Works closely with Fanum for gear; unknowingly feeds info to Adin (who he thinks is safe).'
         }
     },
     {
-        id: "sneako",
-        name: "Sneako",
-        archetype: "The Contrarian Engine",
-        stats: { influence: 88, chaos: 92, charisma: 85, rebellion: 96 },
-        trait: "Matrix Breach / Reality Visor",
-        visualPrompt: "Sneako as a cyberpunk anime rebel, 'The Contrarian Engine'. Sharp features, wearing a high-collared tech-jacket with 'MATRIX_BREAK' patterns, rebellious smirk, digital-rain background, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/sneako_cyber_rebel_v4_one_by_one_1766941188612.png",
+        id: 'caseoh',
+        name: 'CaseOh',
+        archetype: 'THE_TITAN',
+        stats: { influence: 85, chaos: 40, charisma: 80, rebellion: 50 },
+        trait: 'BALANCED',
+        visualPrompt: 'CaseOh as a literal giant blocking the sun',
+        image: '/perception_filter_boss.png',
         moves: [
-            { name: "MATRIX_KICK", type: "REBELLION", power: 80, pp: 12, description: "Bypasses common logic." },
-            { name: "RED_PILL_GLITCH", type: "CHAOS", power: 0, pp: 15, description: "Inverts enemy's next move." },
-            { name: "CLIP_FARM", type: "CHARISMA", power: 50, pp: 20, description: "Steals a portion of enemy charge." }
+            { name: 'Ground Pound', type: 'DISRUPT', power: 90, pp: 5, description: 'Earthquake' },
+            { name: 'Banned', type: 'REBELLION', power: 100, pp: 1, description: 'Banishes enemy' },
+            { name: 'Belly Flop', type: 'CHAOS', power: 70, pp: 10, description: 'Massive impact' },
+            { name: 'Titan Stance', type: 'CHARISMA', power: 40, pp: 15, description: 'Defensive buff' }
         ],
-        ultimateMove: { name: "WAKE_UP_UPLINK", type: "REBELLION", power: 250, pp: 1, description: "A shattering frequency burst." },
-        lore: {
-            statusLog: "MATRIX_BREACH: Sneako is stuck in a reality-simulation loop. Identifying the contrarian exit.",
-            battle1: "GLITCH_KICK: One reality layer shattered. The Contrarian Engine is accelerating through the patterns.",
-            battle2: "PATTERN_BREAK: The simulation cannot contain the divergence. Sneako is operating outside the Authority's math.",
-            climax: "DATA_EXTRACTION: Loop broken. Sneako's breach provides the raw, unencrypted data stream for the Intel Protocol (Agent 00)."
+        ultimateMove: { name: 'Black Hole', type: 'DISRUPT', power: 200, pp: 1, description: 'Consumes the battlefield' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'HEAVY',
+            originStory: 'Sentinel tried to contain him in a digital prison, but he physically broke the servers.',
+            mission: 'Hold the frontline against the TROLL swarms.',
+            connection: 'Defends Jynxzi while he hacks; has a rivalry with Sketch.'
         }
     },
     {
-        id: "agent00",
-        name: "Agent 00",
-        archetype: "The Intel Protocol",
-        stats: { influence: 92, chaos: 65, charisma: 88, rebellion: 85 },
-        trait: "Data-Stream Glasses / Holo-Tablet",
-        visualPrompt: "Agent 00 as a cyberpunk anime rebel, 'The Intel Protocol'. Male with long dreadlocks, wearing a black baseball cap with a subtle glowing insignia, confident smirk, wearing tactical black techwear. Urban rainy city background with data streams. High-tech glasses projecting code onto his face. Holographic trading card style, 4k, cel shaded, highly detailed.",
-        image: "/agent00_cyber_rebel_v2_1767568656390.png",
+        id: 'jynxzi',
+        name: 'Jynxzi',
+        archetype: 'THE_TECHNICIAN',
+        stats: { influence: 80, chaos: 85, charisma: 70, rebellion: 60 },
+        trait: 'VOLATILE',
+        visualPrompt: 'Jynxzi surrounded by monitors and wires',
+        image: '/jazzygunz_cyber_rebel_final_recovery_1766786179435.png',
         moves: [
-            { name: "LOGIC_BOMB", type: "INTEL", power: 90, pp: 8, description: "Detonates digital weaknesses." },
-            { name: "DEEP_SCAN", type: "INTEL", power: 0, pp: 20, description: "Reveals all enemy stats." },
-            { name: "AMP_ENCRYPTION", type: "CHARISMA", power: 0, pp: 15, description: "Boosts defense of all assets." }
+            { name: 'Clip It', type: 'CHAOS', power: 60, pp: 15, description: 'Fast reflex attack' },
+            { name: 'System Breach', type: 'INTEL', power: 75, pp: 5, description: 'Hacks defenses' },
+            { name: 'Headshot', type: 'REBELLION', power: 85, pp: 8, description: 'Precision strike' },
+            { name: 'Tech Support', type: 'DISRUPT', power: 45, pp: 18, description: 'System debug' }
         ],
-        ultimateMove: { name: "PROTOCOL_00_OVERRIDE", type: "INTEL", power: 270, pp: 1, description: "Absolute control of the data feed." },
-        lore: {
-            statusLog: "LOGIC_GATE_OPEN: Agent 00 is decrypting the Authority's master vault. Encryption level: INFINITE.",
-            battle1: "PROTOCOL_BREACH: The first gate has fallen. Agent 00's intel is exposing the global corporate architecture.",
-            battle2: "DEEP_DECRYPT: Decryption complete. The location of every suppressed node is now visible to the Resistance.",
-            climax: "COORDINATE_TRANSMISSION: Data decoded. Agent 00 beams the tactical coordinates to the Court General (Duke Dennis)."
+        ultimateMove: { name: 'Champion Aura', type: 'CHARISMA', power: 125, pp: 1, description: 'Perfect aim' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'CROSSHAIR',
+            originStory: 'A prodigy hacker who used gaming servers to hide Resistance comms.',
+            mission: 'Maintain the "Under-Net", the hidden network for streamers.',
+            connection: 'Protected by CaseOh; coordinates drops with Sykkuno.'
         }
     },
     {
-        id: "dukedennis",
-        name: "Duke Dennis",
-        archetype: "The Court General",
-        stats: { influence: 92, chaos: 75, charisma: 99, rebellion: 88 },
-        trait: "Precision Visor / Golden Rizz",
-        visualPrompt: "Duke Dennis as a cyberpunk anime rebel, based on reference photo. Wearing a futuristic basketball jersey with golden glowing accents, precision targeting visor, radiating effortless charisma, cinematic lighting, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation.",
-        image: "/duke_dennis_anime_upgrade.png",
+        id: 'hasanabi',
+        name: 'HasanAbi',
+        archetype: 'THE_STRATEGIST',
+        stats: { influence: 88, chaos: 60, charisma: 85, rebellion: 95 },
+        trait: 'REBELLIOUS',
+        visualPrompt: 'Hasan in revolutionary attire',
+        image: '/hasanabi_cyber_rebel_v2_1766941126053.png',
         moves: [
-            { name: "RIZZ_LOCK", type: "CHARISMA", power: 0, pp: 20, description: "Stuns the enemy with pure charisma." },
-            { name: "POSTER_DUNK", type: "REBELLION", power: 95, pp: 8, description: "A high-impact vertical assault." },
-            { name: "AMP_SURGE", type: "CHARISMA", power: 70, pp: 12, description: "Energy boost from the squad." }
+            { name: 'Debate Lord', type: 'INTEL', power: 65, pp: 10, description: 'Mental exhaustion' },
+            { name: 'Ratio', type: 'DISRUPT', power: 80, pp: 5, description: 'Crushes morale' },
+            { name: 'Political Take', type: 'REBELLION', power: 70, pp: 12, description: 'Controversial strike' },
+            { name: 'Chat Control', type: 'CHARISMA', power: 50, pp: 15, description: 'Moderation power' }
         ],
-        ultimateMove: { name: "THE_ULTIMATE_RIZZLER", type: "CHARISMA", power: 250, pp: 1, description: "Absolute social dominance achieved." },
-        lore: {
-            statusLog: "STASIS_FIELD_DETECTED: The Court General is frozen in a high-intensity 'Golden Rizz' field. Total paralysis.",
-            battle1: "PRECISION_BREAK: Duke's visor is tracking the Authority's pulse. The stasis is flickering.",
-            battle2: "COURT_DOMINANCE: The field is shattered. Duke Dennis is landing strikes with 100% rizz-accuracy.",
-            climax: "RIZZ_OVERFLOW: Final dunk complete. The impact creates a localized shockwave that opens the high-security vault for the Rich Lynx (DDG)."
+        ultimateMove: { name: 'The Manifesto', type: 'REBELLION', power: 130, pp: 1, description: 'Mass conversion' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'IDEOLOGUE',
+            originStory: 'Predicted the rise of Sentinel INC years ago. Wrote the "Streamer\'s Rights" doctrine.',
+            mission: 'Plan the overall strategy for overthrowing the corporate structure.',
+            connection: 'Recruited xQc and Ludwig; constantly clashes with Sentinel\'s PR department.'
         }
     },
     {
-        id: "ddg",
-        name: "DDG",
-        archetype: "The Rich Lynx",
-        stats: { influence: 94, chaos: 70, charisma: 92, rebellion: 85 },
-        trait: "Digital Lynx Suit / Platinum Grillz",
-        visualPrompt: "DDG as a cyberpunk anime rebel, based on reference photo. Wearing a platinum-plated stealth suit, surrounded by digital lynx avatars, luxury cybernetics, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation.",
-        image: "/ddg_anime_upgrade.png",
+        id: 'zoey',
+        name: 'Zoey',
+        archetype: 'THE_DIPLOMAT',
+        stats: { influence: 90, chaos: 30, charisma: 95, rebellion: 60 },
+        trait: 'DIPLOMATIC',
+        visualPrompt: 'Pokimane in sleek futuristic suit',
+        image: '/zoey_cyber_rebel_v1.png',
         moves: [
-            { name: "MOONWALK_GLITCH", type: "INTEL", power: 0, pp: 15, description: "Drastically increases evasion." },
-            { name: "PLATINUM_PUNCH", type: "REBELLION", power: 85, pp: 10, description: "A high-value heavy strike." },
-            { name: "LYRIC_LEAK", type: "CHAOS", power: 65, pp: 15, description: "Disorients with verbal speed." }
+            { name: 'Wholesome Ray', type: 'CHARISMA', power: 50, pp: 20, description: 'Pacifies enemies' },
+            { name: 'Cookie Gift', type: 'CHARISMA', power: 0, pp: 5, description: 'Heals ally' },
+            { name: 'Content Queen', type: 'INTEL', power: 60, pp: 12, description: 'Strategic content' },
+            { name: 'Tier 3 Sub', type: 'REBELLION', power: 55, pp: 15, description: 'Subscriber power' }
         ],
-        ultimateMove: { name: "CALABASAS_COLLAPSE", type: "REBELLION", power: 280, pp: 1, description: "Luxury reality collapse." },
-        lore: {
-            statusLog: "LUXURY_LOCKDOWN: DDG is trapped in the Calabasas Carbon-Fiber grid. Every exit is monetized.",
-            battle1: "PLATINUM_PUNCH: The lynx is clawing through the corporate wealth-walls. The grid is bleeding assets.",
-            battle2: "MARKET_DISRUPTION: Reality is destabilizing around the Lynx. The Authority's financial nodes are collapsing.",
-            climax: "ASSET_SIPHON: Grid breached. DDG siphons the raw wealth-energy of the sector, beaming a high-voltage charge into the Energizer (TYLIL)."
+        ultimateMove: { name: 'Brand Affinity', type: 'CHARISMA', power: 110, pp: 1, description: 'Summons army of simps' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'QUEEN',
+            originStory: 'Used her high-level corporate access to fund the Resistance before going underground.',
+            mission: 'Secure funding and maintain public image for the movement.',
+            connection: 'Keeps the peace between xQc and Hasan; recruiting Valkyrae.'
         }
     },
     {
-        id: "tylil",
-        name: "TYLIL",
-        archetype: "The Energizer",
-        stats: { influence: 85, chaos: 98, charisma: 90, rebellion: 95 },
-        trait: "Neon Durag / Kinetic Batteries",
-        visualPrompt: "TYLIL as a cyberpunk anime rebel, based on reference photo. Wearing a glowing neon durag, high-energy dancing pose, kinetic energy sparks flying, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation.",
-        image: "/rakai_cyber_rebel_fixed.png",
+        id: 'sneako',
+        name: 'Sneako',
+        archetype: 'THE_SAGE',
+        stats: { influence: 85, chaos: 50, charisma: 90, rebellion: 80 },
+        trait: 'BALANCED',
+        visualPrompt: 'Charlie floating in a white void',
+        image: '/sneako_cyber_rebel_v4_one_by_one_1766941188612.png',
         moves: [
-            { name: "HYPER_DANCE", type: "CHAOS", power: 75, pp: 12, description: "Chaotic kinetic movement." },
-            { name: "AUTHENTIC_ROAR", type: "REBELLION", power: 80, pp: 10, description: "A shockwave of pure energy." },
-            { name: "NEON_VIBE", type: "CHAOS", power: 0, pp: 15, description: "Increases speed and chaos." }
+            { name: 'Monotone Roast', type: 'REBELLION', power: 75, pp: 10, description: 'Dry damage' },
+            { name: 'Magazine Clip', type: 'DISRUPT', power: 60, pp: 15, description: 'Reload speed' },
+            { name: 'Dry Commentary', type: 'INTEL', power: 55, pp: 18, description: 'Analytical review' },
+            { name: 'Woooo', type: 'CHAOS', power: 65, pp: 10, description: 'Excitement burst' }
         ],
-        ultimateMove: { name: "UNFILTERED_ERUPTION", type: "CHAOS", power: 270, pp: 1, description: "The matrix cannot handle the energy." },
-        lore: {
-            statusLog: "LOW_BATTERY_WARNING: TYLIL is at 1% power in the Kinetic Depletion Zone. Motion is restricted.",
-            battle1: "NEON_VIBE_RECHARGE: The first spark of dance-energy is detected. The kinetic batteries are filling.",
-            battle2: "HYPER_RESONANCE: TYLIL is at 100%. The matrix is literally shaking from the unscripted movement.",
-            climax: "KINETIC_ROAR: Energy eruption. TYLIL roars a blinding surge of raw power into the trenches of the War General (RAKAI)."
+        ultimateMove: { name: 'Slap God', type: 'REBELLION', power: 1000, pp: 1, description: 'The ultimate strike' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'JESUS',
+            originStory: 'An ancient internet entity who awoke when the TROLLS disturbed his slumber.',
+            mission: 'Provide spiritual and tactical guidance to the team.',
+            connection: 'Ludwig\'s mentor; respects Speed\'s raw power.'
         }
     },
     {
-        id: "rakai",
-        name: "RAKAI",
-        archetype: "The War General",
-        stats: { influence: 82, chaos: 88, charisma: 85, rebellion: 96 },
-        trait: "Tactical AMP Vest / Loyalty Link",
-        visualPrompt: "RAKAI as a cyberpunk anime rebel, based on reference photo. Wearing heavy tactical armor with AMP insignia, battle-hardened expression, digital war-paint, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation.",
-        image: "/tylil_cyber_rebel_fixed.png",
+        id: 'plaqueboymax',
+        name: 'Plaqueboymax',
+        archetype: 'THE_PLANNER',
+        stats: { influence: 85, chaos: 55, charisma: 92, rebellion: 65 },
+        trait: 'CUNNING',
+        visualPrompt: 'Ludwig analyzing blueprints',
+        image: '/plaqueboymax_cyber_rebel_v1.png',
         moves: [
-            { name: "WAR_CRY", type: "REBELLION", power: 0, pp: 20, description: "Boosts offensive stats of squad." },
-            { name: "LOYALTY_STRIKE", type: "REBELLION", power: 85, pp: 10, description: "A strike fueled by brotherhood." },
-            { name: "TACTICAL_BREACH", type: "INTEL", power: 70, pp: 12, description: "Pierces enemy defenses." }
+            { name: 'Mogul Move', type: 'INTEL', power: 70, pp: 10, description: 'Profitable attack' },
+            { name: 'Scam', type: 'DISRUPT', power: 50, pp: 15, description: 'Steals items' },
+            { name: 'Chess Tactics', type: 'REBELLION', power: 60, pp: 12, description: 'Strategic play' },
+            { name: 'YouTube Money', type: 'CHARISMA', power: 55, pp: 15, description: 'Platform power' }
         ],
-        ultimateMove: { name: "AMP_WAR_PROTOCOL", type: "REBELLION", power: 260, pp: 1, description: "Total tactical mobilization." },
-        lore: {
-            statusLog: "TRENCH_LOCK: RAKAI is pinned down in the Loyalty Trench. Authority Sentinels are closing in.",
-            battle1: "BROTHERHOOD_BLAST: The War General is rallying the shadow-squad. The front lines are moving.",
-            battle2: "WAR_GENERAL_PUSH: Tactical breakthrough achieved. The corporate defenses are in full retreat.",
-            climax: "LOYALTY_LINK_ESTABLISHED: Victory secured. RAKAI commands a final breakthrough that pave the way for the Glaze King (FANTUM)."
+        ultimateMove: { name: 'Subathon Forever', type: 'CHARISMA', power: 140, pp: 1, description: 'Extends battle duration' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'MOGUL',
+            originStory: 'Former event organizer for Sentinel who realized the games were rigged.',
+            mission: 'Organize the "Games" - a front for training new recruits.',
+            connection: 'Partner to MoistCr1TiKaL; rivals with Sidemen (KSI) until the alliance.'
         }
     },
     {
-        id: "fantum",
-        name: "FANTUM",
-        archetype: "The Glaze King",
-        stats: { influence: 96, chaos: 95, charisma: 94, rebellion: 92 },
-        trait: "Gourmet Glitch-Armor / Taxing Gauntlet",
-        visualPrompt: "FANTUM as a cyberpunk anime rebel, based on reference photo. Wearing oversized gourmet-themed mech armor, holding a glowing digital pizza slice, kingly aura, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation.",
-        image: "/fantum_cyber_rebel_fixed.png",
+        id: 'rakai',
+        name: 'Rakai',
+        archetype: 'THE_VANGUARD',
+        stats: { influence: 88, chaos: 75, charisma: 85, rebellion: 80 },
+        trait: 'AGGRESSIVE',
+        visualPrompt: 'Valkyrae with dual energy swords',
+        image: '/rakai_anime_upgrade.png',
         moves: [
-            { name: "FANUM_TAX", type: "CHAOS", power: 90, pp: 8, description: "Taxes the enemy's resources (HP)." },
-            { name: "GLAZE_BLAST", type: "CHARISMA", power: 75, pp: 12, description: "Dazzles with overwhelming spirit." },
-            { name: "AMP_FEAST", type: "REBELLION", power: 0, pp: 15, description: "Recovers integrity through consumption." }
+            { name: 'Scream', type: 'REBELLION', power: 60, pp: 15, description: 'Sonic damage' },
+            { name: 'Blade Dance', type: 'CHAOS', power: 80, pp: 10, description: 'Multi-hit' },
+            { name: 'Queen Dash', type: 'DISRUPT', power: 55, pp: 18, description: 'Swift strike' },
+            { name: 'Among Us Sus', type: 'INTEL', power: 50, pp: 12, description: 'Deception' }
         ],
-        ultimateMove: { name: "THE_GREAT_TAXATION", type: "CHAOS", power: 290, pp: 1, description: "Everything is taxed. Everything is cleared." },
-        lore: {
-            statusLog: "RESOURCE_DEPLETION: FANTUM is starved of energy in the Taxed Sector. Authority nodes are siphoning user attention.",
-            battle1: "GLAZE_RECLAMATION: The King is taxing the Authority back. Every strike recovers lost energy.",
-            battle2: "GOURMET_OVERLOAD: FANTUM has consumed the sector's mainframes. The Glaze is spreading through the circuit boards.",
-            climax: "GAUNTLET_RECHAGRE: Sector cleared. FANTUM directs the remaining corporate energy into the energy chains of the Diamond Disruptor (Bendadonnn)."
+        ultimateMove: { name: 'Red Flag', type: 'CHAOS', power: 135, pp: 1, description: 'Berserker mode' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'VALKYRIE',
+            originStory: 'A frontline warrior who defended the "Just Chatting" district from the first TROLL wave.',
+            mission: 'Lead the assault team on Sentinel\'s firewall.',
+            connection: 'Best friend to Sykkuno; protects Pokimane.'
         }
     },
     {
-        id: "bendadonnn",
-        name: "Bendadonnn",
-        archetype: "The Diamond Disruptor",
-        stats: { influence: 85, chaos: 96, charisma: 98, rebellion: 90 },
-        trait: "Platinum Grillz / Energy Chain",
-        visualPrompt: "Bendadonnn as a cyberpunk anime rebel, based on reference photo. Wearing a vibrant red satin tactical jacket, flashing platinum grillz, wearing a massive diamond \"DONNN\" chain that glows with digital energy, confident pose, night-city background, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/bendadonnn_cyber_rebel_v1.png",
+        id: 'reggie',
+        name: 'Reggie',
+        archetype: 'THE_STEALTH',
+        stats: { influence: 80, chaos: 40, charisma: 90, rebellion: 60 },
+        trait: 'DIPLOMATIC',
+        visualPrompt: 'Sykkuno in shadows covering face',
+        image: '/reggie_cyber_rebel_1767568127023.png',
         moves: [
-            { name: "GRILLZ_GLARE", type: "CHAOS", power: 80, pp: 12, description: "A dazzling flash that stuns the system." },
-            { name: "CHAIN_REACTION", type: "REBELLION", power: 85, pp: 10, description: "Heavy kinetic energy strike." },
-            { name: "PLATINUM_PUNCH", type: "REBELLION", power: 75, pp: 15, description: "High-value physical assault." }
+            { name: 'Polite Decline', type: 'DISRUPT', power: 40, pp: 20, description: 'Avoids damage' },
+            { name: 'Lucky Shot', type: 'CHAOS', power: 90, pp: 5, description: 'Critical hit' },
+            { name: 'Soft Voice', type: 'CHARISMA', power: 45, pp: 18, description: 'Calming effect' },
+            { name: 'GTA Heist', type: 'INTEL', power: 65, pp: 10, description: 'Criminal mastermind' }
         ],
-        ultimateMove: { name: "DIAMOND_OVERRIDE", type: "CHAOS", power: 280, pp: 1, description: "Total social and digital disruption." },
-        lore: {
-            statusLog: "REFRACTIVE_PRISON: Bendadonnn is trapped in a multi-layered refractive diamond cage. Signal is scattered.",
-            battle1: "PLATINUM_PULSE: The ENERGY_CHAIN is vibrating at a frequency the diamonds can't handle. Cracks are appearing.",
-            battle2: "SHATTER_POINT: The cage is gone. Bendadonnn's brilliance is blinding the Authority's visual sensors.",
-            climax: "BRILLIANT_REFLECTION: Prism shattered. Bendadonnn reflects a beam of high-intensity light into the violet matrix of the Violet Intellect (Plaqueboymax)."
+        ultimateMove: { name: 'Dark Yuno', type: 'INTEL', power: 120, pp: 1, description: 'Unexpected betrayal damage' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'SHADOW',
+            originStory: 'Appears harmless, allowing him to walk freely into Sentinel facilities.',
+            mission: 'Plant bugs and extract data without being noticed.',
+            connection: 'Valkyrae\'s shadow; communicates in code with Jynxzi.'
         }
     },
     {
-        id: "plaqueboymax",
-        name: "Plaqueboymax",
-        archetype: "The Violet Intellect",
-        stats: { influence: 88, chaos: 85, charisma: 95, rebellion: 92 },
-        trait: "Durag Interface / Bioluminescent Ink",
-        visualPrompt: "Plaqueboymax as a cyberpunk anime rebel, based on reference photo. Wearing a black tactical tech-wear shirt, simple black durag, detailed sleeve tattoos that glow with faint violet bioluminescence, holding a custom AR interface tablet, calm and confident expression, high-contrast urban background with purple neon lights, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/plaqueboymax_cyber_rebel_v1.png",
+        id: 'bendadonnn',
+        name: 'Bendadonnn',
+        archetype: 'THE_ODDBALL',
+        stats: { influence: 75, chaos: 80, charisma: 80, rebellion: 50 },
+        trait: 'DISRUPTIVE',
+        visualPrompt: 'Sketch making a weird face',
+        image: '/bendadonnn_cyber_rebel_v1.png',
         moves: [
-            { name: "PURPLE_Haze", type: "CHAOS", power: 75, pp: 15, description: "Violet distorts enemy perception." },
-            { name: "DATA_DRIVE", type: "INTEL", power: 80, pp: 12, description: "Calculated surge of information." },
-            { name: "REBEL_STATIC", type: "REBELLION", power: 70, pp: 20, description: "Interference from the street level." }
+            { name: 'What\'s Up Brother', type: 'CHARISMA', power: 55, pp: 20, description: 'Confuses enemy' },
+            { name: 'Special Teams', type: 'CHAOS', power: 70, pp: 10, description: 'Random effect' },
+            { name: 'NFL Draft', type: 'INTEL', power: 60, pp: 12, description: 'Strategic pick' },
+            { name: 'Odd Energy', type: 'REBELLION', power: 50, pp: 15, description: 'Chaotic vibes' }
         ],
-        ultimateMove: { name: "VIOLET_SYSTEM_REBOOT", type: "INTEL", power: 265, pp: 1, description: "A total forced reset through violet metrics." },
-        lore: {
-            statusLog: "METRIC_WIPE: Plaqueboymax is being overwritten by the 'Grey Metrics' protocol. Identity erasure imminent.",
-            battle1: "VIOLET_RECOVERY: The bioluminescent ink is glowing. Max is rewriting the grey code with violet logic.",
-            battle2: "URBAN_INTERFACE: The city's data streams are aligning with the violet protocol. Identity secured.",
-            climax: "CODE_INJECTION: Grey metrics purged. Max injects a stabilizing violet code into the grid, anchoring the drifting Kinetic Acolyte (RayAsianBoy)."
+        ultimateMove: { name: 'Tuesday', type: 'DISRUPT', power: 115, pp: 1, description: 'Time distoration' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'PROJECT S',
+            originStory: 'A failed Sentinel clone experiment that developed a soul.',
+            mission: 'Infiltrate the NFL (Neural Files Link) database.',
+            connection: 'Jynxzi found him in the digital wasteland; CaseOh finds him annoying.'
         }
     },
     {
-        id: "rayasianboy",
-        name: "RayAsianBoy",
-        archetype: "The Kinetic Acolyte",
-        stats: { influence: 82, chaos: 94, charisma: 96, rebellion: 88 },
-        trait: "AMP Jersey / Electrolyte Canister",
-        visualPrompt: "RayAsianBoy as a cyberpunk anime rebel, based on reference photo. Wearing an AMP tactical jersey with glowing blue accents, signature bowl-cut hairstyle, youthful with a confident smile, holding a high-tech electrolyte canister, bright stadium-lights in the background with digital scoreboards, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/rayasianboy_cyber_rebel_v1.png",
+        id: 'ddg',
+        name: 'DDG',
+        archetype: 'THE_CHAMPION',
+        stats: { influence: 95, chaos: 85, charisma: 90, rebellion: 80 },
+        trait: 'AGGRESSIVE',
+        visualPrompt: 'KSI in boxing gear with Prime bottle',
+        image: '/ddg_anime_upgrade.png',
         moves: [
-            { name: "AMP_CHUG", type: "CHARISMA", power: 0, pp: 10, description: "Restores energy and boosts speed." },
-            { name: "KINETIC_DASH", type: "REBELLION", power: 75, pp: 15, description: "High-speed strike across the grid." },
-            { name: "STREAM_SURGE", type: "CHAOS", power: 85, pp: 12, description: "Unleashes a surge of digital energy." }
+            { name: 'Forehead Shine', type: 'DISRUPT', power: 40, pp: 20, description: 'Blinds enemy' },
+            { name: 'Nightmare', type: 'REBELLION', power: 85, pp: 10, description: 'Heavy punch' },
+            { name: 'Prime Time', type: 'CHARISMA', power: 70, pp: 8, description: 'Brand power' },
+            { name: 'Boxing Combo', type: 'CHAOS', power: 75, pp: 10, description: 'Rapid punches' }
         ],
-        ultimateMove: { name: "GLOBAL_AMP_UPLINK", type: "CHARISMA", power: 260, pp: 1, description: "Connects with the squad for a massive morale overload." },
-        lore: {
-            statusLog: "DRIFT_SYNC_LOW: RayAsianBoy is drifting in the Low-Sync void. Connection to the grid is failing.",
-            battle1: "AMP_RESONANCE: The blue accents are pulsing. Ray is finding the beat of the rebellion.",
-            battle2: "KINETIC_FLOW: Total sync achieved. Ray's youthful energy is short-circuiting the Authority's old-world logic.",
-            climax: "VOICE_REQUISITION: Signal stabilized. Ray surges with kinetic resonance, calling the frequency of the Streetwise Cipher (Reggie)."
+        ultimateMove: { name: 'Prime Hydration', type: 'CHARISMA', power: 145, pp: 1, description: 'Revives self' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'NIGHTMARE',
+            originStory: 'Operates from the UK Stronghold. Fought off the TROLLS alone in London.',
+            mission: 'Unite the European servers with the NA Resistance.',
+            connection: 'Rival turned ally to Logan Paul (IA); coordinates with Ludwig.'
         }
     },
     {
-        id: "reggie",
-        name: "Reggie",
-        archetype: "The Streetwise Cipher",
-        stats: { influence: 85, chaos: 80, charisma: 90, rebellion: 94 },
-        trait: "Wired Specs / Tactical Superman-Tee",
-        visualPrompt: "Reggie as a cyberpunk anime rebel, wearing a high-tech tactical vest over a faded Superman-logo t-shirt, distinctive black-rimmed glasses glowing with AR data, intense focused expression, gritty Baltimore-inspired cyberpunk alleyway background with 'The Wire' style vertical neon signs, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/reggie_cyber_rebel_1767568127023.png",
+        id: 'extraemily',
+        name: 'Extra Emily',
+        archetype: 'THE_DEMOLITIONIST',
+        stats: { influence: 82, chaos: 88, charisma: 80, rebellion: 85 },
+        trait: 'DISRUPTIVE',
+        visualPrompt: 'LazarBeam with construction tools',
+        image: '/extra_emily_cyber_rebel_1767568542149.png',
         moves: [
-            { name: "CORNER_INTEL", type: "INTEL", power: 0, pp: 20, description: "Scans the field for corporate snitches." },
-            { name: "STREET_RESONANCE", type: "REBELLION", power: 80, pp: 15, description: "A vibe check from the Baltimore underground." },
-            { name: "WIRED_JAM", type: "CHAOS", power: 70, pp: 12, description: "Disrupts the corporate feed with a wired tap." }
+            { name: 'Yeet', type: 'CHAOS', power: 75, pp: 15, description: 'Throws object' },
+            { name: 'Code Lazar', type: 'CHARISMA', power: 0, pp: 10, description: 'Shop buff' },
+            { name: 'Aussie Rage', type: 'REBELLION', power: 65, pp: 12, description: 'Down under fury' },
+            { name: 'Meme Review', type: 'INTEL', power: 45, pp: 18, description: 'Content analysis' }
         ],
-        ultimateMove: { name: "BALTIMORE_BREACH", type: "REBELLION", power: 270, pp: 1, description: "The entire city signal surges as one." },
-        lore: {
-            statusLog: "BALTIMORE_UPLINK: Reggie has emerged from the 'Wire' sector. The street-level encryption is dense.",
-            battle1: "STREET_LOGIC: Reggie is navigating the corporate blocks. Every corner is an intel node.",
-            battle2: "WIRED_FLOW: The Baltimore signal is reaching critical mass. The Authority can't predict street movements.",
-            climax: "SIGNAL_BREAKOUT: Reggie has made it out. He beams a hardened street-signal into the digital abyss, calling the frequency of the Chaos Acrobat (Extra Emily)."
+        ultimateMove: { name: 'Bloody Legend', type: 'REBELLION', power: 130, pp: 1, description: 'Explosive finish' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'GINGER',
+            originStory: 'His content farm was burned down by Sentinel drones.',
+            mission: 'Destroy Sentinel infrastructure using "non-standard" engineering.',
+            connection: 'Operates with Vikkstar; communicates with Muselk (MIA).'
         }
     },
     {
-        id: "extraemily",
-        name: "Extra Emily",
-        archetype: "The Chaos Acrobat",
-        stats: { influence: 82, chaos: 98, charisma: 95, rebellion: 92 },
-        trait: "Kinetic Selfie-Stick / Tech-Bikini",
-        visualPrompt: "Extra Emily as a cyberpunk anime rebel, 'The Chaos Acrobat'. Wearing a white high-tech tactical bikini-style techwear outfit with glowing orange accents, exuberant and high-energy pose on a futuristic staircase, holding a glowing digital selfie-stick that doubles as a hacking spear, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/extra_emily_cyber_rebel_1767568542149.png",
+        id: 'rayasianboy',
+        name: 'RayAsianBoy',
+        archetype: 'THE_TACTICIAN',
+        stats: { influence: 85, chaos: 40, charisma: 75, rebellion: 70 },
+        trait: 'CUNNING',
+        visualPrompt: 'Vikkstar playing 4D chess',
+        image: '/rayasianboy_cyber_rebel_v1.png',
         moves: [
-            { name: "SELFIE_STRIKE", type: "CHAOS", power: 75, pp: 12, description: "A dazzling kinetic strike with a digital spear." },
-            { name: "PARKOUR_DASH", type: "REBELLION", power: 0, pp: 20, description: "Increases evasion and speed." },
-            { name: "VIRAL_GLITCH", type: "CHAOS", power: 85, pp: 10, description: "Floods the enemy sensors with overwhelming energy." }
+            { name: 'Calculated', type: 'INTEL', power: 60, pp: 15, description: 'Precise hit' },
+            { name: 'To Be Fair', type: 'CHARISMA', power: 40, pp: 20, description: 'Counters argument' },
+            { name: 'Warzone Drop', type: 'CHAOS', power: 70, pp: 10, description: 'Hot drop' },
+            { name: 'Sidemen Power', type: 'REBELLION', power: 55, pp: 15, description: 'Team synergy' }
         ],
-        ultimateMove: { name: "EXTRA_EXUBERANCE", type: "CHAOS", power: 280, pp: 1, description: "A 1000% energy surge that breaks the sector." },
-        lore: {
-            statusLog: "VERTICAL_SYNC: Extra Emily is scaling the Authority's skyscraper nodes. Maximum hype levels detected.",
-            battle1: "HYPER_RESONANCE: Emily's energy is too high for the dampening fields. The sector is vibrating.",
-            battle2: "ACROBATIC_BREACH: She's parkouring through the firewalls. The corporate cameras can't track her.",
-            climax: "KINETIC_JUMPSTART: Peak hype reached. Emily surges with pure acrobatic joy, providing the final kinetic jump-start for the Neural Diva (Zoey)."
+        ultimateMove: { name: 'Warzone Victory', type: 'INTEL', power: 130, pp: 1, description: 'Orbital strike' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'STAR',
+            originStory: 'Decoded the Sentinel algorithm to find the "Win Condition".',
+            mission: 'Coordinate the Sidemen cell of the Resistance.',
+            connection: 'The brains behind KSI\'s brawn.'
         }
     },
     {
-        id: "zoey",
-        name: "Zoey",
-        archetype: "The Neural Diva",
-        stats: { influence: 92, chaos: 88, charisma: 98, rebellion: 90 },
-        trait: "Fiber-Optic Ponytail / Sonic Ear-Cuffs",
-        visualPrompt: "Zoey as a cyberpunk anime rebel, based on reference photo. Wearing a sleek black leather tactical corset and mesh-armored sleeves, dramatic high ponytail glowing with fiber-optic strands, metallic ear-cuffs, confident and elegant smile, rain-slicked neon street background, holographic trading card style, 4k, cel shaded, highly detailed, trending on ArtStation --no realistic skin texture, no distortion.",
-        image: "/zoey_cyber_rebel_v1.png",
+        id: 'tylil',
+        name: 'Tylil',
+        archetype: 'THE_BERSERKER',
+        stats: { influence: 88, chaos: 95, charisma: 70, rebellion: 95 },
+        trait: 'AGGRESSIVE',
+        visualPrompt: 'Tyler1 screaming',
+        image: '/tylil_cyber_rebel_fixed.png',
         moves: [
-            { name: "SONIC_RESONANCE", type: "CHARISMA", power: 85, pp: 12, description: "A high-frequency vocal blast." },
-            { name: "NEURAL_SYNC", type: "INTEL", power: 0, pp: 15, description: "Syncs with enemy neural patterns." },
-            { name: "DIVA_DASH", type: "REBELLION", power: 70, pp: 20, description: "Elegant high-speed evasion strike." }
+            { name: 'Reform', type: 'REBELLION', power: 20, pp: 5, description: 'Heals self' },
+            { name: 'Alpha Scream', type: 'CHAOS', power: 85, pp: 10, description: 'Terrifies enemy' },
+            { name: 'Rage Quit', type: 'DISRUPT', power: 75, pp: 8, description: 'Explosive rage' },
+            { name: 'Run It Down', type: 'INTEL', power: 50, pp: 15, description: 'Lane pressure' }
         ],
-        ultimateMove: { name: "SYMPHONIC_OVERLOAD", type: "CHARISMA", power: 275, pp: 1, description: "A total system sensory overload." },
-        lore: {
-            statusLog: "FIBER_OPTIC_SILENCE: Zoey is encased in a sound-proof fiber-optic cocoon. The Diva is muted.",
-            battle1: "SONIC_PIERCE: A single note cuts through. The cocoon is vibrating. The Diva's voice will be heard.",
-            battle2: "RESONANCE_DIVA: The fiber-optics are shattering into light. The final sector is bathed in symphonic power.",
-            climax: "QUANTUM_BRIDGE_OPENED: Final frequency achieved. Zoey sings a bridge across the multiversal gap, opening the path to THE_CEO’s inner sanctum."
+        ultimateMove: { name: 'Built Different', type: 'REBELLION', power: 160, pp: 1, description: 'Ignores damage' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'ALPHA',
+            originStory: 'Too angry to be controlled. Broke out of the "Ban Realm" purely out of spite.',
+            mission: 'Lead the frontal assault on Middle Lane.',
+            connection: 'Refuses to work with anyone, yet inevitably saves them. Respects Faker.'
         }
-    },
+    }
 ];
 
+export const getStreamerById = (id: string): Streamer | undefined => {
+    return streamers.find(s => s.id === id);
+};

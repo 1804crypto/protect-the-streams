@@ -49,7 +49,7 @@ export const OperatorComms: React.FC = () => {
 
                         {/* Portrait Image (Generated) */}
                         <img
-                            src="/operator_portrait_hologram_1768331413203.png"
+                            src="/operator_portrait_hologram.png"
                             alt="Operator"
                             className="w-full h-full object-cover filter contrast-125 brightness-110 sepia-[0.3] hue-rotate-[180deg]"
                         />

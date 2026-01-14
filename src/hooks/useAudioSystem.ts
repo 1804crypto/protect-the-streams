@@ -7,8 +7,12 @@ import { useAudioStore } from './useAudioStore';
 let globalAudioCtx: AudioContext | null = null;
 
 export const useAudioSystem = () => {
-    // Uses the global store for synchronized muting/unmuting
-    const { isMuted, setIsMuted, toggleMute: storeToggleMute } = useAudioStore();
+    // Uses discrete selectors for synchronized muting/unmuting
+    const isMuted = useAudioStore(state => state.isMuted);
+    const isDivertMode = useAudioStore(state => state.isDivertMode);
+    const setIsMuted = useAudioStore(state => state.setIsMuted);
+    const storeToggleMute = useAudioStore(state => state.toggleMute);
+    const storeToggleDivert = useAudioStore(state => state.toggleDivertMode);
 
     // Ambient system refs
     const droneNode = useRef<OscillatorNode | null>(null);
@@ -244,7 +248,8 @@ export const useAudioSystem = () => {
     // === ENHANCED AMBIENT SYSTEM ===
     useEffect(() => {
         const ctx = initCtx();
-        if (!isMuted && ctx) {
+        // Mute ambient if globally muted OR if in divert mode (external music)
+        if (!isMuted && !isDivertMode && ctx) {
             if (!droneNode.current) {
                 const drone = ctx.createOscillator();
                 const dGain = ctx.createGain();
@@ -310,7 +315,7 @@ export const useAudioSystem = () => {
             });
             droneGain.current = null;
         }
-    }, [isMuted, initCtx]);
+    }, [isMuted, isDivertMode, initCtx]);
 
     const toggleMute = useCallback(() => {
         initCtx();
@@ -319,7 +324,9 @@ export const useAudioSystem = () => {
 
     const forceUnmute = useCallback(() => {
         initCtx();
-        setIsMuted(false);
+        if (useAudioStore.getState().isMuted) {
+            setIsMuted(false);
+        }
     }, [initCtx, setIsMuted]);
 
     const playEvent = useCallback(() => {
@@ -415,7 +422,9 @@ export const useAudioSystem = () => {
 
     return {
         isMuted,
+        isDivertMode,
         toggleMute,
+        toggleDivert: storeToggleDivert,
         forceUnmute,
         playHover,
         playClick,

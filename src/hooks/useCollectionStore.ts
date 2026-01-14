@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { STARTER_INVENTORY, getRewardItems } from '@/data/items';
 import { NatureType, getRandomNature } from '@/data/streamers';
+import { supabase } from '@/lib/supabaseClient';
 
 export interface MissionRecord {
     id: string;
@@ -34,8 +35,8 @@ interface CollectionState {
     markMissionComplete: (id: string, rank?: 'S' | 'A' | 'B' | 'F', xpGained?: number) => void;
 }
 
-// Create the raw Zustand store
-const useStore = create<CollectionState>()(
+// Main store hook
+export const useCollectionStore = create<CollectionState>()(
     persist(
         (set, get) => ({
             securedIds: [],
@@ -140,44 +141,35 @@ const useStore = create<CollectionState>()(
                 // Award items based on rank
                 const rewards = getRewardItems(rank);
                 rewards.forEach(itemId => addItem(itemId, 1));
+
+                // GLOBAL FACTION WAR CONTRIBUTION
+                const { userFaction } = get();
+                if (userFaction !== 'NONE' && rank !== 'F') {
+                    supabase.rpc('contribute_to_faction_war', {
+                        p_streamer_id: id,
+                        p_faction: userFaction
+                    }).then(({ error }) => {
+                        if (error) console.error("Faction War contribution failed:", error);
+                        else console.log(`[FACTION_WAR] Contribution recorded for ${userFaction} in sector ${id}`);
+                    });
+                }
             }
         }),
         {
-            name: 'pts_storage', // Unique name for local storage
+            name: 'pts_storage',
             storage: createJSONStorage(() => localStorage),
         }
     )
 );
 
-// Wrapper hook to maintain backward compatibility and provide derived state/helpers
-export const useCollectionStore = () => {
-    const state = useStore();
-
-    const rebellionLevel = state.completedMissions.length;
-
-    const getItemCount = (itemId: string): number => {
-        return state.inventory[itemId] || 0;
-    };
-
-    const getSectorStatus = (id: string) => {
-        const record = state.completedMissions.find(m => m.id === id);
-        if (!record) return 'LOCKED';
-        return record.rank;
-    };
-
-    const isSecured = (id: string) => state.securedIds.includes(id);
-    const hasClearedMission = (id: string) => state.completedMissions.some(m => m.id === id);
-    const getMissionRecord = (id: string) => state.completedMissions.find(m => m.id === id);
-    const getNature = (id: string): NatureType | null => state.streamerNatures[id] || null;
-
-    return {
-        ...state,
-        rebellionLevel,
-        getItemCount,
-        getSectorStatus,
-        isSecured,
-        hasClearedMission,
-        getMissionRecord,
-        getNature
-    };
+// Derived state helpers that can be used outside of components or as standalone hooks
+export const getRebellionLevel = (state: CollectionState) => state.completedMissions.length;
+export const getItemCount = (state: CollectionState, itemId: string) => state.inventory[itemId] || 0;
+export const getSectorStatus = (state: CollectionState, id: string) => {
+    const record = state.completedMissions.find(m => m.id === id);
+    if (!record) return 'LOCKED';
+    return record.rank;
 };
+export const getMissionRecord = (state: CollectionState, id: string) => state.completedMissions.find(m => m.id === id);
+export const getNature = (state: CollectionState, id: string) => state.streamerNatures[id] || null;
+

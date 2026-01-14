@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Streamer, Move, applyNatureToStats } from '@/data/streamers';
-import { useCollectionStore } from './useCollectionStore';
+import { useCollectionStore, getNature, getItemCount } from './useCollectionStore';
 import { bosses } from '@/data/bosses';
 import {
     getTypeEffectiveness,
@@ -11,7 +11,10 @@ import {
     MoveType,
     SUPER_EFFECTIVE
 } from '@/data/typeChart';
-import { items, BattleItem } from '@/data/items';
+import { BattleItem } from '@/data/items';
+import { useGameDataStore } from './useGameDataStore';
+
+import { useVisualEffects } from './useVisualEffects';
 
 
 export interface EntityState {
@@ -20,22 +23,19 @@ export interface EntityState {
     maxHp: number;
     hp: number;
     stats: any;
+    image?: string;
 }
 
 export const useResistanceMission = (streamer: Streamer) => {
-    const {
-        completedMissions,
-        markMissionComplete,
-        useItem: consumeItem,
-        getItemCount,
-        getNature,
-        difficultyMultiplier,
-        updateDifficulty
-    } = useCollectionStore();
+    const completedMissions = useCollectionStore(state => state.completedMissions);
+    const markMissionComplete = useCollectionStore(state => state.markMissionComplete);
+    const consumeItem = useCollectionStore(state => state.useItem);
+    const updateDifficulty = useCollectionStore(state => state.updateDifficulty);
+    const difficultyMultiplier = useCollectionStore(state => state.difficultyMultiplier);
     const threatLevel = completedMissions.length;
 
     // Get streamer's nature and apply stat modifiers
-    const streamerNature = getNature(streamer.id);
+    const streamerNature = useCollectionStore(state => getNature(state, streamer.id));
     const modifiedStats = streamerNature
         ? applyNatureToStats(streamer.stats, streamerNature)
         : streamer.stats;
@@ -67,15 +67,26 @@ export const useResistanceMission = (streamer: Streamer) => {
         return {
             ...bossData,
             maxHp: bossData.maxHp + (threatLevel * 50),
-            hp: bossData.maxHp + (threatLevel * 50)
+            hp: bossData.maxHp + (threatLevel * 50),
+            image: bossData.image
         };
     }, [streamer.archetype, streamer.id, threatLevel]);
+
+    const { items } = useGameDataStore();
+
+    // 1. Calculate Dynamic Player Stats
+    const missionRecord = completedMissions.find(m => m.id === streamer.id);
+    const streamerLevel = missionRecord?.level || 1;
+
+    // Scale Player HP: Base 100 + (Level Bonus) + (Global Resistance Bonus)
+    // This ensures players can survive high-threat sectors as they progress.
+    const calculatedMaxHp = 100 + ((streamerLevel - 1) * 25) + (threatLevel * 5);
 
     const [player, setPlayer] = useState<EntityState>({
         id: streamer.id,
         name: streamer.name,
-        maxHp: 100,
-        hp: 100,
+        maxHp: calculatedMaxHp,
+        hp: calculatedMaxHp,
         stats: modifiedStats,
     });
 
@@ -85,6 +96,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         maxHp: 120 + (threatLevel * 20),
         hp: 120 + (threatLevel * 20),
         stats: { influence: 80, chaos: 50, charisma: 70, rebellion: 40 },
+        image: '/authority_sentinel_cipher_unit_1766789046162.png'
     });
 
     const [logs, setLogs] = useState<string[]>(["MISSION_INITIALIZED: Stabilizing sector signal..."]);
@@ -105,6 +117,22 @@ export const useResistanceMission = (streamer: Streamer) => {
     const [lastDamageAmount, setLastDamageAmount] = useState<number | null>(null);
     const [lastDamageDealer, setLastDamageDealer] = useState<'player' | 'enemy' | null>(null);
 
+    // Global Visual Sync
+    const setIntegrity = useVisualEffects(state => state.setIntegrity);
+    const triggerGlobalImpact = useVisualEffects(state => state.triggerImpact);
+    const triggerGlobalGlitch = useVisualEffects(state => state.triggerGlitch);
+    const resetGlobalEffects = useVisualEffects(state => state.resetEffects);
+
+    // Sync HP to global store
+    useEffect(() => {
+        setIntegrity(player.hp / player.maxHp);
+    }, [player.hp, player.maxHp, setIntegrity]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => resetGlobalEffects();
+    }, [resetGlobalEffects]);
+
     // Boost state
     const [attackBoost, setAttackBoost] = useState<{ multiplier: number; turnsLeft: number }>({ multiplier: 1, turnsLeft: 0 });
     const [defenseBoost, setDefenseBoost] = useState<{ multiplier: number; turnsLeft: number }>({ multiplier: 1, turnsLeft: 0 });
@@ -118,16 +146,21 @@ export const useResistanceMission = (streamer: Streamer) => {
 
     const isBoss = stage >= 3;
 
-    const addLog = (msg: string) => setLogs(prev => [msg, ...prev].slice(0, 5));
+    const addLog = useCallback((msg: string) => setLogs(prev => [msg, ...prev].slice(0, 5)), []);
 
     const triggerShake = () => {
         setIsShaking(true);
+        triggerGlobalImpact(1.0);
         setTimeout(() => setIsShaking(false), 500);
     };
 
     const triggerGlitch = (intensity: number = 1) => {
         setGlitchIntensity(intensity);
-        setTimeout(() => setGlitchIntensity(0), 400);
+        triggerGlobalGlitch(intensity);
+        setTimeout(() => {
+            setGlitchIntensity(0);
+            triggerGlobalGlitch(0);
+        }, 400);
     };
 
     const handleEnemyTurn = useCallback(() => {
@@ -161,28 +194,27 @@ export const useResistanceMission = (streamer: Streamer) => {
             enemyDamage = Math.floor(enemyDamage * defenseBoost.multiplier);
         }
 
-        setPlayer(prev => {
-            const newHp = Math.max(0, prev.hp - enemyDamage);
-            if (newHp === 0) {
-                setIsComplete(true);
-                setResult('FAILURE');
-                markMissionComplete(streamer.id, 'F', 10);
-                addLog("SIGNAL_LOST: Retreat for recalibration.");
-            }
-            if (enemyDamage > 0) {
-                setIsTakingDamage(true);
-                setTimeout(() => setIsTakingDamage(false), 500);
-            }
-            if (enemyDamage > 10) triggerShake();
-            if (enemyDamage > 10) setCharge(prevCharge => Math.min(100, prevCharge + 5));
-            if (enemyDamage > 25) triggerGlitch(0.3);
+        const newHp = Math.max(0, player.hp - enemyDamage);
 
-            setLastDamageAmount(enemyDamage);
-            setLastDamageDealer('enemy');
-            setTimeout(() => setLastDamageAmount(null), 1000);
+        if (newHp === 0) {
+            setIsComplete(true);
+            setResult('FAILURE');
+            markMissionComplete(streamer.id, 'F', 10);
+            addLog("SIGNAL_LOST: Retreat for recalibration.");
+        }
+        if (enemyDamage > 0) {
+            setIsTakingDamage(true);
+            setTimeout(() => setIsTakingDamage(false), 500);
+        }
+        if (enemyDamage > 10) triggerShake();
+        if (enemyDamage > 10) setCharge(prevCharge => Math.min(100, prevCharge + 5));
+        if (enemyDamage > 25) triggerGlitch(0.3);
 
-            return { ...prev, hp: newHp };
-        });
+        setLastDamageAmount(enemyDamage);
+        setLastDamageDealer('enemy');
+        setTimeout(() => setLastDamageAmount(null), 1000);
+
+        setPlayer(prev => ({ ...prev, hp: newHp }));
 
         addLog(`${enemy.name} uses ${moveName}: ${enemyDamage} damage.`);
         if (moveDesc) addLog(`[${moveDesc}]`);
@@ -191,7 +223,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         // Decrement boost counters
         setAttackBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
         setDefenseBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
-    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, defenseBoost]);
+    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, defenseBoost, player, difficultyMultiplier, streamer.id, markMissionComplete, addLog]);
 
 
 
@@ -250,7 +282,7 @@ export const useResistanceMission = (streamer: Streamer) => {
 
         // Damage Calculation
         let damage = 0;
-        let newEnemyHp = enemy.hp; // Track local var for immediate logic
+        let newEnemyHp = enemy.hp;
 
         if (move.power > 0) {
             const isCrit = Math.random() < 0.10;
@@ -272,62 +304,61 @@ export const useResistanceMission = (streamer: Streamer) => {
             }
 
             // Apply Damage
-            setEnemy(prev => {
-                const nextHp = Math.max(0, prev.hp - damage);
-                newEnemyHp = nextHp; // specific update for this closure
+            const nextHp = Math.max(0, enemy.hp - damage);
+            newEnemyHp = nextHp;
 
-                setLastDamageAmount(damage);
-                setLastDamageDealer('player');
-                setTimeout(() => setLastDamageAmount(null), 1000);
+            setLastDamageAmount(damage);
+            setLastDamageDealer('player');
+            setTimeout(() => setLastDamageAmount(null), 1000);
 
-                // Boss Phase Check
-                if (isBoss && bossEntity.phases) {
-                    const hpRatio = nextHp / prev.maxHp;
-                    const nextPhaseIndex = bossEntity.phases.findIndex((p, i) => hpRatio <= p.threshold && i >= currentBossPhase);
-                    if (nextPhaseIndex !== -1 && nextPhaseIndex >= currentBossPhase) {
-                        const phase = bossEntity.phases[nextPhaseIndex];
-                        setCurrentBossPhase(nextPhaseIndex + 1);
-                        setShowPhaseBanner(true);
-                        setTimeout(() => setShowPhaseBanner(false), 3000);
-                        addLog(`>>> ${phase.name} <<<`);
-                        addLog(`[SYSTEM]: ${phase.msg}`);
-                        triggerGlitch(1.5);
-                        triggerShake();
-                    }
+            // Boss Phase Check
+            if (isBoss && bossEntity.phases) {
+                const hpRatio = nextHp / enemy.maxHp;
+                const nextPhaseIndex = bossEntity.phases.findIndex((p, i) => hpRatio <= p.threshold && i >= currentBossPhase);
+                if (nextPhaseIndex !== -1 && nextPhaseIndex >= currentBossPhase) {
+                    const phase = bossEntity.phases[nextPhaseIndex];
+                    setCurrentBossPhase(nextPhaseIndex + 1);
+                    setShowPhaseBanner(true);
+                    setTimeout(() => setShowPhaseBanner(false), 3000);
+                    addLog(`>>> ${phase.name} <<<`);
+                    addLog(`[SYSTEM]: ${phase.msg}`);
+                    triggerGlitch(1.5);
+                    triggerShake();
                 }
+            }
 
-                if (nextHp === 0) {
-                    if (isBoss) {
-                        setIsComplete(true);
-                        setResult('SUCCESS');
-                        addLog(`FINAL_UPLINK_SECURED: Sector ${streamer.name.toUpperCase()} liberated.`);
-                    } else {
-                        // Progress to next stage (handled via timeout to allow animations)
-                        setTimeout(() => {
-                            const isNextBoss = stage + 1 >= 3;
-                            setStage(s => s + 1);
-                            setEnemy({
-                                id: isNextBoss ? bossEntity.id : 'corp_elite',
-                                name: isNextBoss ? bossEntity.name : 'Elite Sentinel',
-                                maxHp: isNextBoss ? bossEntity.maxHp : 150 + (threatLevel * 30),
-                                hp: isNextBoss ? bossEntity.maxHp : 150 + (threatLevel * 30),
-                                stats: isNextBoss ? bossEntity.stats : { influence: 90, chaos: 60, charisma: 80, rebellion: 50 },
-                                moves: isNextBoss ? bossEntity.moves : undefined
-                            });
-                            if (isNextBoss) triggerGlitch(1);
-                            addLog(`STAGE_${stage + 1} DETECTED: New threat approaching...`);
-                            setIsTurn(true); // Grant turn back to player for new enemy
-                        }, 1000);
-                    }
+            if (nextHp === 0) {
+                if (isBoss) {
+                    setIsComplete(true);
+                    setResult('SUCCESS');
+                    addLog(`FINAL_UPLINK_SECURED: Sector ${streamer.name.toUpperCase()} liberated.`);
+                } else {
+                    // Progress to next stage (handled via timeout to allow animations)
+                    setTimeout(() => {
+                        const isNextBoss = stage + 1 >= 3;
+                        setStage(s => s + 1);
+                        setEnemy({
+                            id: isNextBoss ? bossEntity.id : 'corp_elite',
+                            name: isNextBoss ? bossEntity.name : 'Elite Sentinel',
+                            maxHp: isNextBoss ? bossEntity.maxHp : 150 + (threatLevel * 30),
+                            hp: isNextBoss ? bossEntity.maxHp : 150 + (threatLevel * 30),
+                            stats: isNextBoss ? bossEntity.stats : { influence: 90, chaos: 60, charisma: 80, rebellion: 50 },
+                            moves: isNextBoss ? bossEntity.moves : undefined,
+                            image: isNextBoss ? (bossEntity.image || '/authority_sentinel_cipher_unit_1766789046162.png') : '/sentinel_elite.png'
+                        });
+                        if (isNextBoss) triggerGlitch(1);
+                        addLog(`STAGE_${stage + 1} DETECTED: New threat approaching...`);
+                        setIsTurn(true); // Grant turn back to player for new enemy
+                    }, 1000);
                 }
+            }
 
-                if (damage > 0) {
-                    setIsEnemyTakingDamage(true);
-                    setTimeout(() => setIsEnemyTakingDamage(false), 500);
-                }
+            if (damage > 0) {
+                setIsEnemyTakingDamage(true);
+                setTimeout(() => setIsEnemyTakingDamage(false), 500);
+            }
 
-                return { ...prev, hp: nextHp };
-            });
+            setEnemy(prev => ({ ...prev, hp: nextHp }));
 
             // Charge Update
             setCharge(prev => Math.min(100, prev + Math.floor(damage / 5)));
@@ -341,7 +372,7 @@ export const useResistanceMission = (streamer: Streamer) => {
                 addLog("Signal integrity restored (+30 HP).");
             }
         }
-    }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, attackBoost, movePP, currentBossPhase, streamer.name]);
+    }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, attackBoost, movePP, currentBossPhase, streamer.name, addLog, triggerGlitch]);
 
     const executeUltimate = useCallback(() => {
         if (charge < 100 || !isTurn || isComplete) return;
@@ -353,39 +384,39 @@ export const useResistanceMission = (streamer: Streamer) => {
 
         const damage = Math.floor(streamer.ultimateMove.power * (1.5 + Math.random()));
 
-        setEnemy(prev => {
-            const newHp = Math.max(0, prev.hp - damage);
+        const newHp = Math.max(0, enemy.hp - damage);
 
-            setLastDamageAmount(damage);
-            setLastDamageDealer('player');
-            setTimeout(() => setLastDamageAmount(null), 1000);
+        setLastDamageAmount(damage);
+        setLastDamageDealer('player');
+        setTimeout(() => setLastDamageAmount(null), 1000);
 
-            if (newHp === 0) {
-                if (isBoss) {
-                    setIsComplete(true);
-                    setResult('SUCCESS');
-                    addLog(`CRITICAL_DELETION: Sector ${streamer.name.toUpperCase()} liberated.`);
-                } else {
-                    setTimeout(() => {
-                        const isNextBoss = stage + 1 >= 3;
-                        setStage(s => s + 1);
-                        setEnemy({
-                            id: isNextBoss ? bossEntity.id : 'corp_elite',
-                            name: isNextBoss ? bossEntity.name : 'Elite Sentinel',
-                            maxHp: isNextBoss ? bossEntity.maxHp : 150 + (threatLevel * 30),
-                            hp: isNextBoss ? bossEntity.maxHp : 150 + (threatLevel * 30),
-                            stats: isNextBoss ? bossEntity.stats : { influence: 90, chaos: 60, charisma: 80, rebellion: 50 },
-                            moves: isNextBoss ? bossEntity.moves : undefined
-                        });
-                        setIsTurn(true);
-                    }, 1000);
-                }
+        if (newHp === 0) {
+            if (isBoss) {
+                setIsComplete(true);
+                setResult('SUCCESS');
+                addLog(`CRITICAL_DELETION: Sector ${streamer.name.toUpperCase()} liberated.`);
+            } else {
+                setTimeout(() => {
+                    const isNextBoss = stage + 1 >= 3;
+                    setStage(s => s + 1);
+                    setEnemy({
+                        id: isNextBoss ? bossEntity.id : 'corp_elite',
+                        name: isNextBoss ? bossEntity.name : 'Elite Sentinel',
+                        maxHp: isNextBoss ? bossEntity.maxHp : 150 + (threatLevel * 30),
+                        hp: isNextBoss ? bossEntity.maxHp : 150 + (threatLevel * 30),
+                        stats: isNextBoss ? bossEntity.stats : { influence: 90, chaos: 60, charisma: 80, rebellion: 50 },
+                        moves: isNextBoss ? bossEntity.moves : undefined,
+                        image: isNextBoss ? (bossEntity.image || '/authority_sentinel_cipher_unit_1766789046162.png') : '/sentinel_elite.png'
+                    });
+                    setIsTurn(true);
+                }, 1000);
             }
-            return { ...prev, hp: newHp };
-        });
+        }
+
+        setEnemy(prev => ({ ...prev, hp: newHp }));
 
         addLog(`Catastrophic damage inflicted: ${damage}.`);
-    }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel]);
+    }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel, enemy.hp, enemy.maxHp, addLog, triggerGlitch]);
 
     const useBattleItem = useCallback((itemId: string) => {
         if (!isTurn || isComplete) return false;
@@ -393,7 +424,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         const item = items[itemId];
         if (!item) return false;
 
-        if (getItemCount(itemId) <= 0) {
+        if (getItemCount(useCollectionStore.getState(), itemId) <= 0) {
             addLog(`NO_ITEM: ${item.name} not in inventory!`);
             return false;
         }
@@ -433,7 +464,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         setIsTurn(false);
         setTurns(prev => prev + 1);
         return true;
-    }, [isTurn, isComplete, getItemCount, consumeItem, streamer.moves]);
+    }, [isTurn, isComplete, getItemCount, consumeItem, streamer.moves, items]);
 
     // Completion Handler: now passes correct XP
     useEffect(() => {

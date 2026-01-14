@@ -13,8 +13,7 @@ interface StreamerCardProps {
 
 export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, imageUrl, onHover }) => {
     const cardRef = useRef<HTMLDivElement>(null);
-    const { isSecured } = useCollectionStore();
-    const secured = isSecured(streamer.id);
+    const secured = useCollectionStore(state => state.securedIds.includes(streamer.id));
     const isArchived = streamer.archetype.includes("Archived");
     const [isTouchDevice, setIsTouchDevice] = useState(false);
 
@@ -96,8 +95,18 @@ export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, imageUrl, 
                     )}
 
                     {/* Rank/Tier Badge */}
-                    <div className={`absolute top-4 left-4 z-20 px-3 py-1 text-[10px] font-black italic skew-x-[-12deg] ${isArchived ? 'bg-purple-600 text-white animate-pulse' : 'bg-resistance-accent text-white'}`}>
-                        {isArchived ? 'ARCHIVED_DATA' : `RESISTANCE ID: ${streamer.id.substring(0, 4).toUpperCase()}`}
+                    <div className={`absolute top-4 left-4 z-20 flex flex-col items-start gap-1`}>
+                        <div className={`px-3 py-1 text-[10px] font-black italic skew-x-[-12deg] ${isArchived ? 'bg-purple-600 text-white animate-pulse' : 'bg-resistance-accent text-white'}`}>
+                            {isArchived ? 'ARCHIVED_DATA' : `RESISTANCE ID: ${streamer.id.substring(0, 4).toUpperCase()}`}
+                        </div>
+                        {streamer.narrative && (
+                            <div className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider skew-x-[-12deg] 
+                                ${streamer.narrative.role === 'LEADER' ? 'bg-yellow-500 text-black' :
+                                    streamer.narrative.role === 'DOUBLE_AGENT' ? 'bg-red-600 text-white' :
+                                        'bg-blue-600 text-white'}`}>
+                                {streamer.narrative.role.replace('_', ' ')}
+                            </div>
+                        )}
                     </div>
 
                     {/* Secured Notification */}

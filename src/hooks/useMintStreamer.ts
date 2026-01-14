@@ -15,9 +15,10 @@ import { useCollectionStore } from '@/hooks/useCollectionStore';
 export const useMintStreamer = () => {
     const { connection } = useConnection();
     const { connected, publicKey, sendTransaction } = useWallet();
-    const { secureAsset } = useCollectionStore();
+    const secureAsset = useCollectionStore(state => state.secureAsset);
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<string | null>(null);
+    const [signature, setSignature] = useState<string | null>(null);
     const [error, setError] = useState<{ code: string; message: string } | null>(null);
 
     const mint = async (streamerId?: string) => {
@@ -32,21 +33,24 @@ export const useMintStreamer = () => {
         setLoading(true);
         setStatus(`Establishing Secure Uplink via Solana (${CONFIG.NETWORK})...`);
         setError(null);
+        setSignature(null);
 
         try {
             let treasuryPubkey: PublicKey;
             try {
                 treasuryPubkey = new PublicKey(CONFIG.TREASURY_WALLET);
             } catch {
-                setError({
-                    code: "CONFIG_ERROR",
-                    message: "Resistance HQ address corrupted. Connect to new sector."
-                });
-                setLoading(false);
-                return;
+                throw new Error("Resistance HQ address corrupted.");
             }
 
-            const transaction = new Transaction().add(
+            // Actual On-Chain Verification: Adding a Memo instruction
+            // This stores the streamer detection ID permanently on the blockchain
+            const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqAB2Cc9BnY64Y9CYfR3M9CByfAnp3sBsc8g");
+
+            const transaction = new Transaction();
+
+            // 1. SOL Transfer (Mint Price)
+            transaction.add(
                 SystemProgram.transfer({
                     fromPubkey: publicKey,
                     toPubkey: treasuryPubkey,
@@ -54,37 +58,44 @@ export const useMintStreamer = () => {
                 })
             );
 
+            // 2. On-Chain Metadata (MEMO)
+            if (streamerId) {
+                transaction.add({
+                    keys: [{ pubkey: publicKey, isSigner: true, isWritable: true }],
+                    programId: MEMO_PROGRAM_ID,
+                    data: Buffer.from(`PTS_MINT:${streamerId}`),
+                });
+            }
+
             // Step 1: Initialize
             setStatus("Uplink Protocol Active... [WAITING_FOR_SIGNATURE]");
-            const signature = await sendTransaction(transaction, connection);
+            const txId = await sendTransaction(transaction, connection);
+            setSignature(txId);
 
-            // Step 1.5: Encrypting
-            setStatus("Encrypting Neural Metadata... [99%_ASYMMETRIC_LOCK]");
-            await new Promise(r => setTimeout(r, 800));
-
-            // Step 2: Broadcasting
+            // Step 2: Broadcasting & Verifying (Actual Blockchain Work)
             setStatus("Signal Injected. Broadcasting across Solana Grid... [VALIDATING_HASH]");
             const latestBlockhash = await connection.getLatestBlockhash();
 
-            // Step 2.5: Verifying
             setStatus("Verifying Chain Integrity... [NODE_CONSENSUS_PENDING]");
-            await new Promise(r => setTimeout(r, 800));
 
-            // Step 3: Finalizing
+            // Step 3: Finalizing (Actual Blockchain Work)
             setStatus("Bypassing Corporate Firewall... [FINALIZING_ASSET_MINT]");
-            await connection.confirmTransaction({
-                signature,
+            const confirmation = await connection.confirmTransaction({
+                signature: txId,
                 ...latestBlockhash
-            });
+            }, 'confirmed');
+
+            if (confirmation.value.err) {
+                throw new Error("Transaction verification failed on-chain.");
+            }
 
             // Step 4: Asset Sync
             setStatus("Asset Secured. Synchronizing Neural Link... [ESTABLISHING_HEARTBEAT]");
             if (streamerId) {
-                await new Promise(r => setTimeout(r, 1500));
                 secureAsset(streamerId);
             }
 
-            setStatus("Asset Verified on Blockchain. Corporate Control Severed. Welcome to the Resistance.");
+            setStatus("Successful Uplink! Asset NFT Verified on Blockchain. Corporate Control Severed.");
             setLoading(false);
         } catch (err: any) {
             console.error("Mint Error:", err);
@@ -92,12 +103,12 @@ export const useMintStreamer = () => {
                 code: "SIGNAL_JAMMED",
                 message: err.message.includes("User rejected")
                     ? "Uplink Request Rejected by Agent. Security Protocol Intact."
-                    : "Corporate Jamming detected. Transaction Uplink Blocked—Retry Connection."
+                    : `Corporate Jamming: ${err.message}`
             });
             setStatus(null);
             setLoading(false);
         }
     };
 
-    return { mint, loading, status, error };
+    return { mint, loading, status, error, signature };
 };

@@ -35,7 +35,10 @@ const FACTION_DATA = {
 };
 
 export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onClose }) => {
-    const { setFaction, userFaction, isFactionMinted, mintFactionCard } = useCollectionStore();
+    const userFaction = useCollectionStore(state => state.userFaction);
+    const isFactionMinted = useCollectionStore(state => state.isFactionMinted);
+    const setFaction = useCollectionStore(state => state.setFaction);
+    const mintFactionCard = useCollectionStore(state => state.mintFactionCard);
     const { playClick, playSuccess, playHover } = useAudioSystem();
     const [step, setStep] = useState<'SELECT' | 'CONFIRM' | 'MINTING' | 'SUCCESS'>(
         isFactionMinted ? 'SUCCESS' : 'SELECT'

@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { streamers, Streamer } from '@/data/streamers';
+import { Streamer } from '@/data/streamers';
 import { CONFIG } from '@/data/config';
 import { StreamerCard } from '@/components/Cards/StreamerCard';
 import { CollectionHub } from '@/components/UI/CollectionHub';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMintStreamer } from '@/hooks/useMintStreamer';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
+import { useGameDataStore } from '@/hooks/useGameDataStore';
 
 const Scene = dynamic(() => import('@/components/Three/Scene'), { ssr: false });
 const WalletMultiButton = dynamic(
@@ -23,22 +24,30 @@ import { ToastSystem } from '@/components/UI/ToastSystem';
 import { PvPTerminal } from '@/components/UI/PvPTerminal';
 import { FactionSelection } from '@/components/UI/FactionSelection';
 import { OperatorComms } from '@/components/UI/OperatorComms';
+import { MediaUplink } from '@/components/UI/MediaUplink';
+import { Leaderboard } from '@/components/UI/Leaderboard';
 import { useOperatorStore } from '@/hooks/useOperatorStore';
 
 export default function Home() {
-    const { mint, loading, status, error } = useMintStreamer();
+    const { mint, loading, status, error, signature } = useMintStreamer();
     const { isMuted, toggleMute, playHover, playClick, playSuccess } = useAudioSystem();
     const [isHubOpen, setIsHubOpen] = useState(false);
     const [activeMissionStreamer, setActiveMissionStreamer] = useState<Streamer | null>(null);
     const [activePvPStreamer, setActivePvPStreamer] = useState<Streamer | null>(null);
+    const { streamers, fetchGameData, isInitialized, isLoading: isDataLoading } = useGameDataStore();
     const [mounted, setMounted] = useState(false);
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
     const [isFactionOpen, setIsFactionOpen] = useState(false);
+    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
     const { triggerDialogue } = useOperatorStore();
 
     useEffect(() => {
         setMounted(true);
+        if (!isInitialized) {
+            fetchGameData();
+        }
+
         // Check for first visit
         const hasSeenTutorial = localStorage.getItem('pts_tutorial_complete');
         if (!hasSeenTutorial) {
@@ -49,7 +58,7 @@ export default function Home() {
         setTimeout(() => {
             triggerDialogue('onboarding');
         }, 2000);
-    }, [triggerDialogue]);
+    }, [triggerDialogue, fetchGameData, isInitialized]);
 
     useEffect(() => {
         if (status && status.includes("Secured")) {
@@ -91,6 +100,12 @@ export default function Home() {
                             [HOW_TO_PLAY]
                         </button>
                         <button
+                            onClick={() => { playClick(); setIsLeaderboardOpen(true); }}
+                            className="px-4 py-2 border border-neon-yellow/40 text-[10px] font-bold tracking-widest hover:bg-neon-yellow/10 transition-all hidden md:block text-neon-yellow"
+                        >
+                            [RANKINGS]
+                        </button>
+                        <button
                             onClick={() => { playClick(); setIsHubOpen(true); }}
                             className="px-4 py-2 border border-neon-blue/40 text-[10px] font-bold tracking-widest hover:bg-neon-blue/10 transition-all hidden md:block"
                         >
@@ -124,6 +139,13 @@ export default function Home() {
                         title="How to Play"
                     >
                         ❓
+                    </button>
+                    <button
+                        onClick={() => { playClick(); setIsLeaderboardOpen(true); }}
+                        className="w-14 h-14 rounded-full bg-neon-yellow shadow-[0_0_20px_rgba(255,255,0,0.5)] flex items-center justify-center font-black text-xl"
+                        title="Rankings"
+                    >
+                        🏆
                     </button>
                     <button
                         onClick={() => { playClick(); setIsHubOpen(true); }}
@@ -178,16 +200,26 @@ export default function Home() {
 
                         {/* Minting Status Feedback */}
                         <div className="h-24 flex items-center justify-center">
-                            {status && (
+                            {(status || signature) && (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    className="glass-card p-4 border-neon-green/30 bg-neon-green/5"
+                                    className="glass-card p-4 border-neon-green/30 bg-neon-green/5 flex flex-col items-center gap-2"
                                 >
                                     <p className="text-neon-green font-mono text-xs tracking-widest flex items-center gap-3">
                                         <span className="w-2 h-2 bg-neon-green rounded-full animate-ping" />
-                                        [SIGNAL_STABLE] {status}
+                                        {status ? `[SIGNAL_STABLE] ${status}` : '[UPLINK_SUCCESSFUL]'}
                                     </p>
+                                    {signature && (
+                                        <a
+                                            href={`https://solscan.io/tx/${signature}?cluster=${CONFIG.NETWORK}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[10px] text-neon-blue font-black underline hover:text-white transition-colors tracking-tighter"
+                                        >
+                                            [VIEW_ONCHAIN_VERIFICATION_HASH: {signature.substring(0, 8)}...]
+                                        </a>
+                                    )}
                                 </motion.div>
                             )}
 
@@ -315,6 +347,9 @@ export default function Home() {
                 {/* Faction Selection Instance */}
                 <FactionSelection isOpen={isFactionOpen} onClose={() => setIsFactionOpen(false)} />
 
+                {/* Leaderboard Instance */}
+                <Leaderboard isOpen={isLeaderboardOpen} onClose={() => setIsLeaderboardOpen(false)} />
+
                 {/* Tutorial Modal */}
                 <TutorialModal isOpen={isTutorialOpen} onClose={() => setIsTutorialOpen(false)} />
 
@@ -324,10 +359,12 @@ export default function Home() {
                 {/* Operator Comms System */}
                 <OperatorComms />
 
+                {/* Media Uplink System */}
+                <MediaUplink />
+
                 {/* Grid Overlay */}
                 <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(0,243,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,1)_1px,transparent_1px)] bg-[size:50px_50px] z-[1]" />
             </motion.main>
         </AnimatePresence>
     );
 }
-

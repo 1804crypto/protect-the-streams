@@ -13,81 +13,6 @@ export interface BattleItem {
     icon: string;   // Emoji for quick visual
 }
 
-export const items: Record<string, BattleItem> = {
-    RESTORE_CHIP: {
-        id: 'RESTORE_CHIP',
-        name: 'Restore Chip',
-        description: 'Restores 30 HP to active streamer.',
-        effect: 'heal',
-        value: 30,
-        rarity: 'common',
-        icon: '💊'
-    },
-    HYPER_RESTORE: {
-        id: 'HYPER_RESTORE',
-        name: 'Hyper Restore',
-        description: 'Restores 75 HP to active streamer.',
-        effect: 'heal',
-        value: 75,
-        rarity: 'rare',
-        icon: '💉'
-    },
-    FULL_RESTORE: {
-        id: 'FULL_RESTORE',
-        name: 'Full Restore',
-        description: 'Fully restores HP to active streamer.',
-        effect: 'heal',
-        value: 999,  // Will be capped to maxHP
-        rarity: 'legendary',
-        icon: '✨'
-    },
-    PP_RECHARGE: {
-        id: 'PP_RECHARGE',
-        name: 'PP Recharge',
-        description: 'Restores 5 PP to all moves.',
-        effect: 'restorePP',
-        value: 5,
-        rarity: 'common',
-        icon: '🔋'
-    },
-    FULL_PP_RESTORE: {
-        id: 'FULL_PP_RESTORE',
-        name: 'Full PP Restore',
-        description: 'Fully restores PP to all moves.',
-        effect: 'restorePP',
-        value: 999,  // Will restore all
-        rarity: 'rare',
-        icon: '⚡'
-    },
-    ATTACK_MATRIX: {
-        id: 'ATTACK_MATRIX',
-        name: 'Attack Matrix',
-        description: 'Boosts attack damage by 50% for 3 turns.',
-        effect: 'boostAttack',
-        value: 1.5,
-        rarity: 'rare',
-        icon: '⚔️'
-    },
-    DEFENSE_MATRIX: {
-        id: 'DEFENSE_MATRIX',
-        name: 'Defense Matrix',
-        description: 'Reduces incoming damage by 50% for 3 turns.',
-        effect: 'boostDefense',
-        value: 0.5,
-        rarity: 'rare',
-        icon: '🛡️'
-    },
-    PHOENIX_MODULE: {
-        id: 'PHOENIX_MODULE',
-        name: 'Phoenix Module',
-        description: 'Revives a fallen party member with 50% HP.',
-        effect: 'revive',
-        value: 0.5,
-        rarity: 'legendary',
-        icon: '🔥'
-    }
-};
-
 // Starting inventory for new players
 export const STARTER_INVENTORY: Record<string, number> = {
     RESTORE_CHIP: 3,
@@ -117,4 +42,14 @@ export const getRewardItems = (rank: 'S' | 'A' | 'B' | 'F'): string[] => {
     }
 
     return rewards;
+};
+
+export const items: Record<string, BattleItem> = {
+    RESTORE_CHIP: { id: 'RESTORE_CHIP', name: 'Restore Chip', description: 'Heals 50 HP', effect: 'heal', value: 50, rarity: 'common', icon: '💊' },
+    PP_RECHARGE: { id: 'PP_RECHARGE', name: 'PP Recharge', description: 'Restores 10 PP', effect: 'restorePP', value: 10, rarity: 'common', icon: '🔋' },
+    ATTACK_MATRIX: { id: 'ATTACK_MATRIX', name: 'Attack Matrix', description: 'Boosts Attack', effect: 'boostAttack', value: 1.5, rarity: 'rare', icon: '⚔️' },
+    DEFENSE_MATRIX: { id: 'DEFENSE_MATRIX', name: 'Defense Matrix', description: 'Boosts Defense', effect: 'boostDefense', value: 1.5, rarity: 'rare', icon: '🛡️' },
+    HYPER_RESTORE: { id: 'HYPER_RESTORE', name: 'Hyper Restore', description: 'Heals 200 HP', effect: 'heal', value: 200, rarity: 'legendary', icon: '💖' },
+    FULL_PP_RESTORE: { id: 'FULL_PP_RESTORE', name: 'Full PP Restore', description: 'Fully restores PP', effect: 'restorePP', value: 100, rarity: 'legendary', icon: '⚡' },
+    stim_pack: { id: 'stim_pack', name: 'Stim Pack', description: 'Quick heal', effect: 'heal', value: 30, rarity: 'common', icon: '💉' }
 };

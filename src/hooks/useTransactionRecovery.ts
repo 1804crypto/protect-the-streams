@@ -7,7 +7,8 @@ import { toast } from '@/hooks/useToastStore';
 
 export const useTransactionRecovery = () => {
     const { connection } = useConnection();
-    const { addItem, updateResistanceScore } = useCollectionStore();
+    const addItem = useCollectionStore(state => state.addItem);
+    const updateResistanceScore = useCollectionStore(state => state.updateResistanceScore);
 
     const recoverTransactions = useCallback(async () => {
         const pendingTxsString = localStorage.getItem('pts_pending_txs');

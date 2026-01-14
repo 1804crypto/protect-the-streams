@@ -6,6 +6,7 @@ import { Streamer } from '@/data/streamers';
 import { usePvPMatchmaking } from '@/hooks/usePvPMatchmaking';
 import { usePvPBattle } from '@/hooks/usePvPBattle';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
+import { useNeuralMusic } from '@/hooks/useNeuralMusic';
 
 interface PvPTerminalProps {
     streamer: Streamer;
@@ -16,22 +17,40 @@ interface PvPTerminalProps {
 
 export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isOpen, onClose }) => {
     // 1. Matchmaking
-    const { status: matchStatus, roomId: matchedRoomId, opponentId } = usePvPMatchmaking(streamer.id, isOpen);
+    const { status: matchStatus, roomId: matchedRoomId, opponentId, playerId } = usePvPMatchmaking(streamer.id, isOpen);
 
     // 2. Battle Hook (Only active when match found)
     const {
         player,
         opponent,
         logs,
+        chatLogs,
         isTurn,
         isComplete,
         battleStatus,
         winnerId,
-        executeMove
-    } = usePvPBattle(matchedRoomId || 'waiting', opponentId, streamer);
+        executeMove,
+        sendChat,
+        lastAction
+    } = usePvPBattle(matchedRoomId || 'waiting', opponentId, streamer, playerId);
+
+    // Dynamic Neural Music
+    useNeuralMusic(matchStatus === 'MATCH_FOUND' && !isComplete);
 
     const { playClick, playMoveSound, playDamage, playUltimate, playScanning } = useAudioSystem();
     const [isAttacking, setIsAttacking] = useState(false);
+    const [isOpponentAttacking, setIsOpponentAttacking] = useState(false);
+    const [damageNumber, setDamageNumber] = useState<{ value: number, id: number } | null>(null);
+    const [activeTab, setActiveTab] = useState<'LOGS' | 'COMM'>('LOGS');
+    const [chatInput, setChatInput] = useState('');
+
+    const handleSendChat = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (chatInput.trim()) {
+            sendChat(chatInput);
+            setChatInput('');
+        }
+    };
 
     useEffect(() => {
         let stopScanning: (() => void) | undefined;
@@ -44,10 +63,30 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isO
     }, [matchStatus, playScanning]);
 
     useEffect(() => {
-        if (battleStatus === 'ACTIVE') {
-            // play some battle start sound if exists
+        if (!lastAction) return;
+
+        // If the action happened very recently (within 500ms), play effects
+        const now = Date.now();
+        if (now - lastAction.timestamp < 1000) {
+            // Play Sound based on type
+            if (lastAction.damage > 0) {
+                playDamage(); // Impact sound
+            }
+            if (lastAction.moveType) {
+                playMoveSound(lastAction.moveType);
+            }
+
+            // Trigger Opponent Animation
+            if (lastAction.senderId !== playerId) {
+                setIsOpponentAttacking(true);
+                setTimeout(() => setIsOpponentAttacking(false), 300);
+
+                // Show Damage on Player
+                setDamageNumber({ value: lastAction.damage, id: now });
+                setTimeout(() => setDamageNumber(null), 1500);
+            }
         }
-    }, [battleStatus]);
+    }, [lastAction, playDamage, playMoveSound, playerId]);
 
     if (!isOpen) return null;
 
@@ -83,13 +122,37 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isO
                     </div>
                 )}
 
+                {/* TIMEOUT STATE */}
+                {matchStatus === 'TIMEOUT' && (
+                    <div className="flex flex-col items-center justify-center space-y-8 text-center p-8 bg-black border-2 border-resistance-accent/50 rounded-lg max-w-md">
+                        <div className="text-6xl mb-4">📴</div>
+                        <div>
+                            <h2 className="text-2xl font-black italic text-resistance-accent uppercase tracking-tighter mb-2">SIGNAL_DISSIPATED</h2>
+                            <p className="text-white/60 font-mono text-[10px] tracking-widest leading-relaxed">
+                                UNABLE_TO_LOCATE_HOSTILE_SIGNAL_IN_CURRENT_SECTOR. <br />
+                                CORPORATE_JAMMING_INTENSE.
+                            </p>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="w-full py-4 bg-resistance-accent text-black font-black uppercase tracking-[0.2em] hover:bg-white transition-all rounded-sm"
+                        >
+                            RETURN_TO_BASE
+                        </button>
+                    </div>
+                )}
+
                 {/* BATTLE STATE */}
                 {matchStatus === 'MATCH_FOUND' && (
                     <div className="w-full max-w-[1240px] h-[800px] flex flex-col lg:flex-row gap-4">
                         {/* Viewport */}
                         <motion.div
-                            animate={isAttacking ? { x: [0, 100, 0], y: [0, -20, 0] } : {}}
-                            className="flex-[1.5] bg-black border-2 border-neon-blue/20 rounded-lg relative overflow-hidden flex flex-col"
+                            animate={
+                                isAttacking ? { x: [0, 50, -50, 0], scale: 1.02 } :
+                                    isOpponentAttacking ? { x: [0, -10, 10, -10, 0], borderColor: ['#ff003c', '#00f3ff'] } :
+                                        {}
+                            }
+                            className={`flex-[1.5] bg-black border-2 transition-colors duration-300 rounded-lg relative overflow-hidden flex flex-col ${isOpponentAttacking ? 'border-resistance-accent' : 'border-neon-blue/20'}`}
                         >
                             {/* Status Bar */}
                             <div className="absolute top-0 inset-x-0 p-4 flex justify-between z-50">
@@ -116,12 +179,20 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isO
                                     {opponent && (
                                         <motion.div
                                             initial={{ opacity: 0, scale: 0.8 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            className="absolute top-20 right-20 w-64 h-64 grayscale contrast-125"
+                                            animate={isOpponentAttacking ? { scale: [1, 1.2, 1], y: [0, 20, 0] } : { opacity: 1, scale: 1 }}
+                                            className="absolute top-20 right-20 w-64 h-64 grayscale contrast-125 z-10"
                                         >
-                                            <div className="w-full h-full border-4 border-resistance-accent/30 rounded-full flex items-center justify-center bg-resistance-accent/5">
-                                                <span className="text-4xl font-black text-resistance-accent/20 tracking-tighter italic">HOSTILE_SIGNAL</span>
-                                            </div>
+                                            {opponent.image ? (
+                                                <img
+                                                    src={opponent.image}
+                                                    className="w-full h-full object-cover rounded-full border-4 border-resistance-accent shadow-[0_0_30px_#ff003c]"
+                                                    alt="Opponent"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full border-4 border-resistance-accent/30 rounded-full flex items-center justify-center bg-resistance-accent/5">
+                                                    <span className="text-4xl font-black text-resistance-accent/20 tracking-tighter italic">HOSTILE_SIGNAL</span>
+                                                </div>
+                                            )}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -129,14 +200,31 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isO
                                 {/* Player */}
                                 <motion.div
                                     className="absolute bottom-10 left-10 w-80 h-80 z-20"
-                                    animate={isTurn ? { y: [0, -10, 0] } : {}}
-                                    transition={{ repeat: Infinity, duration: 4 }}
+                                    animate={
+                                        isAttacking ? { x: [0, 100, 0], scale: 1.1 } :
+                                            isTurn ? { y: [0, -10, 0] } : {}
+                                    }
+                                    transition={isAttacking ? { duration: 0.3 } : { repeat: Infinity, duration: 4 }}
                                 >
                                     <img
                                         src={streamer.image}
                                         className="w-full h-full object-cover rounded-3xl border-4 border-neon-blue shadow-[0_0_40px_rgba(0,243,255,0.3)]"
                                         alt="Player"
                                     />
+
+                                    {/* Received Damage Floating Text */}
+                                    <AnimatePresence>
+                                        {damageNumber && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 0, scale: 0.5 }}
+                                                animate={{ opacity: 1, y: -100, scale: 1.5 }}
+                                                exit={{ opacity: 0 }}
+                                                className="absolute top-0 left-1/2 -translate-x-1/2 text-6xl font-black text-resistance-accent drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] z-50 italic"
+                                            >
+                                                -{damageNumber.value}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </motion.div>
                             </div>
 
@@ -149,20 +237,63 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isO
                                 <div className="h-3 bg-white/5 border border-white/10 rounded-sm overflow-hidden">
                                     <motion.div
                                         animate={{ width: `${(player.hp / player.maxHp) * 100}%` }}
-                                        className="h-full bg-neon-blue shadow-[0_0_20px_#00f3ff]"
+                                        className={`h-full shadow-[0_0_20px_#00f3ff] transition-colors ${player.hp < 30 ? 'bg-resistance-accent animate-pulse' : 'bg-neon-blue'}`}
                                     />
                                 </div>
                             </div>
                         </motion.div>
 
-                        {/* Controls */}
-                        <div className="flex-1 bg-black/40 border border-white/10 rounded-lg p-6 flex flex-col">
-                            <div className="flex-1 bg-black/60 border border-white/5 p-4 font-mono text-[10px] mb-6 overflow-y-auto">
-                                {logs.map((log, i) => (
-                                    <div key={i} className={`mb-1 ${i === 0 ? 'text-neon-blue' : 'text-white/30'}`}>
-                                        {`> ${log}`}
+                        {/* Controls & Chat */}
+                        <div className="flex-1 bg-black/40 border border-white/10 rounded-lg p-6 flex flex-col min-w-[300px]">
+                            {/* Tab Switcher */}
+                            <div className="flex space-x-2 mb-4">
+                                <button
+                                    onClick={() => setActiveTab('LOGS')}
+                                    className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'LOGS' ? 'bg-neon-blue text-black' : 'bg-white/5 text-white/40 hover:text-white'}`}
+                                >
+                                    COMBAT_LOG
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('COMM')}
+                                    className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'COMM' ? 'bg-resistance-accent text-black' : 'bg-white/5 text-white/40 hover:text-white'}`}
+                                >
+                                    ENCRYPTED_FEED
+                                </button>
+                            </div>
+
+                            {/* Content Area */}
+                            <div className="flex-1 bg-black/60 border border-white/5 p-4 font-mono text-[10px] mb-6 overflow-y-auto min-h-[200px] relative">
+                                {activeTab === 'LOGS' ? (
+                                    logs.map((log, i) => (
+                                        <div key={i} className={`mb-1 ${i === 0 ? 'text-neon-blue' : 'text-white/30'}`}>
+                                            {`> ${log}`}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex flex-col h-full">
+                                        <div className="flex-1 overflow-y-auto space-y-2 mb-2">
+                                            {chatLogs.length === 0 && <div className="text-white/20 italic text-center mt-10">NO_TRANSMISSIONS</div>}
+                                            {chatLogs.map((msg, i) => (
+                                                <div key={i} className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}>
+                                                    <span className={`px-2 py-1 rounded max-w-[80%] break-words ${msg.sender === 'me' ? 'bg-neon-blue/20 text-neon-blue' : 'bg-resistance-accent/20 text-resistance-accent'}`}>
+                                                        {msg.message}
+                                                    </span>
+                                                    <span className="text-[8px] text-white/20 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <form onSubmit={handleSendChat} className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={chatInput}
+                                                onChange={(e) => setChatInput(e.target.value)}
+                                                placeholder="TRANSMIT_DATA..."
+                                                className="flex-1 bg-black border border-white/20 px-3 py-1 text-white focus:border-neon-blue outline-none"
+                                            />
+                                            <button type="submit" className="bg-white/10 px-3 hover:bg-neon-blue hover:text-black transition-colors">Submit</button>
+                                        </form>
                                     </div>
-                                ))}
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">

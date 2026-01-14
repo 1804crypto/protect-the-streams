@@ -2,6 +2,7 @@ export interface Boss {
     id: string;
     name: string;
     maxHp: number;
+    image?: string;
     stats: {
         influence: number;
         chaos: number;
@@ -25,6 +26,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_spark',
         name: 'Voltage Warden',
         maxHp: 400,
+        image: '/boss_spark.png',
         stats: { influence: 50, chaos: 90, charisma: 40, rebellion: 70 },
         moves: [
             { name: 'DISCHARGE', damage: 30, description: 'Sudden electrical burst.' },
@@ -35,6 +37,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_general',
         name: 'Legion Overseer',
         maxHp: 550,
+        image: '/boss_general.png',
         stats: { influence: 90, chaos: 40, charisma: 80, rebellion: 50 },
         moves: [
             { name: 'COMMAND_SYNC', damage: 25, description: 'Coordinated drone strike.' },
@@ -45,6 +48,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_ghost',
         name: 'Phantom Script',
         maxHp: 350,
+        image: '/boss_ghost.png',
         stats: { influence: 70, chaos: 85, charisma: 60, rebellion: 40 },
         moves: [
             { name: 'VANISH', damage: 0, description: 'Ghostly evasion routines.' },
@@ -55,6 +59,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_infiltrator',
         name: 'Backdoor Daemon',
         maxHp: 420,
+        image: '/boss_ghost.png', // Reuse Ghost for now
         stats: { influence: 60, chaos: 70, charisma: 90, rebellion: 50 },
         moves: [
             { name: 'DATA_SIPHON', damage: 30, description: 'Steals signal integrity.' },
@@ -65,6 +70,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_weaver',
         name: 'Harmonic Nullifier',
         maxHp: 480,
+        image: '/boss_spark.png', // Reuse Spark/Voltage for now
         stats: { influence: 75, chaos: 50, charisma: 95, rebellion: 40 },
         moves: [
             { name: 'DISSONANCE', damage: 35, description: 'Shatters neural harmony.' },
@@ -75,6 +81,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_engine',
         name: 'Turbo Oppressor',
         maxHp: 600,
+        image: '/boss_general.png',
         stats: { influence: 50, chaos: 99, charisma: 40, rebellion: 60 },
         moves: [
             { name: 'OVERCLOCK', damage: 50, description: 'Burning out all limiters.' },
@@ -85,6 +92,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_vanguard',
         name: 'Propaganda Prime',
         maxHp: 520,
+        image: '/boss_king.png',
         stats: { influence: 98, chaos: 60, charisma: 70, rebellion: 50 },
         moves: [
             { name: 'MASS_BROADCAST', damage: 35, description: 'Overwhelming narrative.' },
@@ -95,6 +103,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_provocateur',
         name: 'Outrage Catalyst',
         maxHp: 440,
+        image: '/boss_spark.png',
         stats: { influence: 60, chaos: 95, charisma: 50, rebellion: 80 },
         moves: [
             { name: 'BAIT_CLICK', damage: 40, description: 'Lures into tactical error.' },
@@ -105,6 +114,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_king',
         name: 'Regal Enforcer',
         maxHp: 500,
+        image: '/boss_king.png',
         stats: { influence: 85, chaos: 50, charisma: 90, rebellion: 60 },
         moves: [
             { name: 'ROYAL_DECREE', damage: 40, description: 'Mandatory system compliance.' },
@@ -115,6 +125,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_chaos',
         name: 'Entropy Engine',
         maxHp: 450,
+        image: '/boss_spark.png',
         stats: { influence: 60, chaos: 95, charisma: 50, rebellion: 40 },
         moves: [
             { name: 'STATIC_STORM', damage: 30, description: 'Neural interference surge.' },
@@ -125,6 +136,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_influence',
         name: 'Perception Filter',
         maxHp: 380,
+        image: '/perception_filter_boss.png', // Already exists!
         stats: { influence: 98, chaos: 40, charisma: 60, rebellion: 50 },
         moves: [
             { name: 'ECHO_CHAMBER', damage: 25, description: 'Narrative reinforcement blast.' },
@@ -135,6 +147,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_charisma',
         name: 'Deepfake Overlord',
         maxHp: 500,
+        image: '/boss_ceo.png',
         stats: { influence: 70, chaos: 60, charisma: 95, rebellion: 30 },
         moves: [
             { name: 'SYNTH_ADORATION', damage: 20, description: 'Artificial popularity pulse.' },
@@ -145,6 +158,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_rebellion',
         name: 'Containment Unit X',
         maxHp: 420,
+        image: '/boss_general.png',
         stats: { influence: 50, chaos: 50, charisma: 40, rebellion: 95 },
         moves: [
             { name: 'HARD_RESET', damage: 35, description: 'Physical sector lockdown.' },
@@ -155,6 +169,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_generic',
         name: 'Titan Firewall',
         maxHp: 300,
+        image: '/authority_sentinel_cipher_unit_1766789046162.png',
         stats: { influence: 75, chaos: 50, charisma: 70, rebellion: 40 },
         moves: [
             { name: 'PACKET_FILTER', damage: 35, description: 'Blocks incoming data flow.' },
@@ -165,6 +180,7 @@ export const bosses: Record<string, Boss> = {
         id: 'boss_the_ceo',
         name: 'V.A.L.U.E. OVERLORD',
         maxHp: 2000,
+        image: '/boss_ceo.png',
         stats: { influence: 99, chaos: 99, charisma: 99, rebellion: 99 },
         moves: [
             { name: 'CORPORATE_RESTRUCTURING', damage: 80, description: 'Deletes core personality files.' },

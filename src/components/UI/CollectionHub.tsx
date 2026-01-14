@@ -15,7 +15,10 @@ interface CollectionHubProps {
 }
 
 export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose }) => {
-    const { securedIds, completedMissions, isSecured, getMissionRecord, totalResistanceScore } = useCollectionStore();
+    const securedIds = useCollectionStore(state => state.securedIds);
+    const completedMissions = useCollectionStore(state => state.completedMissions);
+    const totalResistanceScore = useCollectionStore(state => state.totalResistanceScore);
+    const getMissionRecordLocal = (id: string) => completedMissions.find(m => m.id === id);
     const [activeMissionStreamer, setActiveMissionStreamer] = React.useState<Streamer | null>(null);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
     const securedAssets = streamers.filter(s => securedIds.includes(s.id));
@@ -99,7 +102,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                 <h3 className="text-[10px] font-black tracking-[0.3em] text-white/40 uppercase">// AVAILABLE_TACTICAL_UPLINKS</h3>
                                 {securedAssets.length > 0 ? (
                                     securedAssets.map((asset) => {
-                                        const record = getMissionRecord(asset.id);
+                                        const record = getMissionRecordLocal(asset.id);
                                         return (
                                             <div key={asset.id} className="glass-card p-4 border-neon-green/20 flex gap-4 group">
                                                 <div className="w-16 h-16 bg-resistance-dark border border-white/10 overflow-hidden relative">
@@ -140,6 +143,13 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                                             </div>
                                                         ))}
                                                     </div>
+                                                    {asset.narrative && (
+                                                        <div className="mt-2 pt-2 border-t border-white/5">
+                                                            <p className="text-[7px] text-neon-blue/60 font-mono leading-tight">
+                                                                // LINK: {asset.narrative.connection}
+                                                            </p>
+                                                        </div>
+                                                    )}
 
                                                     <button
                                                         onClick={() => setActiveMissionStreamer(asset)}
@@ -188,7 +198,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                     {/* Leaderboard Instance */}
                     <AnimatePresence>
                         {isLeaderboardOpen && (
-                            <Leaderboard onClose={() => setIsLeaderboardOpen(false)} />
+                            <Leaderboard isOpen={true} onClose={() => setIsLeaderboardOpen(false)} />
                         )}
                     </AnimatePresence>
                 </>

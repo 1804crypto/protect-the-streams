@@ -1,26 +1,40 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-export type MatchmakingState = 'IDLE' | 'SEARCHING' | 'MATCH_FOUND' | 'ERROR';
+export type MatchmakingState = 'IDLE' | 'SEARCHING' | 'MATCH_FOUND' | 'TIMEOUT' | 'ERROR';
 
 export const usePvPMatchmaking = (streamerId: string, enabled: boolean) => {
-    const [status, setStatus] = useState<MatchmakingState>('IDLE');
+    const [matchStatus, setMatchStatus] = useState<MatchmakingState>('IDLE');
     const [roomId, setRoomId] = useState<string | null>(null);
     const [opponentId, setOpponentId] = useState<string | null>(null);
+    const [sessionId] = useState(() => crypto.randomUUID()); // Stable ID via state
     const channelRef = useRef<any>(null);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (!enabled) {
-            setStatus('IDLE');
+            setMatchStatus('IDLE');
             if (channelRef.current) supabase.removeChannel(channelRef.current);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             return;
         }
 
-        setStatus('SEARCHING');
+        setMatchStatus('SEARCHING');
+
+        // Start 30s timeout
+        timeoutRef.current = setTimeout(() => {
+            if (matchStatus === 'SEARCHING') {
+                setMatchStatus('TIMEOUT');
+                if (channelRef.current) {
+                    supabase.removeChannel(channelRef.current);
+                    channelRef.current = null;
+                }
+            }
+        }, 30000); // 30 seconds
 
         // Join global lobby
         const channel = supabase.channel('lobby:global', {
-            config: { presence: { key: streamerId } }
+            config: { presence: { key: sessionId } }
         });
 
         channel
@@ -29,48 +43,43 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean) => {
                 const peers = Object.values(state).flat() as any[];
 
                 // Filter out self and only find those actively searching
-                const others = peers.filter(p => p.streamerId !== streamerId && p.status === 'SEARCHING');
+                const others = peers.filter(p => p.sessionId !== sessionId && p.status === 'SEARCHING');
 
                 if (others.length > 0) {
                     // Match found logic
-                    // Deterministic Host Selection: Lower ID is host
-                    const opponent = others[0]; // Simple match with first available
+                    const opponent = others[0];
 
-                    // To prevent race conditions, we need a stable sort or logic.
-                    // Simple logic: We only "propose" a match if MyID < OpponentID (I am host)
-                    // If MyID > OpponentID, I wait for them to propose.
-
-                    if (streamerId < opponent.streamerId) {
-                        // I am host
+                    if (sessionId < opponent.sessionId) {
                         const newRoomId = crypto.randomUUID();
                         channel.send({
                             type: 'broadcast',
                             event: 'MATCH_PROPOSAL',
                             payload: {
-                                targetId: opponent.streamerId,
+                                targetId: opponent.sessionId,
                                 roomId: newRoomId,
-                                hostId: streamerId
+                                hostId: sessionId
                             }
                         });
 
-                        // Set my state
                         setRoomId(newRoomId);
-                        setOpponentId(opponent.streamerId);
-                        setStatus('MATCH_FOUND');
+                        setOpponentId(opponent.sessionId);
+                        setMatchStatus('MATCH_FOUND');
+                        if (timeoutRef.current) clearTimeout(timeoutRef.current);
                     }
                 }
             })
             .on('broadcast', { event: 'MATCH_PROPOSAL' }, ({ payload }) => {
-                if (payload.targetId === streamerId) {
-                    // I have been challenged/matched
+                if (payload.targetId === sessionId) {
                     setRoomId(payload.roomId);
                     setOpponentId(payload.hostId);
-                    setStatus('MATCH_FOUND');
+                    setMatchStatus('MATCH_FOUND');
+                    if (timeoutRef.current) clearTimeout(timeoutRef.current);
                 }
             })
-            .subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') {
+            .subscribe(async (subStatus) => {
+                if (subStatus === 'SUBSCRIBED') {
                     await channel.track({
+                        sessionId,
                         streamerId,
                         timestamp: Date.now(),
                         status: 'SEARCHING'
@@ -82,8 +91,13 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean) => {
 
         return () => {
             if (channel) supabase.removeChannel(channel);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
-    }, [enabled, streamerId]);
+    }, [enabled, streamerId, sessionId, matchStatus]);
 
-    return { status, roomId, opponentId };
+    const retry = () => {
+        setMatchStatus('SEARCHING');
+    };
+
+    return { status: matchStatus, roomId, opponentId, playerId: sessionId, retry };
 };
