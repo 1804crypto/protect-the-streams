@@ -535,6 +535,29 @@ export const streamers: Streamer[] = [
             mission: 'Lead the frontal assault on Middle Lane.',
             connection: 'Refuses to work with anyone, yet inevitably saves them. Respects Faker.'
         }
+    },
+    {
+        id: 'jazzygunz',
+        name: 'JazzyGunz',
+        archetype: 'THE_ENFORCER',
+        stats: { influence: 82, chaos: 75, charisma: 88, rebellion: 85 },
+        trait: 'AGGRESSIVE',
+        visualPrompt: 'JazzyGunz in tactical cyber-armor holding energy dual pistols',
+        image: '/jazzygunz_cyber_rebel_v1.png',
+        moves: [
+            { name: 'Rapid Fire', type: 'CHAOS', power: 75, pp: 15, description: 'Multi-hit barrage' },
+            { name: 'Vlog Cam', type: 'CHARISMA', power: 60, pp: 12, description: 'Capture the moment' },
+            { name: 'Tactical Reload', type: 'INTEL', power: 0, pp: 10, description: 'Boosts next attack' },
+            { name: 'Suppressing Fire', type: 'REBELLION', power: 70, pp: 15, description: 'Pins enemy down' }
+        ],
+        ultimateMove: { name: 'Full Auto', type: 'CHAOS', power: 145, pp: 1, description: 'Unloads everything' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'VALKYRIE_2',
+            originStory: 'Former tactical FPS pro who realized the targets were real simulations of dissenters.',
+            mission: 'Provide heavy fire support for resistance extraction teams.',
+            connection: 'Often flanks with Agent 00; rivals with the Sentinel enforcement division.'
+        }
     }
 ];
 

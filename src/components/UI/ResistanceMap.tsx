@@ -153,6 +153,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
         'ddg': { x: 75, y: 75 },
         'rayasianboy': { x: 78, y: 65 },
         'extraemily': { x: 88, y: 72 },
+        'jazzygunz': { x: 85, y: 80 },
 
         // Wildcards (Strategic Positions)
         'xqc': { x: 50, y: 18 },       // Top Center (The React Core)
