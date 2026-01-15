@@ -261,49 +261,26 @@ export const streamers: Streamer[] = [
         }
     },
     {
-        id: 'caseoh',
-        name: 'CaseOh',
-        archetype: 'THE_TITAN',
-        stats: { influence: 85, chaos: 40, charisma: 80, rebellion: 50 },
-        trait: 'BALANCED',
-        visualPrompt: 'CaseOh as a literal giant blocking the sun',
-        image: '/perception_filter_boss.png',
+        id: 'druski',
+        name: 'Druski',
+        archetype: 'THE_RECRUITER',
+        stats: { influence: 95, chaos: 60, charisma: 98, rebellion: 85 },
+        trait: 'CHARISMATIC',
+        visualPrompt: 'Druski in a high-tech record executive suit with holographic chains',
+        image: '/druski_cyber_rebel_fixed_final_1766629987768.png',
         moves: [
-            { name: 'Ground Pound', type: 'DISRUPT', power: 90, pp: 5, description: 'Earthquake' },
-            { name: 'Banned', type: 'REBELLION', power: 100, pp: 1, description: 'Banishes enemy' },
-            { name: 'Belly Flop', type: 'CHAOS', power: 70, pp: 10, description: 'Massive impact' },
-            { name: 'Titan Stance', type: 'CHARISMA', power: 40, pp: 15, description: 'Defensive buff' }
+            { name: 'Coulda Been Records', type: 'CHARISMA', power: 0, pp: 10, description: 'Recruits enemy energy' },
+            { name: 'Viral Skit', type: 'CHARISMA', power: 70, pp: 15, description: 'Disrupts with humor' },
+            { name: 'Hiring Freeze', type: 'DISRUPT', power: 60, pp: 12, description: 'Freeze enemy frame' },
+            { name: 'CEO Vision', type: 'INTEL', power: 55, pp: 18, description: 'Analytical status' }
         ],
-        ultimateMove: { name: 'Black Hole', type: 'DISRUPT', power: 200, pp: 1, description: 'Consumes the battlefield' },
+        ultimateMove: { name: 'The Final Cut', type: 'CHARISMA', power: 150, pp: 1, description: 'Absolute viral dominance' },
         narrative: {
             role: 'RESISTANCE',
-            codename: 'HEAVY',
-            originStory: 'Sentinel tried to contain him in a digital prison, but he physically broke the servers.',
-            mission: 'Hold the frontline against the TROLL swarms.',
-            connection: 'Defends Jynxzi while he hacks; has a rivalry with Sketch.'
-        }
-    },
-    {
-        id: 'jynxzi',
-        name: 'Jynxzi',
-        archetype: 'THE_TECHNICIAN',
-        stats: { influence: 80, chaos: 85, charisma: 70, rebellion: 60 },
-        trait: 'VOLATILE',
-        visualPrompt: 'Jynxzi surrounded by monitors and wires',
-        image: '/jazzygunz_cyber_rebel_final_recovery_1766786179435.png',
-        moves: [
-            { name: 'Clip It', type: 'CHAOS', power: 60, pp: 15, description: 'Fast reflex attack' },
-            { name: 'System Breach', type: 'INTEL', power: 75, pp: 5, description: 'Hacks defenses' },
-            { name: 'Headshot', type: 'REBELLION', power: 85, pp: 8, description: 'Precision strike' },
-            { name: 'Tech Support', type: 'DISRUPT', power: 45, pp: 18, description: 'System debug' }
-        ],
-        ultimateMove: { name: 'Champion Aura', type: 'CHARISMA', power: 125, pp: 1, description: 'Perfect aim' },
-        narrative: {
-            role: 'RESISTANCE',
-            codename: 'CROSSHAIR',
-            originStory: 'A prodigy hacker who used gaming servers to hide Resistance comms.',
-            mission: 'Maintain the "Under-Net", the hidden network for streamers.',
-            connection: 'Protected by CaseOh; coordinates drops with Sykkuno.'
+            codename: 'HANDOFF',
+            originStory: 'Long-time undercover agent posing as a corporate record executive to identify talent for the rebellion.',
+            mission: 'Scout and secure high-value creators for the Resistance.',
+            connection: 'Discovers potential in young rebels like Kai and Speed.'
         }
     },
     {
@@ -464,7 +441,7 @@ export const streamers: Streamer[] = [
             codename: 'PROJECT S',
             originStory: 'A failed Sentinel clone experiment that developed a soul.',
             mission: 'Infiltrate the NFL (Neural Files Link) database.',
-            connection: 'Jynxzi found him in the digital wasteland; CaseOh finds him annoying.'
+            connection: 'Druski scouted him in the digital wasteland; Kai finds his energy useful but chaotic.'
         }
     },
     {

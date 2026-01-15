@@ -8,6 +8,7 @@ import {
     getTypeEffectiveness,
     getEffectivenessMessage,
     getEnemyType,
+    getStatForMoveType,
     SUPER_EFFECTIVE
 } from '@/data/typeChart';
 import { toast } from 'react-hot-toast';
@@ -311,7 +312,8 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                 const opponentType = getEnemyType(opponent.stats);
                 effectiveness = getTypeEffectiveness(move.type, opponentType);
                 isCrit = Math.random() < 0.10;
-                const relevantStatValue = (player.stats as any)[move.type.toLowerCase()] || 50;
+                const statKey = getStatForMoveType(move.type);
+                const relevantStatValue = (player.stats as any)[statKey] || 50;
                 damage = Math.floor(move.power * (relevantStatValue / 100) * (0.9 + Math.random() * 0.2) * effectiveness * (isCrit ? 1.5 : 1));
             } else {
                 damage = data.damage;

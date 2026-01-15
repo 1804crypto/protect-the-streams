@@ -8,6 +8,7 @@ import {
     getTypeEffectiveness,
     getEffectivenessMessage,
     getEnemyType,
+    getStatForMoveType,
     MoveType,
     SUPER_EFFECTIVE
 } from '@/data/typeChart';
@@ -288,7 +289,8 @@ export const useResistanceMission = (streamer: Streamer) => {
             const isCrit = Math.random() < 0.10;
             const critMult = isCrit ? 1.5 : 1;
 
-            const relevantStatValue = (player.stats as any)[move.type.toLowerCase() as any] || 50;
+            const statKey = getStatForMoveType(move.type);
+            const relevantStatValue = (player.stats as any)[statKey] || 50;
             const baseDamage = Math.floor(move.power * (relevantStatValue / 100) * (0.8 + Math.random() * 0.4));
 
             // Apply modifiers

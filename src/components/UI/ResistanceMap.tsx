@@ -23,8 +23,20 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
     // Global Faction War State
     const [sectorControl, setSectorControl] = useState<Record<string, 'RED' | 'PURPLE' | 'NONE'>>({});
 
+    // 1. Initialization Effect: Load Bosses (Run ONCE)
     useEffect(() => {
-        // Fetch Initial Sector Control
+        const saved = localStorage.getItem('pts_revealed_bosses');
+        if (saved) {
+            try {
+                setRevealedBosses(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse revealed bosses", e);
+            }
+        }
+    }, []);
+
+    // 2. Network Subscription Effect: Sector Control (Run ONCE)
+    useEffect(() => {
         const fetchControl = async () => {
             const { data } = await supabase.from('sector_control').select('*');
             if (data) {
@@ -35,7 +47,6 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
         };
         fetchControl();
 
-        // Subscribe to Global War Updates (REALTIME)
         const channel = supabase
             .channel('global_faction_war')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'sector_control' }, (payload) => {
@@ -47,11 +58,14 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
             })
             .subscribe();
 
-        // Load revealed bosses
-        const saved = localStorage.getItem('pts_revealed_bosses');
-        if (saved) setRevealedBosses(JSON.parse(saved));
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
-        // Random Map Event Trigger (20% chance on mount/map visit)
+    // 3. Random Event Effect (Run ONCE on mount)
+    // Depends on getting data, but we want it to happen shortly after load
+    useEffect(() => {
         const roll = Math.random();
         if (roll < 0.2) {
             const events: { type: MapEventType, title: string, message: string, reward?: string }[] = [
@@ -81,14 +95,20 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
                 setActiveEvent(selected);
                 playEvent();
 
-                // Apply effects immediately
                 if (selected.type === 'SIGNAL_FLARE') {
                     addItem('stim_pack', 1);
                 } else if (selected.type === 'DATA_MOSS') {
-                    const locked = streamers.filter(s => !completedMissions.some(m => m.id === s.id) && !revealedBosses.includes(s.id));
+                    // We need latest state here, but to avoid deps loop, we can use functional updates or specific logic
+                    // For simplicity in this event, we'll read from localStorage directly to double check
+                    // or just reveal a random one that isn't commonly revealed
+                    const saved = localStorage.getItem('pts_revealed_bosses');
+                    const currentRevealed = saved ? JSON.parse(saved) : [];
+
+                    const locked = streamers.filter(s => !currentRevealed.includes(s.id));
+
                     if (locked.length > 0) {
                         const reveal = locked[Math.floor(Math.random() * locked.length)].id;
-                        const updated = [...revealedBosses, reveal];
+                        const updated = [...currentRevealed, reveal];
                         setRevealedBosses(updated);
                         localStorage.setItem('pts_revealed_bosses', JSON.stringify(updated));
                     }
@@ -97,17 +117,16 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
                 }
             }, 1000);
         }
+    }, [addItem, playEvent, updateDifficulty]); // These deps are stable from stores
 
-        // Periodic ambient static
+    // 4. Ambient Audio Effect (Run ONCE)
+    useEffect(() => {
         const ambientInterval = setInterval(() => {
             if (Math.random() > 0.7) playMapAmbient();
         }, 10000);
 
-        return () => {
-            clearInterval(ambientInterval);
-            supabase.removeChannel(channel);
-        };
-    }, [completedMissions, revealedBosses, addItem, updateDifficulty, playEvent, playMapAmbient]);
+        return () => clearInterval(ambientInterval);
+    }, [playMapAmbient]);
 
     // Hand-curated coordinates for a more "strategic" look
     const sectorCoords: Record<string, { x: number, y: number }> = {
@@ -120,7 +139,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
         // W/L Community & Chaos (Bottom Left)
         'adinross': { x: 15, y: 65 },
         'ishowspeed': { x: 25, y: 78 },
-        'caseoh': { x: 12, y: 48 },
+        'druski': { x: 42, y: 35 },
 
         // Content Creator Sector (Top Right)
         'zoey': { x: 72, y: 25 },
@@ -138,7 +157,6 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
         // Wildcards (Strategic Positions)
         'xqc': { x: 50, y: 18 },       // Top Center (The React Core)
         'tylil': { x: 50, y: 82 },     // Bottom Center (Lane Defense)
-        'jynxzi': { x: 45, y: 55 },    // Mid (Network Hub)
         'bendadonnn': { x: 58, y: 55 },    // Mid (Oddball)
     };
 

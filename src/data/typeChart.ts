@@ -91,3 +91,24 @@ export const getEnemyType = (stats: { influence: number; chaos: number; charisma
 
     return statToType[maxStat] || 'CHAOS';
 };
+
+/**
+ * Map a MoveType to the corresponding StreamerStat key.
+ * Used for damage calculation scaling.
+ */
+export const getStatForMoveType = (moveType: MoveType): 'influence' | 'chaos' | 'charisma' | 'rebellion' => {
+    switch (moveType) {
+        case 'INTEL':
+            return 'influence';
+        case 'CHARISMA':
+            return 'charisma';
+        case 'REBELLION':
+            return 'rebellion';
+        case 'CHAOS':
+            return 'chaos';
+        case 'DISRUPT':
+            return 'chaos'; // Disruptive nature boosts chaos, so logic follows.
+        default:
+            return 'chaos';
+    }
+};
