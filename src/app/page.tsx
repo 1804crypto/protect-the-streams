@@ -27,6 +27,7 @@ import { OperatorComms } from '@/components/UI/OperatorComms';
 import { MediaUplink } from '@/components/UI/MediaUplink';
 import { Leaderboard } from '@/components/UI/Leaderboard';
 import { useOperatorStore } from '@/hooks/useOperatorStore';
+import { AuthStatus } from '@/components/UI/AuthStatus';
 
 export default function Home() {
     const { mint, loading, status, error, signature } = useMintStreamer();
@@ -126,6 +127,8 @@ export default function Home() {
                         >
                             {isMuted ? '🔇' : '🔊'}
                         </button>
+
+                        <AuthStatus />
 
                         <WalletMultiButton className="!bg-neon-blue !rounded-none !font-display !uppercase !font-bold hover:!shadow-[0_0_15px_#00f3ff] transition-all !text-[12px]" />
                     </div>

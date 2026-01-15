@@ -2,19 +2,14 @@
 
 import { useState } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import {
-    Transaction,
-    PublicKey,
-    SystemProgram,
-    LAMPORTS_PER_SOL
-} from '@solana/web3.js';
-
 import { CONFIG } from '@/data/config';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
+import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
+import { walletAdapterIdentity } from '@metaplex-foundation/umi-signer-wallet-adapters';
 
 export const useMintStreamer = () => {
     const { connection } = useConnection();
-    const { connected, publicKey, sendTransaction } = useWallet();
+    const { connected, publicKey, wallet, signTransaction } = useWallet();
     const secureAsset = useCollectionStore(state => state.secureAsset);
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<string | null>(null);
@@ -22,11 +17,16 @@ export const useMintStreamer = () => {
     const [error, setError] = useState<{ code: string; message: string } | null>(null);
 
     const mint = async (streamerId?: string) => {
-        if (!connected || !publicKey) {
+        if (!connected || !publicKey || !wallet) {
             setError({
                 code: "UPLINK_TERMINATED",
                 message: "No Resistance Wallet detected. Signal cannot be established."
             });
+            return;
+        }
+
+        if (!streamerId) {
+            setError({ code: "NO_TARGET", message: "No streamer target selected." });
             return;
         }
 
@@ -36,74 +36,63 @@ export const useMintStreamer = () => {
         setSignature(null);
 
         try {
-            let treasuryPubkey: PublicKey;
-            try {
-                treasuryPubkey = new PublicKey(CONFIG.TREASURY_WALLET);
-            } catch {
-                throw new Error("Resistance HQ address corrupted.");
-            }
+            // 1. Fetch Transaction from Backend
+            setStatus("Constructing Neural Link... [REQUESTING_FRAMEWORK]");
 
-            // Actual On-Chain Verification: Adding a Memo instruction
-            // This stores the streamer detection ID permanently on the blockchain
-            const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqAB2Cc9BnY64Y9CYfR3M9CByfAnp3sBsc8g");
-
-            const transaction = new Transaction();
-
-            // 1. SOL Transfer (Mint Price)
-            transaction.add(
-                SystemProgram.transfer({
-                    fromPubkey: publicKey,
-                    toPubkey: treasuryPubkey,
-                    lamports: CONFIG.MINT_PRICE * LAMPORTS_PER_SOL,
+            const response = await fetch('/api/mint/transaction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    streamerId,
+                    userPublicKey: publicKey.toBase58()
                 })
-            );
+            });
 
-            // 2. On-Chain Metadata (MEMO)
-            if (streamerId) {
-                transaction.add({
-                    keys: [{ pubkey: publicKey, isSigner: true, isWritable: true }],
-                    programId: MEMO_PROGRAM_ID,
-                    data: Buffer.from(`PTS_MINT:${streamerId}`),
-                });
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Server rejected uplink request.');
             }
 
-            // Step 1: Initialize
-            setStatus("Uplink Protocol Active... [WAITING_FOR_SIGNATURE]");
-            const txId = await sendTransaction(transaction, connection);
-            setSignature(txId);
+            const { transaction: base64Tx } = await response.json();
 
-            // Step 2: Broadcasting & Verifying (Actual Blockchain Work)
-            setStatus("Signal Injected. Broadcasting across Solana Grid... [VALIDATING_HASH]");
-            const latestBlockhash = await connection.getLatestBlockhash();
+            // 2. Deserialize Transaction
+            setStatus("Reviewing Corporate Protocols... [USER_SIGNATURE_REQUIRED]");
 
+            const umi = createUmi(connection);
+            umi.use(walletAdapterIdentity(wallet.adapter));
+
+            const txBuffer = Buffer.from(base64Tx, 'base64');
+            const transaction = umi.transactions.deserialize(new Uint8Array(txBuffer));
+
+            // 3. User Sign & Send (via Umi / Wallet Adapter)
+            // Umi's signer adapter handles the signing flow
+            const signedTx = await umi.identity.signTransaction(transaction);
+
+            setStatus("Broadcasting Signal... [INJECTING_PAYLOAD]");
+            const validSignature = await umi.rpc.sendTransaction(signedTx);
+
+            // Deserialize Signature
+            const sigString = userFriendlySignature(validSignature);
+            setSignature(sigString);
+
+            // 4. Confirm
             setStatus("Verifying Chain Integrity... [NODE_CONSENSUS_PENDING]");
+            await umi.rpc.confirmTransaction(validSignature, {
+                strategy: { type: 'blockhash', ...transaction.message.blockhash }
+            });
 
-            // Step 3: Finalizing (Actual Blockchain Work)
-            setStatus("Bypassing Corporate Firewall... [FINALIZING_ASSET_MINT]");
-            const confirmation = await connection.confirmTransaction({
-                signature: txId,
-                ...latestBlockhash
-            }, 'confirmed');
-
-            if (confirmation.value.err) {
-                throw new Error("Transaction verification failed on-chain.");
-            }
-
-            // Step 4: Asset Sync
-            setStatus("Asset Secured. Synchronizing Neural Link... [ESTABLISHING_HEARTBEAT]");
-            if (streamerId) {
-                secureAsset(streamerId);
-            }
-
-            setStatus("Successful Uplink! Asset NFT Verified on Blockchain. Corporate Control Severed.");
+            // 5. Success
+            setStatus("Asset Secured. NFT Verified on Blockchain. Corporate Control Severed.");
+            secureAsset(streamerId);
             setLoading(false);
+
         } catch (err: any) {
             console.error("Mint Error:", err);
             setError({
                 code: "SIGNAL_JAMMED",
                 message: err.message.includes("User rejected")
                     ? "Uplink Request Rejected by Agent. Security Protocol Intact."
-                    : `Corporate Jamming: ${err.message}`
+                    : `Network Error: ${err.message}`
             });
             setStatus(null);
             setLoading(false);
@@ -112,3 +101,9 @@ export const useMintStreamer = () => {
 
     return { mint, loading, status, error, signature };
 };
+
+// Helper for display
+function userFriendlySignature(sig: Uint8Array): string {
+    const bs58 = require('bs58');
+    return bs58.encode(sig);
+}

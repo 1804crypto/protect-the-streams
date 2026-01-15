@@ -21,8 +21,10 @@ interface CollectionState {
     difficultyMultiplier: number;
     streamerNatures: Record<string, NatureType>;
     totalResistanceScore: number;
+    level: number; // Global Player Level
     userFaction: 'RED' | 'PURPLE' | 'NONE';
     isFactionMinted: boolean;
+    activeMissionStart: number | null; // Anti-Cheat: Track start time
 
     // Actions
     secureAsset: (id: string) => void;
@@ -32,8 +34,51 @@ interface CollectionState {
     updateResistanceScore: (points: number) => void;
     setFaction: (faction: 'RED' | 'PURPLE') => void;
     mintFactionCard: () => void;
+    startMission: () => void; // Call when entering battle
     markMissionComplete: (id: string, rank?: 'S' | 'A' | 'B' | 'F', xpGained?: number) => void;
+    syncFromCloud: (userData: any) => void;
 }
+
+// Internal Helper for Cloud Sync
+const syncStateToCloud = async (
+    xpDelta: number,
+    inventory: Record<string, number>,
+    missionId?: string,
+    rank?: string,
+    duration?: number,
+    set?: any
+) => {
+    try {
+        const payload: any = {
+            deltaXp: xpDelta,
+            inventory: inventory
+        };
+
+        if (missionId) payload.missionId = missionId;
+        if (rank) payload.rank = rank;
+        if (duration) payload.duration = duration;
+
+        const res = await fetch('/api/player/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.success && set) {
+            set((state: any) => ({
+                totalResistanceScore: data.newXp,
+                level: data.newLevel
+            }));
+            console.log("Cloud Sync Verified. Level:", data.newLevel);
+        } else if (data.error) {
+            console.error("Cloud Sync Rejected:", data.error);
+        }
+    } catch (err) {
+        console.error("Cloud Sync Failed:", err);
+    }
+};
 
 // Main store hook
 export const useCollectionStore = create<CollectionState>()(
@@ -45,8 +90,10 @@ export const useCollectionStore = create<CollectionState>()(
             difficultyMultiplier: 1,
             streamerNatures: {},
             totalResistanceScore: 0,
+            level: 1,
             userFaction: 'NONE',
             isFactionMinted: false,
+            activeMissionStart: null,
 
             secureAsset: (id: string) => {
                 const { securedIds, streamerNatures } = get();
@@ -60,24 +107,32 @@ export const useCollectionStore = create<CollectionState>()(
             },
 
             addItem: (itemId: string, count = 1) => {
-                set((state) => ({
-                    inventory: {
-                        ...state.inventory,
-                        [itemId]: (state.inventory[itemId] || 0) + count
-                    }
-                }));
+                const { inventory } = get();
+                const newInventory = {
+                    ...inventory,
+                    [itemId]: (inventory[itemId] || 0) + count
+                };
+
+                set({ inventory: newInventory });
+
+                // Sync Update
+                syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
             },
 
             useItem: (itemId: string): boolean => {
                 const { inventory } = get();
                 if ((inventory[itemId] || 0) <= 0) return false;
 
-                set((state) => ({
-                    inventory: {
-                        ...state.inventory,
-                        [itemId]: Math.max(0, (state.inventory[itemId] || 0) - 1)
-                    }
-                }));
+                const newInventory = {
+                    ...inventory,
+                    [itemId]: Math.max(0, (inventory[itemId] || 0) - 1)
+                };
+
+                set({ inventory: newInventory });
+
+                // Sync Update (Consumption)
+                syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+
                 return true;
             },
 
@@ -91,8 +146,18 @@ export const useCollectionStore = create<CollectionState>()(
 
             mintFactionCard: () => set({ isFactionMinted: true }),
 
+            startMission: () => set({ activeMissionStart: Date.now() }),
+
             markMissionComplete: (id: string, rank = 'B', xpGained = 50) => {
-                const { completedMissions, addItem, updateResistanceScore } = get();
+                const { completedMissions, addItem, updateResistanceScore, activeMissionStart } = get();
+
+                // Calculate Duration
+                const now = Date.now();
+                const duration = activeMissionStart ? (now - activeMissionStart) : 0;
+
+                // Reset Start Time
+                set({ activeMissionStart: null });
+
                 const existingIndex = completedMissions.findIndex(m => m.id === id);
                 let newMissions = [...completedMissions];
 
@@ -103,7 +168,7 @@ export const useCollectionStore = create<CollectionState>()(
 
                     existing.xp = (existing.xp || 0) + xpGained;
 
-                    // Calculate level
+                    // Calculates local level purely for mission record metadata (legacy)
                     let newLevel = 1;
                     if (existing.xp >= 1000) newLevel = 5;
                     else if (existing.xp >= 500) newLevel = 4;
@@ -136,11 +201,18 @@ export const useCollectionStore = create<CollectionState>()(
 
                 // Award points based on rank
                 const rankPoints = rank === 'S' ? 500 : rank === 'A' ? 300 : rank === 'B' ? 100 : 20;
-                updateResistanceScore(rankPoints);
 
                 // Award items based on rank
                 const rewards = getRewardItems(rank);
-                rewards.forEach(itemId => addItem(itemId, 1));
+
+                // We calculate new inventory locally to send correct state
+                const { inventory } = get();
+                const newInventory = { ...inventory };
+                rewards.forEach(itemId => {
+                    newInventory[itemId] = (newInventory[itemId] || 0) + 1;
+                });
+
+                set({ inventory: newInventory }); // Optimistic Item Update
 
                 // GLOBAL FACTION WAR CONTRIBUTION
                 const { userFaction } = get();
@@ -153,6 +225,21 @@ export const useCollectionStore = create<CollectionState>()(
                         else console.log(`[FACTION_WAR] Contribution recorded for ${userFaction} in sector ${id}`);
                     });
                 }
+
+                // CLOUD SYNC
+                syncStateToCloud(xpGained, newInventory, id, rank, duration, set);
+            },
+
+            syncFromCloud: (userData: any) => {
+                const updates: Partial<CollectionState> = {};
+                if (userData.inventory) updates.inventory = userData.inventory;
+                if (userData.xp) updates.totalResistanceScore = userData.xp;
+                if (userData.level) updates.level = userData.level;
+
+                if (Object.keys(updates).length > 0) {
+                    set(updates as any);
+                    console.log("Synced from cloud:", updates);
+                }
             }
         }),
         {
@@ -162,7 +249,7 @@ export const useCollectionStore = create<CollectionState>()(
     )
 );
 
-// Derived state helpers that can be used outside of components or as standalone hooks
+// Derived state helpers
 export const getRebellionLevel = (state: CollectionState) => state.completedMissions.length;
 export const getItemCount = (state: CollectionState, itemId: string) => state.inventory[itemId] || 0;
 export const getSectorStatus = (state: CollectionState, id: string) => {
@@ -172,4 +259,3 @@ export const getSectorStatus = (state: CollectionState, id: string) => {
 };
 export const getMissionRecord = (state: CollectionState, id: string) => state.completedMissions.find(m => m.id === id);
 export const getNature = (state: CollectionState, id: string) => state.streamerNatures[id] || null;
-

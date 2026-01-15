@@ -543,7 +543,7 @@ export const streamers: Streamer[] = [
         stats: { influence: 82, chaos: 75, charisma: 88, rebellion: 85 },
         trait: 'AGGRESSIVE',
         visualPrompt: 'JazzyGunz in tactical cyber-armor holding energy dual pistols',
-        image: '/jazzygunz_cyber_rebel_v1.png',
+        image: '/jazzygunz_reconstructed_rebel_fixed_1766786271015.png',
         moves: [
             { name: 'Rapid Fire', type: 'CHAOS', power: 75, pp: 15, description: 'Multi-hit barrage' },
             { name: 'Vlog Cam', type: 'CHARISMA', power: 60, pp: 12, description: 'Capture the moment' },
