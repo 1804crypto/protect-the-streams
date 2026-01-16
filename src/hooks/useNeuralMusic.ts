@@ -7,15 +7,13 @@ import { useAudioStore } from './useAudioStore';
 let audioCtx: AudioContext | null = null;
 
 export const useNeuralMusic = (isActive: boolean) => {
-    const { integrity, glitchIntensity, isCritical } = useVisualEffects();
+    const { integrity, glitchIntensity } = useVisualEffects();
     const isMuted = useAudioStore(state => state.isMuted);
     const isDivertMode = useAudioStore(state => state.isDivertMode);
 
     // Engine Nodes
     const pulseOsc = useRef<OscillatorNode | null>(null);
     const pulseGain = useRef<GainNode | null>(null);
-    const alarmOsc = useRef<OscillatorNode | null>(null);
-    const alarmGain = useRef<GainNode | null>(null);
     const noiseFilter = useRef<BiquadFilterNode | null>(null);
 
     const initCtx = useCallback(() => {
@@ -60,30 +58,10 @@ export const useNeuralMusic = (isActive: boolean) => {
             noiseFilter.current = filter;
         }
 
-        // 2. Critical System Alarm
-        if (isCritical && !alarmOsc.current) {
-            const alarm = ctx.createOscillator();
-            const aGain = ctx.createGain();
-            alarm.type = 'sine';
-            alarm.frequency.setValueAtTime(800, ctx.currentTime);
-            aGain.gain.setValueAtTime(0, ctx.currentTime);
-
-            alarm.connect(aGain);
-            aGain.connect(ctx.destination);
-            alarm.start();
-            alarmOsc.current = alarm;
-            alarmGain.current = aGain;
-        }
-
         return () => {
-            if (!isCritical) {
-                if (alarmOsc.current) {
-                    try { alarmOsc.current.stop(); } catch { }
-                    alarmOsc.current = null;
-                }
-            }
+            // No specific cleanup needed for critical alarm anymore
         };
-    }, [isActive, isMuted, isDivertMode, isCritical, initCtx]);
+    }, [isActive, isMuted, isDivertMode, initCtx]);
 
     // Reactive Modulation
     useEffect(() => {
@@ -105,29 +83,14 @@ export const useNeuralMusic = (isActive: boolean) => {
             }
         }
 
-        // Modulate Alarm (Beeping Frequency)
-        if (alarmGain.current && alarmOsc.current) {
-            const now = ctx.currentTime;
-            const beepRate = Math.max(0.1, integrity * 2);
-
-            // Trigger a beep
-            alarmGain.current.gain.cancelScheduledValues(now);
-            alarmGain.current.gain.setValueAtTime(0, now);
-            alarmGain.current.gain.linearRampToValueAtTime(0.15, now + 0.05);
-            alarmGain.current.gain.linearRampToValueAtTime(0, now + 0.15);
-        }
-
     }, [integrity, glitchIntensity, isActive]);
 
     const cleanup = () => {
-        [pulseOsc, alarmOsc].forEach(ref => {
-            if (ref.current) {
-                try { ref.current.stop(); } catch { }
-                ref.current = null;
-            }
-        });
+        if (pulseOsc.current) {
+            try { pulseOsc.current.stop(); } catch { }
+            pulseOsc.current = null;
+        }
         pulseGain.current = null;
-        alarmGain.current = null;
     };
 
     useEffect(() => {

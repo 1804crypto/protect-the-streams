@@ -45,7 +45,7 @@ export const getRewardItems = (rank: 'S' | 'A' | 'B' | 'F'): string[] => {
 };
 
 export const items: Record<string, BattleItem> = {
-    RESTORE_CHIP: { id: 'RESTORE_CHIP', name: 'Restore Chip', description: 'Heals 50 HP', effect: 'heal', value: 50, rarity: 'common', icon: '💊' },
+    RESTORE_CHIP: { id: 'RESTORE_CHIP', name: 'Restore Chip', description: 'Fully restores HP', effect: 'heal', value: 100, rarity: 'common', icon: '💊' },
     PP_RECHARGE: { id: 'PP_RECHARGE', name: 'PP Recharge', description: 'Restores 10 PP', effect: 'restorePP', value: 10, rarity: 'common', icon: '🔋' },
     ATTACK_MATRIX: { id: 'ATTACK_MATRIX', name: 'Attack Matrix', description: 'Boosts Attack', effect: 'boostAttack', value: 1.5, rarity: 'rare', icon: '⚔️' },
     DEFENSE_MATRIX: { id: 'DEFENSE_MATRIX', name: 'Defense Matrix', description: 'Boosts Defense', effect: 'boostDefense', value: 1.5, rarity: 'rare', icon: '🛡️' },

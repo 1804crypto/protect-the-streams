@@ -53,7 +53,7 @@ export const useMintStreamer = () => {
                 throw new Error(data.error || 'Server rejected uplink request.');
             }
 
-            const { transaction: base64Tx } = await response.json();
+            const { transaction: base64Tx, blockhash, lastValidBlockHeight } = await response.json();
 
             // 2. Deserialize Transaction
             setStatus("Reviewing Corporate Protocols... [USER_SIGNATURE_REQUIRED]");
@@ -78,7 +78,11 @@ export const useMintStreamer = () => {
             // 4. Confirm
             setStatus("Verifying Chain Integrity... [NODE_CONSENSUS_PENDING]");
             await umi.rpc.confirmTransaction(validSignature, {
-                strategy: { type: 'blockhash', ...transaction.message.blockhash }
+                strategy: {
+                    type: 'blockhash',
+                    blockhash: blockhash,
+                    lastValidBlockHeight: lastValidBlockHeight
+                }
             });
 
             // 5. Success

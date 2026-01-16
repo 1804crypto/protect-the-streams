@@ -438,8 +438,10 @@ export const useResistanceMission = (streamer: Streamer) => {
         switch (item.effect) {
             case 'heal':
                 setPlayer(prev => {
-                    const newHp = Math.min(prev.maxHp, prev.hp + item.value);
-                    addLog(`Restored ${Math.min(item.value, prev.maxHp - prev.hp)} HP.`);
+                    // Full heal for RESTORE_CHIP or standard value for others
+                    const healAmount = itemId === 'RESTORE_CHIP' ? prev.maxHp : item.value;
+                    const newHp = Math.min(prev.maxHp, prev.hp + healAmount);
+                    addLog(`Restored ${Math.min(healAmount, prev.maxHp - prev.hp)} HP.`);
                     return { ...prev, hp: newHp };
                 });
                 break;

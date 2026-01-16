@@ -29,7 +29,7 @@ export async function GET(
             },
             {
                 trait_type: "Role",
-                value: streamer.role || "Operator"
+                value: streamer.narrative.role || "Operator"
             },
             {
                 trait_type: "Affiliation",
