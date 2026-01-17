@@ -15,13 +15,15 @@ export async function GET(
         return NextResponse.json({ error: 'Streamer not found' }, { status: 404 });
     }
 
+    const host = process.env.NEXT_PUBLIC_HOST_URL || `https://${request.headers.get('host')}` || 'https://protect-the-streams.vercel.app';
+
     // Construct Metadata (Metaplex Core Standard / JSON Standard)
     const metadata = {
         name: `PTS Agent: ${streamer.name}`,
         symbol: "PTS",
         description: `Official Resistance Asset for ${streamer.name}. Protect The Streams Global Conflict.`,
-        image: `https://protect-the-streams.vercel.app${streamer.image}`, // Ensure absolute URL
-        external_url: "https://protect-the-streams.vercel.app",
+        image: `${host}${streamer.image}`, // Ensure absolute URL
+        external_url: host,
         attributes: [
             {
                 trait_type: "Class",
@@ -43,7 +45,7 @@ export async function GET(
         properties: {
             files: [
                 {
-                    uri: `https://protect-the-streams.vercel.app${streamer.image}`,
+                    uri: `${host}${streamer.image}`,
                     type: "image/png"
                 }
             ],

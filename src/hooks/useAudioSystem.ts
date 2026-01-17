@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useAudioStore } from './useAudioStore';
+import { useVisualEffects } from './useVisualEffects';
 
 // Singleton AudioContext moved outside the hook to persist across components
 let globalAudioCtx: AudioContext | null = null;
@@ -13,6 +14,10 @@ export const useAudioSystem = () => {
     const setIsMuted = useAudioStore(state => state.setIsMuted);
     const storeToggleMute = useAudioStore(state => state.toggleMute);
     const storeToggleDivert = useAudioStore(state => state.toggleDivertMode);
+
+    // Neural Music Engine State (from visual store)
+    const integrity = useVisualEffects(state => state.integrity);
+    const isCritical = useVisualEffects(state => state.isCritical);
 
     // Ambient system refs
     const droneNode = useRef<OscillatorNode | null>(null);
@@ -316,6 +321,47 @@ export const useAudioSystem = () => {
             droneGain.current = null;
         }
     }, [isMuted, isDivertMode, initCtx]);
+
+    // === NEURAL MUSIC ENGINE MODULATION ===
+    useEffect(() => {
+        const ctx = globalAudioCtx;
+        if (!ctx || isMuted || isDivertMode) return;
+
+        const time = ctx.currentTime;
+        const intensity = 1 - integrity; // 0 (full hp) to 1 (dead)
+
+        // 1. Drone Modulation: Higher frequency and volume as damage increases
+        if (droneNode.current && droneGain.current) {
+            const baseFreq = 40;
+            const targetFreq = baseFreq + (intensity * 60); // 40Hz -> 100Hz
+            droneNode.current.frequency.setTargetAtTime(targetFreq, time, 0.5);
+
+            const baseVol = 0.025;
+            const targetVol = baseVol + (intensity * 0.04); // Increase volume up to 0.065
+            droneGain.current.gain.setTargetAtTime(targetVol, time, 1);
+        }
+
+        // 2. Heartbeat/Sub-bass Modulation: Faster pulse when critical
+        if (lfoNode.current) {
+            const baseRate = 0.5;
+            const criticalRate = 2.5;
+            const targetRate = baseRate + (intensity * (criticalRate - baseRate));
+            lfoNode.current.frequency.setTargetAtTime(targetRate, time, 0.5);
+        }
+
+        // 3. Distortion/Shimmer: More noise and jitter when HP is low
+        if (shimmerNode.current) {
+            const baseFreq = 2500;
+            const jitter = isCritical ? 800 : 200;
+            shimmerNode.current.frequency.setTargetAtTime(baseFreq + (Math.random() * jitter), time, 0.1);
+
+            // If critical, trigger occasional "glitch" textures
+            if (isCritical && Math.random() > 0.95) {
+                playNoise(0.05, 0.01);
+            }
+        }
+
+    }, [integrity, isCritical, isMuted, isDivertMode, playNoise]);
 
     const toggleMute = useCallback(() => {
         initCtx();

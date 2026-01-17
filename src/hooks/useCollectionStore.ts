@@ -25,6 +25,8 @@ interface CollectionState {
     userFaction: 'RED' | 'PURPLE' | 'NONE';
     isFactionMinted: boolean;
     activeMissionStart: number | null; // Anti-Cheat: Track start time
+    wins: number;
+    losses: number;
 
     // Actions
     secureAsset: (id: string) => void;
@@ -37,6 +39,9 @@ interface CollectionState {
     startMission: () => void; // Call when entering battle
     markMissionComplete: (id: string, rank?: 'S' | 'A' | 'B' | 'F', xpGained?: number) => void;
     syncFromCloud: (userData: any) => void;
+    addWin: () => void;
+    addLoss: () => void;
+    refreshStats: () => Promise<void>;
 }
 
 // Internal Helper for Cloud Sync
@@ -46,7 +51,8 @@ const syncStateToCloud = async (
     missionId?: string,
     rank?: string,
     duration?: number,
-    set?: any
+    set?: any,
+    additionalParams?: { wins?: number, losses?: number, securedIds?: string[] }
 ) => {
     try {
         const payload: any = {
@@ -57,6 +63,9 @@ const syncStateToCloud = async (
         if (missionId) payload.missionId = missionId;
         if (rank) payload.rank = rank;
         if (duration) payload.duration = duration;
+        if (additionalParams?.wins !== undefined) payload.wins = additionalParams.wins;
+        if (additionalParams?.losses !== undefined) payload.losses = additionalParams.losses;
+        if (additionalParams?.securedIds !== undefined) payload.securedIds = additionalParams.securedIds;
 
         const res = await fetch('/api/player/sync', {
             method: 'POST',
@@ -94,16 +103,22 @@ export const useCollectionStore = create<CollectionState>()(
             userFaction: 'NONE',
             isFactionMinted: false,
             activeMissionStart: null,
+            wins: 0,
+            losses: 0,
 
             secureAsset: (id: string) => {
-                const { securedIds, streamerNatures } = get();
+                const { securedIds, streamerNatures, inventory } = get();
                 if (securedIds.includes(id)) return;
 
                 const nature = getRandomNature();
+                const newSecuredIds = [...securedIds, id];
                 set({
-                    securedIds: [...securedIds, id],
+                    securedIds: newSecuredIds,
                     streamerNatures: { ...streamerNatures, [id]: nature }
                 });
+
+                // Sync Securing to Cloud
+                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { securedIds: newSecuredIds });
             },
 
             addItem: (itemId: string, count = 1) => {
@@ -235,10 +250,39 @@ export const useCollectionStore = create<CollectionState>()(
                 if (userData.inventory) updates.inventory = userData.inventory;
                 if (userData.xp) updates.totalResistanceScore = userData.xp;
                 if (userData.level) updates.level = userData.level;
+                if (userData.wins) updates.wins = userData.wins;
+                if (userData.losses) updates.losses = userData.losses;
+                if (userData.secured_ids) updates.securedIds = userData.secured_ids;
 
                 if (Object.keys(updates).length > 0) {
                     set(updates as any);
                     console.log("Synced from cloud:", updates);
+                }
+            },
+
+            addWin: () => {
+                const { wins, inventory } = get();
+                const newWins = wins + 1;
+                set({ wins: newWins });
+                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { wins: newWins });
+            },
+
+            addLoss: () => {
+                const { losses, inventory } = get();
+                const newLosses = losses + 1;
+                set({ losses: newLosses });
+                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { losses: newLosses });
+            },
+
+            refreshStats: async () => {
+                try {
+                    const res = await fetch('/api/auth/session');
+                    const data = await res.json();
+                    if (data.authenticated && data.user) {
+                        get().syncFromCloud(data.user);
+                    }
+                } catch (err) {
+                    console.error("Failed to refresh stats:", err);
                 }
             }
         }),

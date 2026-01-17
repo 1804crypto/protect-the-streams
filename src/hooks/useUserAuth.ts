@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import bs58 from 'bs58';
 import { toast } from '@/hooks/useToastStore';
@@ -8,7 +8,27 @@ export const useUserAuth = () => {
     const { publicKey, signMessage } = useWallet();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAuthenticating, setIsAuthenticating] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
     const { syncFromCloud } = useCollectionStore();
+
+    // Auto-check session on mount
+    useEffect(() => {
+        const checkSession = async () => {
+            try {
+                const res = await fetch('/api/auth/session');
+                const data = await res.json();
+                if (data.authenticated && data.user) {
+                    syncFromCloud(data.user);
+                    setIsAuthenticated(true);
+                    setUserId(data.user.id);
+                    console.log("Session restored from cloud.");
+                }
+            } catch (err) {
+                console.warn("Session check failed", err);
+            }
+        };
+        checkSession();
+    }, [syncFromCloud]);
 
     const login = useCallback(async () => {
         if (!publicKey) {
@@ -56,6 +76,7 @@ export const useUserAuth = () => {
             if (data.success && data.user) {
                 syncFromCloud(data.user);
                 setIsAuthenticated(true);
+                setUserId(data.user.id);
                 toast.success("Identity Verified", "Using Cloud Save data.");
             }
 
@@ -74,6 +95,7 @@ export const useUserAuth = () => {
     return {
         isAuthenticated,
         isAuthenticating,
+        userId,
         login,
         publicKey
     };

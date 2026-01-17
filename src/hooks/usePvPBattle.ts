@@ -28,6 +28,9 @@ export interface PvPPlayerState {
 export const usePvPBattle = (matchId: string, opponentId: string | null, myStreamer: Streamer, playerId: string) => {
     // Use stable nature data
     const myNature = useCollectionStore(state => getNature(state, myStreamer.id));
+    const addWin = useCollectionStore(state => state.addWin);
+    const addLoss = useCollectionStore(state => state.addLoss);
+    const refreshStats = useCollectionStore(state => state.refreshStats);
 
     // 1. Local State
     const [player, setPlayer] = useState<PvPPlayerState>({
@@ -194,11 +197,25 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                 .eq('id', matchId)
                 .single();
 
-            if (matchData && matchData.status === 'ACTIVE') {
-                addLog("SIGNAL_REJECTION: Attempting mid-match neural recovery...");
-                setBattleStatus('RECOVERING');
-                // Request neural handshake from peer
-                sendAction({ type: 'RECOVERY_REQUEST', senderId: playerId });
+            if (matchData) {
+                // Determine if I am attacker or defender in the persistent record
+                const isAttacker = matchData.attacker_id === playerId;
+                const updateCol = isAttacker ? 'attacker_stats' : 'defender_stats';
+                const hpCol = isAttacker ? 'attacker_hp' : 'defender_hp';
+
+                await supabase.from('pvp_matches').update({
+                    [updateCol]: player.stats,
+                    [hpCol]: player.hp,
+                    last_update: new Date().toISOString()
+                }).eq('id', matchId);
+
+                if (matchData.status === 'ACTIVE') {
+                    addLog("SIGNAL_STABILITY: Neural link verified with server.");
+                    addLog("SIGNAL_REJECTION: Attempting mid-match neural recovery...");
+                    setBattleStatus('RECOVERING');
+                    // Request neural handshake from peer
+                    sendAction({ type: 'RECOVERY_REQUEST', senderId: playerId });
+                }
             }
         };
 
@@ -296,48 +313,40 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             // AUTHORITATIVE VALIDATION: Call Supabase RPC to calculate damage server-side
             const { data, error: rpcError } = await supabase.rpc('validate_pvp_move', {
                 p_match_id: matchId,
+                p_sender_id: playerId,
                 p_move_name: move.name,
                 p_move_type: move.type,
-                p_move_power: move.power,
-                p_attacker_stats: player.stats,
-                p_defender_stats: opponent.stats
+                p_move_power: move.power
             });
 
             let damage: number;
             let effectiveness: number;
             let isCrit: boolean;
+            let matchFinished: boolean;
 
-            if (rpcError) {
-                console.warn("Security Uplink Failed. Falling back to Secure Local Simulation.", rpcError);
+            if (rpcError || data.error) {
+                console.warn("Security Uplink Failed or Rejected.", rpcError || data.error);
                 const opponentType = getEnemyType(opponent.stats);
                 effectiveness = getTypeEffectiveness(move.type, opponentType);
                 isCrit = Math.random() < 0.10;
-                const statKey = getStatForMoveType(move.type);
-                const relevantStatValue = (player.stats as any)[statKey] || 50;
-                damage = Math.floor(move.power * (relevantStatValue / 100) * (0.9 + Math.random() * 0.2) * effectiveness * (isCrit ? 1.5 : 1));
+                damage = Math.floor(move.power * ((player.stats as any).influence / 100) * effectiveness * (isCrit ? 1.5 : 1));
+                matchFinished = false;
             } else {
                 damage = data.damage;
                 effectiveness = data.effectiveness;
                 isCrit = data.is_crit;
+                matchFinished = data.is_complete;
             }
 
-            // Update local opponent view
-            const nextOpponentHp = Math.max(0, opponent.hp - damage);
+            // Update local opponent view (RPC result is authoritative)
+            const nextOpponentHp = data?.next_hp !== undefined ? data.next_hp : Math.max(0, opponent.hp - damage);
             setOpponent(prev => prev ? ({ ...prev, hp: nextOpponentHp }) : prev);
 
-            if (nextOpponentHp === 0) {
+            if (matchFinished) {
                 setIsComplete(true);
                 setWinnerId(player.name);
                 setBattleStatus('FINISHED');
                 addLog("CRITICAL_DELETION: PvP Objective Achieved.");
-                persistMatchState({ status: 'FINISHED', winner_id: playerId });
-            } else {
-                // Persist state to DB for recovery support
-                persistMatchState({
-                    attacker_hp: player.hp,
-                    defender_hp: nextOpponentHp,
-                    turn_player_id: opponentId
-                });
             }
 
             const actionPayload = {
@@ -367,6 +376,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             const recordResult = async () => {
                 try {
                     console.log(`[MATCH RECORDED] Result: ${isWin ? 'WIN' : 'LOSS'} for ${player.name}`);
+                    await refreshStats(); // Server already updated the DB, just pull latest
                 } catch (err) {
                     console.error("Failed to record match stats", err);
                 }

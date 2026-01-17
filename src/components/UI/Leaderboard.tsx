@@ -4,9 +4,10 @@ import { supabase } from '@/lib/supabaseClient';
 
 interface LeaderboardEntry {
     id: string;
-    username: string;
+    username: string | null;
     wins: number;
     losses: number;
+    xp: number;
     rank: number;
 }
 
@@ -25,23 +26,28 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
         try {
             // Try fetching from real DB
             const { data, error } = await supabase
-                .from('profiles')
-                .select('id, username, wins, losses')
+                .from('users')
+                .select('id, username, wins, losses, xp')
                 .order('wins', { ascending: false })
+                .order('xp', { ascending: false })
                 .limit(10);
 
             if (error || !data || data.length === 0) {
                 // Fallback to Mock Data if table doesn't exist or is empty
                 console.warn("Using mock leaderboard data");
                 setEntries([
-                    { id: '1', username: 'NEO_V1', wins: 42, losses: 3, rank: 1 },
-                    { id: '2', username: 'GHOST_SHELL', wins: 38, losses: 5, rank: 2 },
-                    { id: '3', username: 'CYBER_WOLF', wins: 31, losses: 12, rank: 3 },
-                    { id: '4', username: 'CHROME_HEART', wins: 28, losses: 8, rank: 4 },
-                    { id: '5', username: 'DATA_MINER', wins: 25, losses: 15, rank: 5 },
+                    { id: '1', username: 'NEO_V1', wins: 42, losses: 3, xp: 5000, rank: 1 },
+                    { id: '2', username: 'GHOST_SHELL', wins: 38, losses: 5, xp: 4500, rank: 2 },
+                    { id: '3', username: 'CYBER_WOLF', wins: 31, losses: 12, xp: 3000, rank: 3 },
+                    { id: '4', username: 'CHROME_HEART', wins: 28, losses: 8, xp: 2500, rank: 4 },
+                    { id: '5', username: 'DATA_MINER', wins: 25, losses: 15, xp: 2000, rank: 5 },
                 ]);
             } else {
-                setEntries(data.map((d, i) => ({ ...d, rank: i + 1 })));
+                setEntries(data.map((d, i) => ({
+                    ...d,
+                    username: d.username || `OPERATIVE_${d.id.substring(0, 4)}`,
+                    rank: i + 1
+                })));
             }
         } catch (e) {
             console.error(e);
@@ -110,23 +116,23 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                         >
                                             <td className="py-5 px-4 font-black relative overflow-hidden">
                                                 <span className={`relative z-10 ${entry.rank === 1 ? 'text-neon-yellow text-xl' :
-                                                        entry.rank === 2 ? 'text-white text-lg' :
-                                                            entry.rank === 3 ? 'text-neon-blue text-lg' :
-                                                                'text-white/40'
+                                                    entry.rank === 2 ? 'text-white text-lg' :
+                                                        entry.rank === 3 ? 'text-neon-blue text-lg' :
+                                                            'text-white/40'
                                                     }`}>
                                                     {entry.rank.toString().padStart(2, '0')}
                                                 </span>
                                                 {entry.rank <= 3 && (
                                                     <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 ${entry.rank === 1 ? 'bg-neon-yellow shadow-[0_0_15px_#f3ff00]' :
-                                                            entry.rank === 2 ? 'bg-white shadow-[0_0_15px_#fff]' :
-                                                                'bg-neon-blue shadow-[0_0_15px_#00f3ff]'
+                                                        entry.rank === 2 ? 'bg-white shadow-[0_0_15px_#fff]' :
+                                                            'bg-neon-blue shadow-[0_0_15px_#00f3ff]'
                                                         }`} />
                                                 )}
                                             </td>
                                             <td className="py-5 px-4">
                                                 <div className="flex flex-col">
                                                     <span className="font-black text-white group-hover:text-neon-blue transition-colors uppercase tracking-tight">
-                                                        {entry.username}
+                                                        {entry.username || 'UNIDENTIFIED_OPERATIVE'}
                                                     </span>
                                                     <span className="text-[7px] text-white/20 uppercase tracking-tighter">SIG: {entry.id.substring(0, 8)}</span>
                                                 </div>
