@@ -50,6 +50,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     const [isComplete, setIsComplete] = useState(false);
     const [winnerId, setWinnerId] = useState<string | null>(null);
     const [battleStatus, setBattleStatus] = useState<'INITIATING' | 'SYNCING' | 'ACTIVE' | 'RECOVERING' | 'FINISHED'>('INITIATING');
+    const [turnLocked, setTurnLocked] = useState(false);
 
     const channelRef = useRef<any>(null);
 
@@ -190,18 +191,71 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
         const initSync = async () => {
             setBattleStatus('SYNCING');
-            // Attempt to fetch existing match data for recovery
-            const { data: matchData } = await supabase
-                .from('pvp_matches')
-                .select('*')
-                .eq('id', matchId)
-                .single();
+            try {
+                // Attempt to fetch existing match data for recovery
+                const { data: matchData, error: fetchError } = await supabase
+                    .from('pvp_matches')
+                    .select('*')
+                    .eq('id', matchId)
+                    .single();
 
-            if (matchData) {
-                // Determine if I am attacker or defender in the persistent record
-                const isAttacker = matchData.attacker_id === playerId;
-                const updateCol = isAttacker ? 'attacker_stats' : 'defender_stats';
-                const hpCol = isAttacker ? 'attacker_hp' : 'defender_hp';
+                if (fetchError) {
+                    console.warn("MATCH_FETCH_FAILED: Initializing fresh state.", fetchError);
+                } else if (matchData) {
+                    const isAttacker = matchData.attacker_id === playerId;
+                    const opponentIdReal = isAttacker ? matchData.defender_id : matchData.attacker_id;
+
+                    // 1. Restore Player HP
+                    const mySavedHp = isAttacker ? matchData.attacker_hp : matchData.defender_hp;
+                    setPlayer(prev => ({ ...prev, hp: mySavedHp }));
+
+                    // 2. Determine Turn Authoritatively
+                    if (matchData.turn_player_id) {
+                        setIsTurn(matchData.turn_player_id === playerId);
+                        setTurnLocked(true);
+                    } else {
+                        // Deterministic Turn if not yet set in DB: Lower ID goes first
+                        const amIFirst = playerId < opponentIdReal;
+                        setIsTurn(amIFirst);
+                        // We don't lock yet because the first move will lock it in DB
+                    }
+
+                    // 3. Partial Opponent Restore (Visuals come from SYNC broadcast)
+                    if (matchData.attacker_stats && matchData.defender_stats) {
+                        const oppStats = isAttacker ? matchData.defender_stats : matchData.attacker_stats;
+                        const oppHp = isAttacker ? matchData.defender_hp : matchData.attacker_hp;
+
+                        setOpponent(prev => prev ? {
+                            ...prev,
+                            hp: oppHp,
+                            stats: oppStats
+                        } : {
+                            id: opponentIdReal,
+                            name: "Agent Detected",
+                            maxHp: 100,
+                            hp: oppHp,
+                            stats: oppStats,
+                            streamerId: ""
+                        } as any);
+                    }
+
+                    if (matchData.status === 'ACTIVE') {
+                        addLog("SIGNAL_STABILITY: Neural link verified with server.");
+                        if (matchData.last_update) {
+                            addLog("RECOVERY_MODE: Restoring combat state from archive.");
+                            setBattleStatus('ACTIVE');
+                        }
+                    } else if (matchData.status === 'FINISHED') {
+                        setIsComplete(true);
+                        setBattleStatus('FINISHED');
+                        setWinnerId(matchData.winner_id === playerId ? player.name : "Opponent");
+                    }
+                }
+
+                // Update my own stats in the record if they aren't there
+                const isAttackerInDB = matchData?.attacker_id === playerId;
+                const updateCol = isAttackerInDB ? 'attacker_stats' : 'defender_stats';
+                const hpCol = isAttackerInDB ? 'attacker_hp' : 'defender_hp';
 
                 await supabase.from('pvp_matches').update({
                     [updateCol]: player.stats,
@@ -209,13 +263,8 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                     last_update: new Date().toISOString()
                 }).eq('id', matchId);
 
-                if (matchData.status === 'ACTIVE') {
-                    addLog("SIGNAL_STABILITY: Neural link verified with server.");
-                    addLog("SIGNAL_REJECTION: Attempting mid-match neural recovery...");
-                    setBattleStatus('RECOVERING');
-                    // Request neural handshake from peer
-                    sendAction({ type: 'RECOVERY_REQUEST', senderId: playerId });
-                }
+            } catch (err) {
+                console.error("SYNC_CRITICAL_FAILURE", err);
             }
         };
 
@@ -247,10 +296,12 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                     setBattleStatus('ACTIVE');
                     addLog("PEER_LINK_ESTABLISHED: Engaging hostiles.");
 
-                    // Deterministic Turn: Lower SessionID goes first
-                    const amIFirst = playerId < opponentId;
-                    setIsTurn(amIFirst);
-                    if (amIFirst) addLog("INITIATIVE_ROLL: You have the first move.");
+                    // Only set deterministic turn if it hasn't been set by authoritative recovery
+                    if (!turnLocked) {
+                        const amIFirst = playerId < (opponentId as string);
+                        setIsTurn(amIFirst);
+                        if (amIFirst) addLog("INITIATIVE_ROLL: You have the first move.");
+                    }
                 }
             })
             .on('presence', { event: 'leave' }, ({ leftPresences }) => {

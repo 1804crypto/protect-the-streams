@@ -85,12 +85,16 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
 
     // Trigger Initial Lore on mount
     const hasInitialized = React.useRef(false);
+    const startMission = useCollectionStore(state => state.startMission);
 
     useEffect(() => {
         if (isOpen && !hasInitialized.current) {
             hasInitialized.current = true;
             forceUnmute();
             addLog("AUDIO_UPLINK: Syncing neural frequencies...");
+
+            // START MISSION TIMER (Anti-Cheat)
+            startMission();
 
             // Trigger Operator Brief
             setTimeout(() => {
@@ -101,7 +105,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                 setCurrentLore(streamer.lore.statusLog);
             }
         }
-    }, [isOpen, streamer.lore, forceUnmute, triggerDialogue, addLog]);
+    }, [isOpen, streamer.lore, forceUnmute, triggerDialogue, addLog, startMission]);
 
     // Handle Stage Progression Lore
     useEffect(() => {
