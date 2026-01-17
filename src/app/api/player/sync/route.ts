@@ -27,7 +27,20 @@ export async function POST(req: NextRequest) {
         // We ignore 'deltaLevel' from client. Server validates progression.
         // 2. Parse Body
         // We ignore 'deltaLevel' from client. Server validates progression.
-        const { deltaXp, inventory, missionId, rank, duration, wins, losses, securedIds } = await req.json();
+        const {
+            deltaXp,
+            inventory,
+            missionId,
+            rank,
+            duration,
+            wins,
+            losses,
+            securedIds,
+            streamerNatures,
+            completedMissions,
+            faction,
+            isFactionMinted
+        } = await req.json();
 
         // 3. Validation (Basic Sanity Checks)
         if (deltaXp && deltaXp > 5000) {
@@ -74,6 +87,10 @@ export async function POST(req: NextRequest) {
         if (wins !== undefined) updates.wins = wins;
         if (losses !== undefined) updates.losses = losses;
         if (securedIds !== undefined) updates.secured_ids = securedIds;
+        if (streamerNatures !== undefined) updates.streamer_natures = streamerNatures;
+        if (completedMissions !== undefined) updates.completed_missions = completedMissions;
+        if (faction !== undefined) updates.faction = faction;
+        if (isFactionMinted !== undefined) updates.is_faction_minted = isFactionMinted;
 
         const { error: updateError } = await supabase
             .from('users')

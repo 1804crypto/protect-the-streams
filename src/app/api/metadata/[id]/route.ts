@@ -15,7 +15,8 @@ export async function GET(
         return NextResponse.json({ error: 'Streamer not found' }, { status: 404 });
     }
 
-    const host = process.env.NEXT_PUBLIC_HOST_URL || `https://${request.headers.get('host')}` || 'https://protect-the-streams.vercel.app';
+    const hostHeader = request.headers.get('host');
+    const host = process.env.NEXT_PUBLIC_HOST_URL || (hostHeader ? `https://${hostHeader}` : 'https://protect-the-streams.vercel.app');
 
     // Construct Metadata (Metaplex Core Standard / JSON Standard)
     const metadata = {

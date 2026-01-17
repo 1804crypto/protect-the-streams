@@ -52,7 +52,15 @@ const syncStateToCloud = async (
     rank?: string,
     duration?: number,
     set?: any,
-    additionalParams?: { wins?: number, losses?: number, securedIds?: string[] }
+    additionalParams?: {
+        wins?: number,
+        losses?: number,
+        securedIds?: string[],
+        streamerNatures?: any,
+        completedMissions?: any[],
+        faction?: string,
+        isFactionMinted?: boolean
+    }
 ) => {
     try {
         const payload: any = {
@@ -66,6 +74,10 @@ const syncStateToCloud = async (
         if (additionalParams?.wins !== undefined) payload.wins = additionalParams.wins;
         if (additionalParams?.losses !== undefined) payload.losses = additionalParams.losses;
         if (additionalParams?.securedIds !== undefined) payload.securedIds = additionalParams.securedIds;
+        if (additionalParams?.streamerNatures !== undefined) payload.streamerNatures = additionalParams.streamerNatures;
+        if (additionalParams?.completedMissions !== undefined) payload.completedMissions = additionalParams.completedMissions;
+        if (additionalParams?.faction !== undefined) payload.faction = additionalParams.faction;
+        if (additionalParams?.isFactionMinted !== undefined) payload.isFactionMinted = additionalParams.isFactionMinted;
 
         const res = await fetch('/api/player/sync', {
             method: 'POST',
@@ -118,7 +130,10 @@ export const useCollectionStore = create<CollectionState>()(
                 });
 
                 // Sync Securing to Cloud
-                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { securedIds: newSecuredIds });
+                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, {
+                    securedIds: newSecuredIds,
+                    streamerNatures: { ...streamerNatures, [id]: nature }
+                });
             },
 
             addItem: (itemId: string, count = 1) => {
@@ -157,9 +172,17 @@ export const useCollectionStore = create<CollectionState>()(
                 totalResistanceScore: state.totalResistanceScore + points
             })),
 
-            setFaction: (faction: 'RED' | 'PURPLE') => set({ userFaction: faction, isFactionMinted: false }),
+            setFaction: (faction: 'RED' | 'PURPLE') => {
+                set({ userFaction: faction, isFactionMinted: false });
+                const { inventory } = get();
+                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction });
+            },
 
-            mintFactionCard: () => set({ isFactionMinted: true }),
+            mintFactionCard: () => {
+                set({ isFactionMinted: true });
+                const { inventory, userFaction } = get();
+                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction: userFaction, isFactionMinted: true });
+            },
 
             startMission: () => set({ activeMissionStart: Date.now() }),
 
@@ -242,7 +265,7 @@ export const useCollectionStore = create<CollectionState>()(
                 }
 
                 // CLOUD SYNC
-                syncStateToCloud(xpGained, newInventory, id, rank, duration, set);
+                syncStateToCloud(xpGained, newInventory, id, rank, duration, set, { completedMissions: newMissions });
             },
 
             syncFromCloud: (userData: any) => {
@@ -253,6 +276,10 @@ export const useCollectionStore = create<CollectionState>()(
                 if (userData.wins) updates.wins = userData.wins;
                 if (userData.losses) updates.losses = userData.losses;
                 if (userData.secured_ids) updates.securedIds = userData.secured_ids;
+                if (userData.streamer_natures) updates.streamerNatures = userData.streamer_natures;
+                if (userData.completed_missions) updates.completedMissions = userData.completed_missions;
+                if (userData.faction) updates.userFaction = userData.faction;
+                if (userData.is_faction_minted !== undefined) updates.isFactionMinted = userData.is_faction_minted;
 
                 if (Object.keys(updates).length > 0) {
                     set(updates as any);
