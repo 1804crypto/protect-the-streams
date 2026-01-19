@@ -375,8 +375,13 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             let isCrit: boolean;
             let matchFinished: boolean;
 
-            if (rpcError || data.error) {
-                console.warn("Security Uplink Failed or Rejected.", rpcError || data.error);
+            if (data?.error === 'NOT_YOUR_TURN') {
+                addLog("SIGNAL_SYNC_ERROR: Wait for your turn.");
+                return;
+            }
+
+            if (rpcError || data?.error) {
+                console.warn("Security Uplink Failed. Attempting ephemeral calculation.", rpcError || data?.error);
                 const opponentType = getEnemyType(opponent.stats);
                 effectiveness = getTypeEffectiveness(move.type, opponentType);
                 isCrit = Math.random() < 0.10;

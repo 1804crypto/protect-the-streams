@@ -64,28 +64,59 @@ export const useMintStreamer = () => {
             const txBuffer = Buffer.from(base64Tx, 'base64');
             const transaction = umi.transactions.deserialize(new Uint8Array(txBuffer));
 
-            // 3. User Sign & Send (via Umi / Wallet Adapter)
-            // Umi's signer adapter handles the signing flow
+            // 3. User Sign
             const signedTx = await umi.identity.signTransaction(transaction);
 
+            // 4. Broadcast with Retry Logic (Exponential Backoff)
             setStatus("Broadcasting Signal... [INJECTING_PAYLOAD]");
-            const validSignature = await umi.rpc.sendTransaction(signedTx);
 
-            // Deserialize Signature
+            const MAX_RETRIES = 3;
+            let attempt = 0;
+            let validSignature: Uint8Array | null = null;
+
+            while (attempt < MAX_RETRIES && !validSignature) {
+                try {
+                    validSignature = await umi.rpc.sendTransaction(signedTx, {
+                        skipPreflight: true, // Standard for core minting to reduce latency
+                        preflightCommitment: 'processed'
+                    });
+                } catch (sendErr) {
+                    attempt++;
+                    if (attempt >= MAX_RETRIES) throw sendErr;
+                    setStatus(`Signal Interference Detected. Retrying Link... [ATTEMPT_${attempt}/${MAX_RETRIES}]`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt))); // 2s, 4s, 8s
+                }
+            }
+
+            if (!validSignature) throw new Error("SIGNAL_LOSS: Max retries exceeded during broadcast.");
+
+            // Deserialize Signature for UI
             const sigString = userFriendlySignature(validSignature);
             setSignature(sigString);
 
-            // 4. Confirm
+            // 5. Confirm with Persistence
             setStatus("Verifying Chain Integrity... [NODE_CONSENSUS_PENDING]");
-            await umi.rpc.confirmTransaction(validSignature, {
-                strategy: {
-                    type: 'blockhash',
-                    blockhash: blockhash,
-                    lastValidBlockHeight: lastValidBlockHeight
-                }
-            });
 
-            // 5. Success
+            try {
+                await umi.rpc.confirmTransaction(validSignature, {
+                    strategy: {
+                        type: 'blockhash',
+                        blockhash: blockhash,
+                        lastValidBlockHeight: lastValidBlockHeight
+                    },
+                    commitment: 'confirmed'
+                });
+            } catch (confirmErr) {
+                // If confirmation times out, we do one final check of the signature status
+                const statuses = await umi.rpc.getSignatureStatuses([validSignature]);
+                const status = statuses[0] as any;
+                // Check if status exists and doesn't have an error
+                if (!status || status.err || status.confirmationStatus === 'failed') {
+                    throw new Error("CENTRAL_NODE_REJECTION: Transaction failed or not found on-chain.");
+                }
+            }
+
+            // 6. Success
             setStatus("Asset Secured. NFT Verified on Blockchain. Corporate Control Severed.");
             secureAsset(streamerId);
             setLoading(false);
