@@ -22,7 +22,7 @@ export async function GET(
     const metadata = {
         name: `PTS Agent: ${streamer.name}`,
         symbol: "PTS",
-        description: `Official Resistance Asset for ${streamer.name}. Protect The Streams Global Conflict.`,
+        description: `Official Resistance Asset for ${streamer.name}. Protect The Streams Global Conflict. Archive ID: ${streamer.id.toUpperCase()}`,
         image: `${host}${streamer.image}`, // Ensure absolute URL
         external_url: host,
         attributes: [
@@ -35,8 +35,37 @@ export async function GET(
                 value: streamer.narrative.role || "Operator"
             },
             {
+                trait_type: "Archetype",
+                value: streamer.archetype.replace(/_/g, ' ')
+            },
+            {
                 trait_type: "Affiliation",
                 value: "Resistance"
+            },
+            {
+                trait_type: "Trait",
+                value: streamer.trait
+            },
+            // Numerical Stats as Attributes (Standard for gaming NFTs)
+            {
+                display_type: "number",
+                trait_type: "Influence",
+                value: streamer.stats.influence
+            },
+            {
+                display_type: "number",
+                trait_type: "Chaos",
+                value: streamer.stats.chaos
+            },
+            {
+                display_type: "number",
+                trait_type: "Charisma",
+                value: streamer.stats.charisma
+            },
+            {
+                display_type: "number",
+                trait_type: "Rebellion",
+                value: streamer.stats.rebellion
             },
             {
                 trait_type: "Generation",
@@ -50,7 +79,10 @@ export async function GET(
                     type: "image/png"
                 }
             ],
-            category: "image"
+            category: "image",
+            streamer_id: streamer.id,
+            narrative_role: streamer.narrative.role,
+            codename: streamer.narrative.codename
         }
     };
 
