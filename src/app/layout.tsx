@@ -5,8 +5,33 @@ import { ResistanceOverlay } from "@/components/UI/ResistanceOverlay";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "PROTECT THE STREAMERS | Resistance OS",
-    description: "Bypassing Corporate Blackouts. Secure your influence on Solana.",
+    title: "PROTECT THE STREAMS | Resistance OS",
+    description: "The Global Conflict has begun. Join the Resistance, recruit your favorite streamers, and overthrow Sentinel INC on the Solana Blockchain.",
+    openGraph: {
+        title: "PROTECT THE STREAMS | Resistance OS",
+        description: "Bypassing Corporate Blackouts. Secure your influence on Solana.",
+        url: "https://endearing-syrniki-7788ed.netlify.app",
+        siteName: "Protect The Streams",
+        images: [
+            {
+                url: "/pts_cover_xqc_placeholder.jpg",
+                width: 1200,
+                height: 630,
+                alt: "Protect The Streams Resistance Interface",
+            },
+        ],
+        locale: "en_US",
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "PROTECT THE STREAMS | Resistance OS",
+        description: "Join the Resistance. Overthrow Sentinel INC.",
+        images: ["/pts_cover_xqc_placeholder.jpg"],
+    },
+    icons: {
+        icon: "/favicon.ico",
+    },
 };
 
 export default function RootLayout({
