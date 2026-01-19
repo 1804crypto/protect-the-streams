@@ -5,6 +5,7 @@ import { ResistanceOverlay } from "@/components/UI/ResistanceOverlay";
 import "./globals.css";
 
 export const metadata: Metadata = {
+    metadataBase: new URL("https://endearing-syrniki-7788ed.netlify.app"),
     title: "PROTECT THE STREAMS | Resistance OS",
     description: "The Global Conflict has begun. Join the Resistance, recruit your favorite streamers, and overthrow Sentinel INC on the Solana Blockchain.",
     openGraph: {
