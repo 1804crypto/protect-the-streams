@@ -66,24 +66,16 @@ export async function POST(req: NextRequest) {
                     ],
                     programId: publicKey('11111111111111111111111111111111'), // System Program
                     data: (function () {
-                        // Create Transfer Instruction Data manually or use a helper
-                        // System Transfer: 2 (u32 identifier) + 8 bytes lamports
-                        // 0x02000000 + low + high...
-                        // Easiest is to use the helper but 'mpl-toolbox' is not installed.
-                        // Let's defer to install mpl-toolbox or manually encode.
-                        // Manual encoding for Transfer (0x02)
                         const data = new Uint8Array(12);
                         data.set([2, 0, 0, 0]); // Index 2 = Transfer
-                        const lamports = BigInt(CONFIG.MINT_PRICE * 1_000_000_000);
+                        const lamports = BigInt(Math.floor(CONFIG.MINT_PRICE * 1_000_000_000));
                         const view = new DataView(data.buffer);
                         view.setBigUint64(4, lamports, true); // Little Endian
                         return data;
                     })()
                 },
                 bytesCreatedOnChain: 0,
-                signers: [backendSigner], // Backend authorizes the transaction construction (payer of fees?) No, User pays fees.
-                // Wait, if User pays fees, User must be main signer. 
-                // The Builder will be serialized and sent to frontend.
+                signers: [],
             })
             // 2. Create Asset
             .add(create(umi, {
@@ -91,8 +83,8 @@ export async function POST(req: NextRequest) {
                 collection: collection,
                 name: `PTS Agent: ${streamerId}`,
                 uri: uri,
-                owner: user, // Mint directly to user
-                authority: backendSigner, // Backend is authority
+                owner: user,
+                authority: backendSigner,
             }));
 
         const blockhash = await umi.rpc.getLatestBlockhash();

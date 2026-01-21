@@ -6,10 +6,9 @@ import { useCollectionStore } from '@/hooks/useCollectionStore';
 
 export const useUserAuth = () => {
     const { publicKey, signMessage } = useWallet();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
-    const { syncFromCloud } = useCollectionStore();
+    const { syncFromCloud, isAuthenticated, setAuthenticated } = useCollectionStore();
 
     // Auto-check session on mount
     useEffect(() => {
@@ -19,16 +18,19 @@ export const useUserAuth = () => {
                 const data = await res.json();
                 if (data.authenticated && data.user) {
                     syncFromCloud(data.user);
-                    setIsAuthenticated(true);
+                    setAuthenticated(true);
                     setUserId(data.user.id);
                     console.log("Session restored from cloud.");
+                } else {
+                    setAuthenticated(false);
                 }
             } catch (err) {
                 console.warn("Session check failed", err);
+                setAuthenticated(false);
             }
         };
         checkSession();
-    }, [syncFromCloud]);
+    }, [syncFromCloud, setAuthenticated]);
 
     const login = useCallback(async () => {
         if (!publicKey) {
@@ -75,7 +77,7 @@ export const useUserAuth = () => {
 
             if (data.success && data.user) {
                 syncFromCloud(data.user);
-                setIsAuthenticated(true);
+                setAuthenticated(true);
                 setUserId(data.user.id);
                 toast.success("Identity Verified", "Using Cloud Save data.");
             }

@@ -42,6 +42,8 @@ interface CollectionState {
     addWin: () => void;
     addLoss: () => void;
     refreshStats: () => Promise<void>;
+    isAuthenticated: boolean;
+    setAuthenticated: (auth: boolean) => void;
 }
 
 // Internal Helper for Cloud Sync
@@ -90,10 +92,16 @@ const syncStateToCloud = async (
         if (data.success && set) {
             set((state: any) => ({
                 totalResistanceScore: data.newXp,
-                level: data.newLevel
+                level: data.newLevel,
+                isAuthenticated: true // Confirm we are authenticated
             }));
             console.log("Cloud Sync Verified. Level:", data.newLevel);
         } else if (data.error) {
+            if (data.error === "Unauthorized" || res.status === 401) {
+                // Silently handle unauthorized - just means we are in guest mode
+                if (set) set({ isAuthenticated: false });
+                return;
+            }
             console.error("Cloud Sync Rejected:", data.error);
         }
     } catch (err) {
@@ -117,6 +125,9 @@ export const useCollectionStore = create<CollectionState>()(
             activeMissionStart: null,
             wins: 0,
             losses: 0,
+            isAuthenticated: false,
+
+            setAuthenticated: (auth: boolean) => set({ isAuthenticated: auth }),
 
             secureAsset: (id: string) => {
                 const { securedIds, streamerNatures, inventory } = get();
@@ -130,10 +141,13 @@ export const useCollectionStore = create<CollectionState>()(
                 });
 
                 // Sync Securing to Cloud
-                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, {
-                    securedIds: newSecuredIds,
-                    streamerNatures: { ...streamerNatures, [id]: nature }
-                });
+                const { isAuthenticated } = get();
+                if (isAuthenticated) {
+                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, {
+                        securedIds: newSecuredIds,
+                        streamerNatures: { ...streamerNatures, [id]: nature }
+                    });
+                }
             },
 
             addItem: (itemId: string, count = 1) => {
@@ -146,7 +160,10 @@ export const useCollectionStore = create<CollectionState>()(
                 set({ inventory: newInventory });
 
                 // Sync Update
-                syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                const { isAuthenticated } = get();
+                if (isAuthenticated) {
+                    syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                }
             },
 
             useItem: (itemId: string): boolean => {
@@ -161,7 +178,10 @@ export const useCollectionStore = create<CollectionState>()(
                 set({ inventory: newInventory });
 
                 // Sync Update (Consumption)
-                syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                const { isAuthenticated } = get();
+                if (isAuthenticated) {
+                    syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                }
 
                 return true;
             },
@@ -174,14 +194,18 @@ export const useCollectionStore = create<CollectionState>()(
 
             setFaction: (faction: 'RED' | 'PURPLE') => {
                 set({ userFaction: faction, isFactionMinted: false });
-                const { inventory } = get();
-                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction });
+                const { inventory, isAuthenticated } = get();
+                if (isAuthenticated) {
+                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction });
+                }
             },
 
             mintFactionCard: () => {
                 set({ isFactionMinted: true });
-                const { inventory, userFaction } = get();
-                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction: userFaction, isFactionMinted: true });
+                const { inventory, userFaction, isAuthenticated } = get();
+                if (isAuthenticated) {
+                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction: userFaction, isFactionMinted: true });
+                }
             },
 
             startMission: () => set({ activeMissionStart: Date.now() }),
@@ -265,7 +289,10 @@ export const useCollectionStore = create<CollectionState>()(
                 }
 
                 // CLOUD SYNC
-                syncStateToCloud(xpGained, newInventory, id, rank, duration, set, { completedMissions: newMissions });
+                const { isAuthenticated: isAuth } = get();
+                if (isAuth) {
+                    syncStateToCloud(xpGained, newInventory, id, rank, duration, set, { completedMissions: newMissions });
+                }
             },
 
             syncFromCloud: (userData: any) => {
@@ -281,6 +308,8 @@ export const useCollectionStore = create<CollectionState>()(
                 if (userData.faction) updates.userFaction = userData.faction;
                 if (userData.is_faction_minted !== undefined) updates.isFactionMinted = userData.is_faction_minted;
 
+                updates.isAuthenticated = true;
+
                 if (Object.keys(updates).length > 0) {
                     set(updates as any);
                     console.log("Synced from cloud:", updates);
@@ -288,17 +317,21 @@ export const useCollectionStore = create<CollectionState>()(
             },
 
             addWin: () => {
-                const { wins, inventory } = get();
+                const { wins, inventory, isAuthenticated } = get();
                 const newWins = wins + 1;
                 set({ wins: newWins });
-                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { wins: newWins });
+                if (isAuthenticated) {
+                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { wins: newWins });
+                }
             },
 
             addLoss: () => {
-                const { losses, inventory } = get();
+                const { losses, inventory, isAuthenticated } = get();
                 const newLosses = losses + 1;
                 set({ losses: newLosses });
-                syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { losses: newLosses });
+                if (isAuthenticated) {
+                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { losses: newLosses });
+                }
             },
 
             refreshStats: async () => {
@@ -307,15 +340,22 @@ export const useCollectionStore = create<CollectionState>()(
                     const data = await res.json();
                     if (data.authenticated && data.user) {
                         get().syncFromCloud(data.user);
+                        set({ isAuthenticated: true });
+                    } else {
+                        set({ isAuthenticated: false });
                     }
                 } catch (err) {
                     console.error("Failed to refresh stats:", err);
+                    set({ isAuthenticated: false });
                 }
             }
         }),
         {
             name: 'pts_storage',
             storage: createJSONStorage(() => localStorage),
+            partialize: (state) => Object.fromEntries(
+                Object.entries(state).filter(([key]) => key !== 'isAuthenticated')
+            ),
         }
     )
 );
