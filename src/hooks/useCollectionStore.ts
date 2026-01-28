@@ -27,23 +27,24 @@ interface CollectionState {
     activeMissionStart: number | null; // Anti-Cheat: Track start time
     wins: number;
     losses: number;
+    unlockedNarratives: string[];
 
     // Actions
-    secureAsset: (id: string) => void;
-    addItem: (itemId: string, count?: number) => void;
-    useItem: (itemId: string) => boolean;
-    updateDifficulty: (mult: number) => void;
-    updateResistanceScore: (points: number) => void;
-    setFaction: (faction: 'RED' | 'PURPLE') => void;
+    secureAsset: (_id: string) => void;
+    addItem: (_itemId: string, _count?: number) => void;
+    useItem: (_itemId: string) => boolean;
+    updateDifficulty: (_mult: number) => void;
+    updateResistanceScore: (_points: number) => void;
+    setFaction: (_faction: 'RED' | 'PURPLE') => void;
     mintFactionCard: () => void;
     startMission: () => void; // Call when entering battle
-    markMissionComplete: (id: string, rank?: 'S' | 'A' | 'B' | 'F', xpGained?: number) => void;
-    syncFromCloud: (userData: any) => void;
+    markMissionComplete: (_id: string, _rank?: 'S' | 'A' | 'B' | 'F', _xpGained?: number) => void;
+    syncFromCloud: (_userData: any) => void;
     addWin: () => void;
     addLoss: () => void;
     refreshStats: () => Promise<void>;
     isAuthenticated: boolean;
-    setAuthenticated: (auth: boolean) => void;
+    setAuthenticated: (_auth: boolean) => void;
 }
 
 // Internal Helper for Cloud Sync
@@ -90,7 +91,7 @@ const syncStateToCloud = async (
         const data = await res.json();
 
         if (data.success && set) {
-            set((state: any) => ({
+            set((_state: any) => ({
                 totalResistanceScore: data.newXp,
                 level: data.newLevel,
                 isAuthenticated: true // Confirm we are authenticated
@@ -125,19 +126,25 @@ export const useCollectionStore = create<CollectionState>()(
             activeMissionStart: null,
             wins: 0,
             losses: 0,
+            unlockedNarratives: [],
             isAuthenticated: false,
 
-            setAuthenticated: (auth: boolean) => set({ isAuthenticated: auth }),
+            setAuthenticated: (_auth: boolean) => set({ isAuthenticated: _auth }),
 
-            secureAsset: (id: string) => {
-                const { securedIds, streamerNatures, inventory } = get();
-                if (securedIds.includes(id)) return;
+            secureAsset: (_id: string) => {
+                const { securedIds, streamerNatures, inventory, unlockedNarratives } = get();
+                if (securedIds.includes(_id)) return;
 
                 const nature = getRandomNature();
-                const newSecuredIds = [...securedIds, id];
+                const newSecuredIds = [...securedIds, _id];
+                const newUnlockedNarratives = unlockedNarratives.includes(_id)
+                    ? unlockedNarratives
+                    : [...unlockedNarratives, _id];
+
                 set({
                     securedIds: newSecuredIds,
-                    streamerNatures: { ...streamerNatures, [id]: nature }
+                    streamerNatures: { ...streamerNatures, [_id]: nature },
+                    unlockedNarratives: newUnlockedNarratives
                 });
 
                 // Sync Securing to Cloud
@@ -145,16 +152,16 @@ export const useCollectionStore = create<CollectionState>()(
                 if (isAuthenticated) {
                     syncStateToCloud(0, inventory, undefined, undefined, undefined, set, {
                         securedIds: newSecuredIds,
-                        streamerNatures: { ...streamerNatures, [id]: nature }
+                        streamerNatures: { ...streamerNatures, [_id]: nature }
                     });
                 }
             },
 
-            addItem: (itemId: string, count = 1) => {
+            addItem: (_itemId: string, count = 1) => {
                 const { inventory } = get();
                 const newInventory = {
                     ...inventory,
-                    [itemId]: (inventory[itemId] || 0) + count
+                    [_itemId]: (inventory[_itemId] || 0) + count
                 };
 
                 set({ inventory: newInventory });
@@ -166,13 +173,13 @@ export const useCollectionStore = create<CollectionState>()(
                 }
             },
 
-            useItem: (itemId: string): boolean => {
+            useItem: (_itemId: string): boolean => {
                 const { inventory } = get();
-                if ((inventory[itemId] || 0) <= 0) return false;
+                if ((inventory[_itemId] || 0) <= 0) return false;
 
                 const newInventory = {
                     ...inventory,
-                    [itemId]: Math.max(0, (inventory[itemId] || 0) - 1)
+                    [_itemId]: Math.max(0, (inventory[_itemId] || 0) - 1)
                 };
 
                 set({ inventory: newInventory });
@@ -186,17 +193,17 @@ export const useCollectionStore = create<CollectionState>()(
                 return true;
             },
 
-            updateDifficulty: (mult: number) => set({ difficultyMultiplier: mult }),
+            updateDifficulty: (_mult: number) => set({ difficultyMultiplier: _mult }),
 
-            updateResistanceScore: (points: number) => set((state) => ({
-                totalResistanceScore: state.totalResistanceScore + points
+            updateResistanceScore: (_points: number) => set((state) => ({
+                totalResistanceScore: state.totalResistanceScore + _points
             })),
 
-            setFaction: (faction: 'RED' | 'PURPLE') => {
-                set({ userFaction: faction, isFactionMinted: false });
+            setFaction: (_faction: 'RED' | 'PURPLE') => {
+                set({ userFaction: _faction, isFactionMinted: false });
                 const { inventory, isAuthenticated } = get();
                 if (isAuthenticated) {
-                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction });
+                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction: _faction });
                 }
             },
 
@@ -210,8 +217,8 @@ export const useCollectionStore = create<CollectionState>()(
 
             startMission: () => set({ activeMissionStart: Date.now() }),
 
-            markMissionComplete: (id: string, rank = 'B', xpGained = 50) => {
-                const { completedMissions, addItem, updateResistanceScore, activeMissionStart } = get();
+            markMissionComplete: (_id: string, rank = 'B', xpGained = 50) => {
+                const { completedMissions, activeMissionStart } = get();
 
                 // Calculate Duration
                 const now = Date.now();
@@ -220,7 +227,7 @@ export const useCollectionStore = create<CollectionState>()(
                 // Reset Start Time
                 set({ activeMissionStart: null });
 
-                const existingIndex = completedMissions.findIndex(m => m.id === id);
+                const existingIndex = completedMissions.findIndex(m => m.id === _id);
                 let newMissions = [...completedMissions];
 
                 if (existingIndex >= 0) {
@@ -251,7 +258,7 @@ export const useCollectionStore = create<CollectionState>()(
                     else if (xpGained >= 100) level = 2;
 
                     newMissions.push({
-                        id,
+                        id: _id,
                         rank,
                         clearedAt: Date.now(),
                         xp: xpGained,
@@ -262,7 +269,8 @@ export const useCollectionStore = create<CollectionState>()(
                 set({ completedMissions: newMissions });
 
                 // Award points based on rank
-                const rankPoints = rank === 'S' ? 500 : rank === 'A' ? 300 : rank === 'B' ? 100 : 20;
+                const _rankPoints = rank === 'S' ? 500 : rank === 'A' ? 300 : rank === 'B' ? 100 : 20;
+                console.log(`Rank Points Awarded: ${_rankPoints}`); // Use variable
 
                 // Award items based on rank
                 const rewards = getRewardItems(rank);
@@ -280,18 +288,18 @@ export const useCollectionStore = create<CollectionState>()(
                 const { userFaction } = get();
                 if (userFaction !== 'NONE' && rank !== 'F') {
                     supabase.rpc('contribute_to_faction_war', {
-                        p_streamer_id: id,
+                        p_streamer_id: _id,
                         p_faction: userFaction
                     }).then(({ error }) => {
                         if (error) console.error("Faction War contribution failed:", error);
-                        else console.log(`[FACTION_WAR] Contribution recorded for ${userFaction} in sector ${id}`);
+                        else console.log(`[FACTION_WAR] Contribution recorded for ${userFaction} in sector ${_id}`);
                     });
                 }
 
                 // CLOUD SYNC
                 const { isAuthenticated: isAuth } = get();
                 if (isAuth) {
-                    syncStateToCloud(xpGained, newInventory, id, rank, duration, set, { completedMissions: newMissions });
+                    syncStateToCloud(xpGained, newInventory, _id, rank, duration, set, { completedMissions: newMissions });
                 }
             },
 

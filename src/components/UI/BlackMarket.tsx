@@ -11,6 +11,11 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
     const { purchaseItem, isProcessing, txStatus, setTxStatus } = usePtsTransaction();
     const addItem = useCollectionStore(state => state.addItem);
     const [selectedItem, setSelectedItem] = useState<StoreItem | null>(null);
+    const [neuralId, setNeuralId] = useState<string>('');
+
+    React.useEffect(() => {
+        setNeuralId(Math.random().toString(36).substring(2, 11).toUpperCase());
+    }, []);
 
     const handlePurchase = async (item: StoreItem) => {
         setSelectedItem(item);
@@ -117,7 +122,7 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                                             txStatus === 'CONFIRMED' ? 'UPLINK SUCCESSFUL // ITEM ACQUIRED' :
                                                 txStatus === 'ERROR' ? 'TRANSACTION REJECTED // SIGNAL LOST' : ''}
                                     </p>
-                                    <p className="text-[10px] text-gray-500 font-mono">NEURAL_ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+                                    <p className="text-[10px] text-gray-500 font-mono">NEURAL_ID: {neuralId || '---------'}</p>
                                 </div>
                             </div>
                             {txStatus === 'ERROR' && (

@@ -55,7 +55,7 @@ export const MapEventOverlay: React.FC<MapEventOverlayProps> = ({ event, onClose
                         </div>
 
                         <h3 className="text-[10px] font-mono tracking-[0.5em] opacity-40 mb-2 uppercase">
-                            // ENCRYPTION_DECODER_READY
+                            {"// ENCRYPTION_DECODER_READY"}
                         </h3>
 
                         <h2 className="text-2xl font-black uppercase tracking-tighter mb-4 italic">

@@ -28,6 +28,7 @@ import { MediaUplink } from '@/components/UI/MediaUplink';
 import { Leaderboard } from '@/components/UI/Leaderboard';
 import { useOperatorStore } from '@/hooks/useOperatorStore';
 import { AuthStatus } from '@/components/UI/AuthStatus';
+import { NarrativeArchive } from '@/components/UI/NarrativeArchive';
 
 export default function Home() {
     const { mint, loading, status, error, signature } = useMintStreamer();
@@ -40,6 +41,7 @@ export default function Home() {
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
     const [isFactionOpen, setIsFactionOpen] = useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+    const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
     const { triggerDialogue } = useOperatorStore();
 
@@ -112,6 +114,12 @@ export default function Home() {
                         >
                             [INTEL_RECOVERY]
                         </button>
+                        <button
+                            onClick={() => { playClick(); setIsArchiveOpen(true); }}
+                            className="px-4 py-2 border border-neon-orange/40 text-[10px] font-bold tracking-widest hover:bg-neon-orange/10 transition-all hidden md:block text-neon-orange"
+                        >
+                            [ARCHIVES]
+                        </button>
 
                         <button
                             onClick={() => { playClick(); setIsFactionOpen(true); }}
@@ -156,6 +164,13 @@ export default function Home() {
                         title="Intel Recovery"
                     >
                         📁
+                    </button>
+                    <button
+                        onClick={() => { playClick(); setIsArchiveOpen(true); }}
+                        className="w-14 h-14 rounded-full bg-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.5)] flex items-center justify-center font-black text-xl"
+                        title="Neural Archives"
+                    >
+                        📜
                     </button>
                 </div>
 
@@ -355,6 +370,9 @@ export default function Home() {
 
                 {/* Tutorial Modal */}
                 <TutorialModal isOpen={isTutorialOpen} onClose={() => setIsTutorialOpen(false)} />
+
+                {/* Narrative Archive Instance */}
+                <NarrativeArchive isOpen={isArchiveOpen} onClose={() => setIsArchiveOpen(false)} />
 
                 {/* Notification System */}
                 <ToastSystem />

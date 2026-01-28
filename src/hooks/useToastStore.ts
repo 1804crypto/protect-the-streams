@@ -13,8 +13,8 @@ export interface ToastMessage {
 
 interface ToastState {
     toasts: ToastMessage[];
-    addToast: (toast: Omit<ToastMessage, 'id'>) => void;
-    removeToast: (id: string) => void;
+    addToast: (_toast: Omit<ToastMessage, 'id'>) => void;
+    removeToast: (_id: string) => void;
 }
 
 export const useToastStore = create<ToastState>((set) => ({

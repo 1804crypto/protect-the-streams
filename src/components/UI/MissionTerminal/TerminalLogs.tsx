@@ -18,7 +18,7 @@ export const TerminalLogs: React.FC<TerminalLogsProps> = ({ logs }) => {
                         animate={{ opacity: 1 - (i * 0.15), x: 0 }}
                         className={`flex items-start gap-2 ${i === 0 ? 'text-neon-blue font-bold' : 'text-white/30'}`}
                     >
-                        <span className="opacity-40">{`[${(Date.now() % 10000).toString().padStart(4, '0')}]`}</span>
+                        <span className="opacity-40">{`[${i.toString().padStart(4, '0')}]`}</span>
                         <span className="flex-1">{log}</span>
                     </motion.div>
                 ))}

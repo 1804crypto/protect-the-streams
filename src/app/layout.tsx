@@ -15,7 +15,7 @@ export const metadata: Metadata = {
         siteName: "Protect The Streams",
         images: [
             {
-                url: "/pts_cover_xqc_placeholder.jpg",
+                url: "/pts_cover.jpg",
                 width: 1200,
                 height: 630,
                 alt: "Protect The Streams Resistance Interface",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: "PROTECT THE STREAMS | Resistance OS",
         description: "Join the Resistance. Overthrow Sentinel INC.",
-        images: ["/pts_cover_xqc_placeholder.jpg"],
+        images: ["/pts_cover.jpg"],
     },
     icons: {
         icon: "/favicon.ico",

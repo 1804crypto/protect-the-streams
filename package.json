@@ -52,6 +52,8 @@
     "dotenv": "^17.2.3",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.1",
+    "globals": "^17.0.0",
+    "netlify-cli": "^23.13.5",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",

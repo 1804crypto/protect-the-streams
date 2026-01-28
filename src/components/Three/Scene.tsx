@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react/no-unknown-property */
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment, Float, MeshDistortMaterial, Stars } from '@react-three/drei';
@@ -39,8 +40,8 @@ function ResistanceCore() {
 
         // Critical jitter
         if (isCritical) {
-            meshRef.current.position.x = (Math.random() - 0.5) * 0.05;
-            meshRef.current.position.z = (Math.random() - 0.5) * 0.05;
+            meshRef.current.position.x = Math.sin(t * 100) * 0.02;
+            meshRef.current.position.z = Math.cos(t * 100) * 0.02;
         } else {
             meshRef.current.position.x = 0;
             meshRef.current.position.z = 0;
@@ -79,22 +80,19 @@ function ResistanceCore() {
     );
 }
 
+const PARTICLE_COUNT = 100;
+const INITIAL_PARTICLES = Array.from({ length: PARTICLE_COUNT }, () => ({
+    x: (Math.random() - 0.5) * 50,
+    y: (Math.random() - 0.5) * 50,
+    z: (Math.random() - 0.5) * 50,
+}));
+
 function DataStreams() {
     const meshRef = useRef<THREE.InstancedMesh>(null!);
     const { integrity, glitchIntensity } = useVisualEffects();
-    const count = 100;
     const dummy = useMemo(() => new THREE.Object3D(), []);
 
-    const particles = useMemo(() => {
-        const temp = [];
-        for (let i = 0; i < count; i++) {
-            const x = (Math.random() - 0.5) * 50;
-            const y = (Math.random() - 0.5) * 50;
-            const z = (Math.random() - 0.5) * 50;
-            temp.push({ x, y, z });
-        }
-        return temp;
-    }, []);
+    const particles = useMemo(() => INITIAL_PARTICLES, []);
 
     useFrame((state) => {
         const t = state.clock.elapsedTime;
@@ -109,7 +107,7 @@ function DataStreams() {
     });
 
     return (
-        <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
+        <instancedMesh ref={meshRef} args={[undefined, undefined, PARTICLE_COUNT]}>
             <boxGeometry args={[0.05, 10, 0.05]} />
             <meshStandardMaterial
                 color={integrity < 0.3 ? "#ff003c" : "#00f3ff"}
@@ -134,8 +132,8 @@ function SceneContent() {
         if (timeSinceImpact < 0.5) {
             const decay = 1 - (timeSinceImpact / 0.5);
             const shake = shakeIntensity * decay * 0.2;
-            cameraRef.current.position.x = (Math.random() - 0.5) * shake;
-            cameraRef.current.position.y = (Math.random() - 0.5) * shake;
+            cameraRef.current.position.x = Math.sin(state.clock.elapsedTime * 150) * shake;
+            cameraRef.current.position.y = Math.cos(state.clock.elapsedTime * 150) * shake;
         } else {
             cameraRef.current.position.x = THREE.MathUtils.lerp(cameraRef.current.position.x, 0, 0.1);
             cameraRef.current.position.y = THREE.MathUtils.lerp(cameraRef.current.position.y, 0, 0.1);

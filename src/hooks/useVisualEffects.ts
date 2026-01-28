@@ -10,9 +10,9 @@ interface VisualEffectsState {
     lastImpactTime: number;
 
     // Actions
-    setIntegrity: (value: number) => void;
-    triggerImpact: (intensity: number) => void;
-    triggerGlitch: (intensity: number) => void;
+    setIntegrity: (_value: number) => void;
+    triggerImpact: (_intensity: number) => void;
+    triggerGlitch: (_intensity: number) => void;
     resetEffects: () => void;
 }
 

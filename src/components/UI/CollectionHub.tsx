@@ -21,6 +21,11 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
     const getMissionRecordLocal = (id: string) => completedMissions.find(m => m.id === id);
     const [activeMissionStreamer, setActiveMissionStreamer] = React.useState<Streamer | null>(null);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
+    const [authId, setAuthId] = React.useState<string>('');
+
+    React.useEffect(() => {
+        setAuthId(Math.random().toString(36).substring(7).toUpperCase());
+    }, []);
     const securedAssets = streamers.filter(s => securedIds.includes(s.id));
 
     return (
@@ -51,7 +56,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                     <h2 className="text-3xl font-black neon-text-blue uppercase tracking-tighter">Secured Intel</h2>
                                     <div className="flex items-center gap-4 mt-2">
                                         <p className="text-[10px] text-white/40 font-mono tracking-[0.3em]">
-                                            // {completedMissions.length} OF {streamers.length} SECTORS_LIBERATED
+                                            {"// " + completedMissions.length + " OF " + streamers.length + " SECTORS_LIBERATED"}
                                         </p>
                                         <div className="h-3 w-px bg-white/10" />
                                         <div className="flex items-center gap-2">
@@ -82,12 +87,12 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
 
                             {/* Resistance Strategic Map */}
                             <div className="mb-12">
-                                <h3 className="text-[10px] font-black tracking-[0.3em] text-white/40 mb-4 uppercase">// STRATEGIC_MAP</h3>
+                                <h3 className="text-[10px] font-black tracking-[0.3em] text-white/40 mb-4 uppercase">{"// STRATEGIC_MAP"}</h3>
                                 <ResistanceMap onSectorClick={(s) => setActiveMissionStreamer(s as Streamer)} />
                             </div>
 
                             <div className="space-y-6">
-                                <h3 className="text-[10px] font-black tracking-[0.3em] text-white/40 uppercase">// DEFENSE_GRID_STATUS</h3>
+                                <h3 className="text-[10px] font-black tracking-[0.3em] text-white/40 uppercase">{"// DEFENSE_GRID_STATUS"}</h3>
                                 <div className="h-1 w-full bg-white/5 relative overflow-hidden">
                                     <motion.div
                                         initial={{ width: 0 }}
@@ -99,7 +104,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
 
                             {/* Assets Content */}
                             <div className="space-y-6">
-                                <h3 className="text-[10px] font-black tracking-[0.3em] text-white/40 uppercase">// AVAILABLE_TACTICAL_UPLINKS</h3>
+                                <h3 className="text-[10px] font-black tracking-[0.3em] text-white/40 uppercase">{"// AVAILABLE_TACTICAL_UPLINKS"}</h3>
                                 {securedAssets.length > 0 ? (
                                     securedAssets.map((asset) => {
                                         const record = getMissionRecordLocal(asset.id);
@@ -146,7 +151,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                                     {asset.narrative && (
                                                         <div className="mt-2 pt-2 border-t border-white/5">
                                                             <p className="text-[7px] text-neon-blue/60 font-mono leading-tight">
-                                                                // LINK: {asset.narrative.connection}
+                                                                {"// LINK: " + asset.narrative.connection}
                                                             </p>
                                                         </div>
                                                     )}
@@ -178,7 +183,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                             {/* Footer */}
                             <div className="p-8 bg-black/40 border-t border-white/5">
                                 <p className="text-[8px] text-white/20 font-mono tracking-widest text-center">
-                                    TERMINAL_SESSION_SECURE // AUTH_ID: {Math.random().toString(36).substring(7).toUpperCase()}
+                                    TERMINAL_SESSION_SECURE // AUTH_ID: {authId || '-------'}
                                 </p>
                             </div>
                         </div>

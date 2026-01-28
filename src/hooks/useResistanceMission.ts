@@ -9,10 +9,8 @@ import {
     getEffectivenessMessage,
     getEnemyType,
     getStatForMoveType,
-    MoveType,
     SUPER_EFFECTIVE
 } from '@/data/typeChart';
-import { BattleItem } from '@/data/items';
 import { useGameDataStore } from './useGameDataStore';
 
 import { useVisualEffects } from './useVisualEffects';
@@ -149,20 +147,20 @@ export const useResistanceMission = (streamer: Streamer) => {
 
     const addLog = useCallback((msg: string) => setLogs(prev => [msg, ...prev].slice(0, 5)), []);
 
-    const triggerShake = () => {
+    const triggerShake = useCallback(() => {
         setIsShaking(true);
         triggerGlobalImpact(1.0);
         setTimeout(() => setIsShaking(false), 500);
-    };
+    }, [triggerGlobalImpact]);
 
-    const triggerGlitch = (intensity: number = 1) => {
+    const triggerGlitch = useCallback((intensity: number = 1) => {
         setGlitchIntensity(intensity);
         triggerGlobalGlitch(intensity);
         setTimeout(() => {
             setGlitchIntensity(0);
             triggerGlobalGlitch(0);
         }, 400);
-    };
+    }, [triggerGlobalGlitch]);
 
     const handleEnemyTurn = useCallback(() => {
         if (isComplete) return;
@@ -224,7 +222,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         // Decrement boost counters
         setAttackBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
         setDefenseBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
-    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, defenseBoost, player, difficultyMultiplier, streamer.id, markMissionComplete, addLog]);
+    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, defenseBoost, player, difficultyMultiplier, streamer.id, markMissionComplete, addLog, triggerShake, triggerGlitch]);
 
 
 
@@ -283,7 +281,6 @@ export const useResistanceMission = (streamer: Streamer) => {
 
         // Damage Calculation
         let damage = 0;
-        let newEnemyHp = enemy.hp;
 
         if (move.power > 0) {
             const isCrit = Math.random() < 0.10;
@@ -307,7 +304,6 @@ export const useResistanceMission = (streamer: Streamer) => {
 
             // Apply Damage
             const nextHp = Math.max(0, enemy.hp - damage);
-            newEnemyHp = nextHp;
 
             setLastDamageAmount(damage);
             setLastDamageDealer('player');
@@ -374,7 +370,7 @@ export const useResistanceMission = (streamer: Streamer) => {
                 addLog("Signal integrity restored (+30 HP).");
             }
         }
-    }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, attackBoost, movePP, currentBossPhase, streamer.name, addLog, triggerGlitch]);
+    }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, attackBoost, movePP, currentBossPhase, streamer.name, addLog, triggerGlitch, triggerShake]);
 
     const executeUltimate = useCallback(() => {
         if (charge < 100 || !isTurn || isComplete) return;
@@ -418,9 +414,9 @@ export const useResistanceMission = (streamer: Streamer) => {
         setEnemy(prev => ({ ...prev, hp: newHp }));
 
         addLog(`Catastrophic damage inflicted: ${damage}.`);
-    }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel, enemy.hp, enemy.maxHp, addLog, triggerGlitch]);
+    }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel, enemy.hp, addLog, triggerGlitch]);
 
-    const useBattleItem = useCallback((itemId: string) => {
+    const executeUseItem = useCallback((itemId: string) => {
         if (!isTurn || isComplete) return false;
 
         const item = items[itemId];
@@ -468,20 +464,22 @@ export const useResistanceMission = (streamer: Streamer) => {
         setIsTurn(false);
         setTurns(prev => prev + 1);
         return true;
-    }, [isTurn, isComplete, getItemCount, consumeItem, streamer.moves, items]);
+    }, [isTurn, isComplete, consumeItem, streamer.moves, items, addLog]);
 
-    // Completion Handler: now passes correct XP
     useEffect(() => {
         if (result === 'SUCCESS' && !hasMarkedComplete) {
             const rank = calculateRank();
             const xp = calculateXP(rank);
 
-            markMissionComplete(streamer.id, rank, xp);
-            setHasMarkedComplete(true);
+            // Wrap in setTimeout to avoid React 'setState in effect' warning
+            setTimeout(() => {
+                setHasMarkedComplete(true);
+                markMissionComplete(streamer.id, rank, xp);
 
-            if (difficultyMultiplier > 1) {
-                updateDifficulty(1);
-            }
+                if (difficultyMultiplier > 1) {
+                    updateDifficulty(1);
+                }
+            }, 0);
         }
     }, [result, streamer.id, markMissionComplete, hasMarkedComplete, calculateRank, calculateXP, difficultyMultiplier, updateDifficulty]);
 
@@ -494,7 +492,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         result,
         executeMove,
         executeUltimate,
-        useBattleItem,
+        executeUseItem,
         triggerShake,
         triggerGlitch,
         stage,

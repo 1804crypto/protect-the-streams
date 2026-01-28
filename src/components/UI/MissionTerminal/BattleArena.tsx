@@ -29,8 +29,8 @@ interface BattleArenaProps {
     showPhaseBanner: boolean;
     currentBossPhase: number;
     itemEffects: { id: number, type: 'heal' | 'boost_atk' | 'boost_def' }[];
-    onItemEffectComplete: (id: number) => void;
-    onDamagePopupComplete: (id: number) => void;
+    onItemEffectComplete: (_id: number) => void;
+    onDamagePopupComplete: (_id: number) => void;
     statsKey: number;
 }
 
@@ -163,9 +163,29 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                     className="relative z-20 w-[240px] h-[240px] lg:w-[380px] lg:h-[380px] group"
                 >
                     {/* Enemy Card Background */}
-                    <div className={`absolute inset-0 rounded-[20px] lg:rounded-[40px] border-4 lg:border-[12px] ${isBoss ? 'border-resistance-accent shadow-[0_0_80px_rgba(255,0,60,0.6)] bg-gradient-to-br from-black via-resistance-accent/10 to-black' : 'border-white/20 bg-black/60 shadow-[0_0_40px_rgba(255,255,255,0.1)]'} overflow-hidden`}>
-                        {/* Static Overlay for enemy */}
-                        <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
+                    <div className={`absolute inset-0 rounded-[20px] lg:rounded-[40px] border-4 lg:border-[12px] overflow-hidden transition-all duration-700
+                        ${isBoss
+                            ? 'border-resistance-accent shadow-[0_0_80px_rgba(255,0,60,0.6)]'
+                            : 'border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.1)]'
+                        }`}
+                    >
+                        {/* Themed Background Image */}
+                        <motion.div
+                            initial={{ scale: 1.2, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="absolute inset-0 z-0"
+                            style={{
+                                backgroundImage: `url(${isBoss ? '/boss_card_bg.png' : '/sentinel_card_bg.png'})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                            }}
+                        >
+                            {/* Overlay Gradient for contrast */}
+                            <div className={`absolute inset-0 ${isBoss ? 'bg-gradient-to-t from-black via-transparent to-black/40' : 'bg-gradient-to-t from-black/60 via-transparent to-black/20'}`} />
+                        </motion.div>
+
+                        {/* Static Overlay for enemy texture */}
+                        <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none z-10" />
                     </div>
 
                     <img
@@ -231,7 +251,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                     ))}
                     {effectivenessFlash && (
                         <motion.div
-                            key={`eff-${effectivenessFlash}-${Date.now()}`}
+                            key={`eff-${effectivenessFlash}-${statsKey}`}
                             initial={{ opacity: 1 }}
                             animate={{ opacity: 0 }}
                             className={`absolute inset-0 z-50 ${effectivenessFlash === 'super' ? 'bg-neon-green/20' : 'bg-red-500/20'}`}

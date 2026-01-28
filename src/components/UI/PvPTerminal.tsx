@@ -6,7 +6,7 @@ import { Streamer } from '@/data/streamers';
 import { usePvPMatchmaking } from '@/hooks/usePvPMatchmaking';
 import { usePvPBattle } from '@/hooks/usePvPBattle';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
-import { useNeuralMusic } from '@/hooks/useNeuralMusic';
+// useNeuralMusic removed as it was unused here
 
 interface PvPTerminalProps {
     streamer: Streamer;
@@ -15,7 +15,7 @@ interface PvPTerminalProps {
     onClose: () => void;
 }
 
-export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isOpen, onClose }) => {
+export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _matchId, isOpen, onClose }) => {
     // 1. Matchmaking
     const { status: matchStatus, roomId: matchedRoomId, opponentId, playerId } = usePvPMatchmaking(streamer.id, isOpen);
 
@@ -27,17 +27,14 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isO
         chatLogs,
         isTurn,
         isComplete,
-        battleStatus,
+        battleStatus: _battleStatus,
         winnerId,
         executeMove,
         sendChat,
         lastAction
     } = usePvPBattle(matchedRoomId || 'waiting', opponentId, streamer, playerId);
 
-    // Dynamic Neural Music
-    useNeuralMusic(matchStatus === 'MATCH_FOUND' && !isComplete);
-
-    const { playClick, playMoveSound, playDamage, playUltimate, playScanning } = useAudioSystem();
+    const { playClick, playMoveSound, playDamage, playUltimate: _playUltimate, playScanning } = useAudioSystem();
     const [isAttacking, setIsAttacking] = useState(false);
     const [isOpponentAttacking, setIsOpponentAttacking] = useState(false);
     const [damageNumber, setDamageNumber] = useState<{ value: number, id: number } | null>(null);
@@ -78,12 +75,16 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isO
 
             // Trigger Opponent Animation
             if (lastAction.senderId !== playerId) {
-                setIsOpponentAttacking(true);
-                setTimeout(() => setIsOpponentAttacking(false), 300);
+                setTimeout(() => {
+                    setIsOpponentAttacking(true);
+                    setTimeout(() => setIsOpponentAttacking(false), 300);
+                }, 0);
 
                 // Show Damage on Player
-                setDamageNumber({ value: lastAction.damage, id: now });
-                setTimeout(() => setDamageNumber(null), 1500);
+                setTimeout(() => {
+                    setDamageNumber({ value: lastAction.damage, id: now });
+                    setTimeout(() => setDamageNumber(null), 1500);
+                }, 0);
             }
         }
     }, [lastAction, playDamage, playMoveSound, playerId]);
@@ -113,6 +114,9 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId, isO
                             <div className="w-32 h-32 border-4 border-neon-blue/30 rounded-full animate-ping absolute inset-0" />
                             <div className="w-32 h-32 border-4 border-t-neon-blue rounded-full animate-spin flex items-center justify-center">
                                 <span className="text-4xl">📡</span>
+                                <div>GEO_SYNC: ACTIVE</div>
+                                <div>SIGNAL_DENSITY: 99%</div>
+                                <div className="text-neon-blue">ENCRYPTION: LEVEL_99</div>
                             </div>
                         </div>
                         <div className="text-center">

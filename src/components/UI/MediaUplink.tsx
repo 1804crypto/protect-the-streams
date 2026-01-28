@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, Music, X, Activity, Wifi } from 'lucide-react';
+import { Radio, Music, X, Activity } from 'lucide-react';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 
 export const MediaUplink: React.FC = () => {
@@ -46,7 +46,7 @@ export const MediaUplink: React.FC = () => {
                                 width="100%"
                                 height="120"
                                 allow="encrypted-media"
-                                style={{ border: 'none' }}
+                                className="border-none"
                                 title="Audius Rebel Broadcast"
                             />
                         </div>
@@ -72,7 +72,7 @@ export const MediaUplink: React.FC = () => {
                             </button>
 
                             <p className="text-[7px] font-mono text-white/20 italic leading-tight">
-                                // Isolating external frequencies will dampen the internal Resistance drone while maintaining tactical field SFX.
+                                {"// Isolating external frequencies will dampen the internal Resistance drone while maintaining tactical field SFX."}
                             </p>
                         </div>
                     </motion.div>

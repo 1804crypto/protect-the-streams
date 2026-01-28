@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import bs58 from 'bs58';
 import { toast } from '@/hooks/useToastStore';
@@ -9,6 +9,18 @@ export const useUserAuth = () => {
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
     const { syncFromCloud, isAuthenticated, setAuthenticated } = useCollectionStore();
+
+    // Wallet Switch Detection
+    const prevWalletRef = useRef<string | null>(null);
+    useEffect(() => {
+        const currentWallet = publicKey?.toBase58() || null;
+        if (prevWalletRef.current && currentWallet !== prevWalletRef.current) {
+            console.warn("Wallet switched or disconnected. Resetting auth state.");
+            setAuthenticated(false);
+            setUserId(null);
+        }
+        prevWalletRef.current = currentWallet;
+    }, [publicKey, setAuthenticated]);
 
     // Auto-check session on mount
     useEffect(() => {
@@ -92,7 +104,7 @@ export const useUserAuth = () => {
         } finally {
             setIsAuthenticating(false);
         }
-    }, [publicKey, signMessage, syncFromCloud]);
+    }, [publicKey, signMessage, syncFromCloud, setAuthenticated, setUserId]);
 
     return {
         isAuthenticated,

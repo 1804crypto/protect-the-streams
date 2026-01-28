@@ -16,22 +16,23 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean) => {
 
     useEffect(() => {
         if (!enabled) {
-            setMatchStatus('IDLE');
+            setTimeout(() => setMatchStatus('IDLE'), 0);
             if (channelRef.current) supabase.removeChannel(channelRef.current);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             return;
         }
 
-        setMatchStatus('SEARCHING');
+        setTimeout(() => setMatchStatus('SEARCHING'), 0);
 
         // Start 30s timeout
         timeoutRef.current = setTimeout(() => {
-            if (matchStatus === 'SEARCHING') {
-                setMatchStatus('TIMEOUT');
-                if (channelRef.current) {
-                    supabase.removeChannel(channelRef.current);
-                    channelRef.current = null;
-                }
+            setMatchStatus(currentStatus => {
+                if (currentStatus === 'SEARCHING') return 'TIMEOUT';
+                return currentStatus;
+            });
+            if (channelRef.current) {
+                supabase.removeChannel(channelRef.current);
+                channelRef.current = null;
             }
         }, 30000); // 30 seconds
 
@@ -106,7 +107,7 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean) => {
             if (channel) supabase.removeChannel(channel);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
-    }, [enabled, streamerId, sessionId, playerId, matchStatus]);
+    }, [enabled, streamerId, sessionId, playerId]);
 
     const retry = () => {
         setMatchStatus('SEARCHING');

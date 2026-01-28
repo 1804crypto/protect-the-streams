@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Zap, X, CreditCard, CheckCircle2, Loader2, Wallet } from 'lucide-react';
+import { Shield, Zap, X, CreditCard, CheckCircle2, Loader2 } from 'lucide-react';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 
@@ -46,6 +46,11 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
     const [tempFaction, setTempFaction] = useState<'RED' | 'PURPLE' | null>(
         userFaction !== 'NONE' ? userFaction : null
     );
+    const [memberId, setMemberId] = useState<number | null>(null);
+
+    React.useEffect(() => {
+        setMemberId(Math.floor(Math.random() * 999));
+    }, []);
 
     const handleSelectFaction = (faction: 'RED' | 'PURPLE') => {
         playClick();
@@ -81,6 +86,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                     <button
                         onClick={onClose}
                         className="absolute -top-12 right-0 text-white/40 hover:text-white transition-all p-2 group"
+                        title="Close Faction Selection"
                     >
                         <X size={24} className="group-hover:rotate-90 transition-transform" />
                     </button>
@@ -158,7 +164,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                                     <p className="text-white font-mono text-[10px] tracking-[0.4em] mt-2 opacity-50 underline decoration-neon-blue/20">{currentFaction.motto}</p>
                                 </div>
                                 <p className="text-white/70 leading-relaxed text-sm font-cyber border-l-2 border-neon-blue/30 pl-6 italic">
-                                    "You are about to synchronize your biological signature with the {currentFaction.id} protocol. Once established, this link becomes a permanent node in the resistance network."
+                                    {"\"You are about to synchronize your biological signature with the " + currentFaction.id + " protocol. Once established, this link becomes a permanent node in the resistance network.\""}
                                 </p>
                                 <div className="space-y-4 pt-6 text-[10px] font-mono tracking-widest text-white/40 uppercase">
                                     <div className="flex justify-between border-b border-white/5 pb-2">
@@ -192,7 +198,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                                     <currentFaction.icon size={120} className={`${currentFaction.color} drop-shadow-[0_0_15px_currentColor]`} />
                                     <div className="text-center">
                                         <p className="text-[10px] font-mono opacity-30 mb-1">MEMBER_ID</p>
-                                        <p className="text-xs font-black tracking-widest italic">#RES-09{Math.floor(Math.random() * 999)}</p>
+                                        <p className="text-xs font-black tracking-widest italic">#RES-09{memberId ?? '---'}</p>
                                     </div>
                                     <div className="w-full h-px bg-white/10"></div>
                                     <div className="flex flex-col items-center gap-2">

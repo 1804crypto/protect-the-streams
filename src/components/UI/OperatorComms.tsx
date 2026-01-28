@@ -6,7 +6,7 @@ import { useOperatorStore } from '@/hooks/useOperatorStore';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 
 export const OperatorComms: React.FC = () => {
-    const { currentDialogue, isMessageOpen, nextDialogue, closeDialogue } = useOperatorStore();
+    const { currentDialogue, isMessageOpen, nextDialogue, closeDialogue: _closeDialogue } = useOperatorStore();
     const { playVoiceLine, playClick, forceUnmute } = useAudioSystem();
 
     useEffect(() => {

@@ -29,7 +29,7 @@ async function checkWallet() {
         try {
             const exists = await umi.rpc.accountExists(publicKey(collectionAddr));
             console.log("Collection Account Exists:", exists);
-        } catch (e) {
+        } catch (e: any) {
             console.log("Error checking collection:", e.message);
         }
     }

@@ -96,9 +96,29 @@ async function seedItems() {
     }
 }
 
+async function seedSectorControl() {
+    console.log('🌱 Seeding Sector Control...');
+
+    const sectorControlList = streamers.map(s => ({
+        streamer_id: s.id,
+        controlling_faction: 'NONE',
+        red_influence: 0,
+        purple_influence: 0
+    }));
+
+    const { error } = await supabase.from('sector_control').upsert(sectorControlList);
+
+    if (error) {
+        console.error('Error seeding sector control:', error);
+    } else {
+        console.log(`✅ Synced ${sectorControlList.length} sectors`);
+    }
+}
+
 async function main() {
     await seedStreamers();
     await seedItems();
+    await seedSectorControl();
     console.log('🚀 Database Seed Complete');
 }
 

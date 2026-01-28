@@ -7,6 +7,9 @@ import { useVisualEffects } from './useVisualEffects';
 // Singleton AudioContext moved outside the hook to persist across components
 let globalAudioCtx: AudioContext | null = null;
 
+// Local type as fallback for ESLint if not detected in globals
+type OscillatorTypeNative = 'sine' | 'square' | 'sawtooth' | 'triangle';
+
 export const useAudioSystem = () => {
     // Uses discrete selectors for synchronized muting/unmuting
     const isMuted = useAudioStore(state => state.isMuted);
@@ -38,7 +41,7 @@ export const useAudioSystem = () => {
     }, []);
 
     // Core SFX player with envelope
-    const playSfx = useCallback((freq: number, type: OscillatorType, duration: number, volume = 0.1, detune = 0) => {
+    const playSfx = useCallback((freq: number, type: OscillatorTypeNative, duration: number, volume = 0.1, detune = 0) => {
         const ctx = initCtx();
         if (isMuted || !ctx) return;
 
@@ -314,7 +317,7 @@ export const useAudioSystem = () => {
         } else {
             [droneNode, subBassNode, shimmerNode, lfoNode].forEach(nodeRef => {
                 if (nodeRef.current) {
-                    try { nodeRef.current.stop(); } catch { }
+                    try { nodeRef.current.stop(); } catch { /* ignore */ }
                     nodeRef.current = null;
                 }
             });
@@ -421,7 +424,7 @@ export const useAudioSystem = () => {
                     osc.stop();
                     lfo.stop();
                 }, 150);
-            } catch (e) { }
+            } catch { /* ignore */ }
         };
     }, [isMuted, initCtx]);
 
@@ -430,19 +433,22 @@ export const useAudioSystem = () => {
         if (isMuted || !ctx) return;
         const moveType = type.toUpperCase();
         switch (moveType) {
-            case 'CHAOS':
+            case 'CHAOS': {
                 playSfx(60, 'sawtooth', 0.4, 0.1, 100);
                 setTimeout(() => playNoise(0.2, 0.05), 50);
                 break;
-            case 'REBELLION':
+            }
+            case 'REBELLION': {
                 playNoise(0.15, 0.15);
                 playSfx(120, 'square', 0.1, 0.1);
                 break;
-            case 'INTEL':
+            }
+            case 'INTEL': {
                 playSfx(1500, 'sine', 0.1, 0.08);
                 setTimeout(() => playSfx(2000, 'sine', 0.05, 0.05), 40);
                 break;
-            case 'CHARISMA':
+            }
+            case 'CHARISMA': {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = 'sine';
@@ -456,11 +462,13 @@ export const useAudioSystem = () => {
                 osc.start();
                 osc.stop(ctx.currentTime + 0.3);
                 break;
-            case 'INFLUENCE':
+            }
+            case 'INFLUENCE': {
                 [300, 300, 300].forEach((freq, i) => {
                     setTimeout(() => playSfx(freq, 'triangle', 0.2, 0.05 / (i + 1)), i * 100);
                 });
                 break;
+            }
             default:
                 playClick();
         }

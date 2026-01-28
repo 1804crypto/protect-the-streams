@@ -8,7 +8,7 @@ interface InventoryOverlayProps {
     inventory: Record<string, number>;
     isTurn: boolean;
     isComplete: boolean;
-    onUseItem: (itemId: string, itemConfig: any) => void;
+    onUseItem: (_itemId: string, _itemConfig: any) => void;
 }
 
 export const InventoryOverlay: React.FC<InventoryOverlayProps> = ({

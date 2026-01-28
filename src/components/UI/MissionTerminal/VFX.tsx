@@ -4,15 +4,25 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 export const ParticleEffect = ({ x, y, color }: { x: number, y: number, color: string }) => {
+    const [offsets, setOffsets] = React.useState({ x: 0, y: 0, rotate: 0 });
+
+    React.useEffect(() => {
+        setOffsets({
+            x: (Math.random() - 0.5) * 200,
+            y: (Math.random() - 0.5) * 200,
+            rotate: Math.random() * 720
+        });
+    }, []);
+
     return (
         <motion.div
             initial={{ x, y, opacity: 1, scale: 1 }}
             animate={{
-                x: x + (Math.random() - 0.5) * 200,
-                y: y + (Math.random() - 0.5) * 200,
+                x: x + offsets.x,
+                y: y + offsets.y,
                 opacity: 0,
                 scale: [1, 2, 0],
-                rotate: Math.random() * 720
+                rotate: offsets.rotate
             }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             className={`absolute left-0 top-0 w-2 h-2 ${color} z-30 pointer-events-none rounded-sm blur-[0.5px] border border-white/20 shadow-[0_0_10px_currentColor]`}

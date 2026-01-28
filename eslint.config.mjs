@@ -3,6 +3,7 @@ import nextPlugin from "@next/eslint-plugin-next";
 import reactPlugin from "eslint-plugin-react";
 import hooksPlugin from "eslint-plugin-react-hooks";
 import tsParser from "@typescript-eslint/parser";
+import globals from "globals";
 
 export default [
     {
@@ -24,15 +25,12 @@ export default [
                 },
             },
             globals: {
-                window: "readonly",
-                document: "readonly",
-                localStorage: "readonly",
-                console: "readonly",
-                setTimeout: "readonly",
-                clearTimeout: "readonly",
-                crypto: "readonly",
-                process: "readonly",
-                NodeJS: "readonly"
+                ...globals.browser,
+                ...globals.node,
+                NodeJS: "readonly",
+                setInterval: "readonly",
+                clearInterval: "readonly",
+                Buffer: "readonly"
             },
         },
         rules: {
@@ -43,7 +41,11 @@ export default [
             "react/prop-types": "off",
             "@next/next/no-img-element": "warn",
             "react/no-unescaped-entities": "off",
-            "no-unused-vars": "warn",
+            "no-unused-vars": ["warn", {
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_",
+                "caughtErrorsIgnorePattern": "^_"
+            }],
             "no-undef": "error"
         },
         settings: {

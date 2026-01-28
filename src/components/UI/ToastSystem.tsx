@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToastStore, ToastMessage } from '@/hooks/useToastStore';
-import { X, CheckCircle, AlertTriangle, Info, Terminal, Gift } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, Info, Gift } from 'lucide-react';
 
 const icons = {
     success: <CheckCircle className="w-5 h-5 text-neon-green" />,

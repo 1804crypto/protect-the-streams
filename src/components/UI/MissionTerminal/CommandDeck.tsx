@@ -9,7 +9,7 @@ interface CommandDeckProps {
     movePP: Record<string, number>;
     isTurn: boolean;
     isComplete: boolean;
-    onMoveClick: (move: Move) => void;
+    onMoveClick: (_move: Move) => void;
     charge: number;
     onUltimateClick: () => void;
     onToggleInventory: () => void;

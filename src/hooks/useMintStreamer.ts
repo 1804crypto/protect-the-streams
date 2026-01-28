@@ -9,7 +9,7 @@ import { walletAdapterIdentity } from '@metaplex-foundation/umi-signer-wallet-ad
 
 export const useMintStreamer = () => {
     const { connection } = useConnection();
-    const { connected, publicKey, wallet, signTransaction } = useWallet();
+    const { connected, publicKey, wallet } = useWallet();
     const secureAsset = useCollectionStore(state => state.secureAsset);
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<string | null>(null);
@@ -106,7 +106,7 @@ export const useMintStreamer = () => {
                     },
                     commitment: 'confirmed'
                 });
-            } catch (confirmErr) {
+            } catch {
                 // If confirmation times out, we do one final check of the signature status
                 const statuses = await umi.rpc.getSignatureStatuses([validSignature]);
                 const status = statuses[0] as any;

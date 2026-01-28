@@ -11,29 +11,29 @@ import { BlackMarket } from './BlackMarket';
 import { ShoppingCart } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
-export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }> = ({ onSectorClick }) => {
+export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void }> = ({ onSectorClick }) => {
     const completedMissions = useCollectionStore(state => state.completedMissions);
     const addItem = useCollectionStore(state => state.addItem);
     const updateDifficulty = useCollectionStore(state => state.updateDifficulty);
     const { playEvent, playMapAmbient } = useAudioSystem();
     const [activeEvent, setActiveEvent] = useState<{ type: MapEventType, title: string, message: string, reward?: string } | null>(null);
-    const [revealedBosses, setRevealedBosses] = useState<string[]>([]);
+    const [revealedBosses, setRevealedBosses] = useState<string[]>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('pts_revealed_bosses');
+            try {
+                return saved ? JSON.parse(saved) : [];
+            } catch {
+                return [];
+            }
+        }
+        return [];
+    });
     const [isMarketOpen, setIsMarketOpen] = useState(false);
 
     // Global Faction War State
     const [sectorControl, setSectorControl] = useState<Record<string, 'RED' | 'PURPLE' | 'NONE'>>({});
 
-    // 1. Initialization Effect: Load Bosses (Run ONCE)
-    useEffect(() => {
-        const saved = localStorage.getItem('pts_revealed_bosses');
-        if (saved) {
-            try {
-                setRevealedBosses(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to parse revealed bosses", e);
-            }
-        }
-    }, []);
+    // 1. Initialization logic handled in useState above
 
     // 2. Network Subscription Effect: Sector Control (Run ONCE)
     useEffect(() => {
@@ -64,9 +64,10 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
     }, []);
 
     // 3. Random Event Effect (Run ONCE on mount)
-    // Depends on getting data, but we want it to happen shortly after load
     useEffect(() => {
+        let isMounted = true;
         const roll = Math.random();
+
         if (roll < 0.2) {
             const events: { type: MapEventType, title: string, message: string, reward?: string }[] = [
                 {
@@ -91,33 +92,36 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
 
             const selected = events[Math.floor(Math.random() * events.length)];
 
-            setTimeout(() => {
+            const timer = setTimeout(() => {
+                if (!isMounted) return;
+
                 setActiveEvent(selected);
                 playEvent();
 
                 if (selected.type === 'SIGNAL_FLARE') {
                     addItem('stim_pack', 1);
                 } else if (selected.type === 'DATA_MOSS') {
-                    // We need latest state here, but to avoid deps loop, we can use functional updates or specific logic
-                    // For simplicity in this event, we'll read from localStorage directly to double check
-                    // or just reveal a random one that isn't commonly revealed
-                    const saved = localStorage.getItem('pts_revealed_bosses');
-                    const currentRevealed = saved ? JSON.parse(saved) : [];
-
-                    const locked = streamers.filter(s => !currentRevealed.includes(s.id));
-
-                    if (locked.length > 0) {
-                        const reveal = locked[Math.floor(Math.random() * locked.length)].id;
-                        const updated = [...currentRevealed, reveal];
-                        setRevealedBosses(updated);
-                        localStorage.setItem('pts_revealed_bosses', JSON.stringify(updated));
-                    }
+                    setRevealedBosses(prev => {
+                        const locked = streamers.filter(s => !prev.includes(s.id));
+                        if (locked.length > 0) {
+                            const reveal = locked[Math.floor(Math.random() * locked.length)].id;
+                            const updated = [...prev, reveal];
+                            localStorage.setItem('pts_revealed_bosses', JSON.stringify(updated));
+                            return updated;
+                        }
+                        return prev;
+                    });
                 } else if (selected.type === 'AUTHORITY_SWEEP') {
                     updateDifficulty(1.1);
                 }
-            }, 1000);
+            }, 2000); // Wait bit more for map stability
+
+            return () => {
+                isMounted = false;
+                clearTimeout(timer);
+            };
         }
-    }, [addItem, playEvent, updateDifficulty]); // These deps are stable from stores
+    }, [addItem, playEvent, updateDifficulty]);
 
     // 4. Ambient Audio Effect (Run ONCE)
     useEffect(() => {
@@ -257,7 +261,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
                         y: [sector.y + "%", (parseFloat(sector.y.toString()) + 0.5) + "%", sector.y + "%"],
                     }}
                     transition={{
-                        duration: 3 + Math.random() * 2,
+                        duration: 4, // Fixed for purity
                         repeat: Infinity,
                         ease: "easeInOut"
                     }}
@@ -342,7 +346,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (streamer: any) => void }
             {/* Corner Decorative Elements */}
             <div className="absolute top-4 left-4 font-mono text-[7px] text-white/40 space-y-1 pointer-events-none">
                 <div>GEO_SYNC: ACTIVE</div>
-                <div>SIGNAL_DENSITY: {Math.floor(Math.random() * 100)}%</div>
+                <div>SIGNAL_DENSITY: 99%</div>
                 <div className="text-neon-blue">ENCRYPTION: LEVEL_99</div>
             </div>
 

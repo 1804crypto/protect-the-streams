@@ -26,6 +26,14 @@ export const useNeuralMusic = (isActive: boolean) => {
         return audioCtx;
     }, []);
 
+    const cleanup = useCallback(() => {
+        if (pulseOsc.current) {
+            try { pulseOsc.current.stop(); } catch { /* ignore */ }
+            pulseOsc.current = null;
+        }
+        pulseGain.current = null;
+    }, []);
+
     // Main Engine Loop
     useEffect(() => {
         const ctx = initCtx();
@@ -61,7 +69,7 @@ export const useNeuralMusic = (isActive: boolean) => {
         return () => {
             // No specific cleanup needed for critical alarm anymore
         };
-    }, [isActive, isMuted, isDivertMode, initCtx]);
+    }, [isActive, isMuted, isDivertMode, initCtx, cleanup]);
 
     // Reactive Modulation
     useEffect(() => {
@@ -85,15 +93,7 @@ export const useNeuralMusic = (isActive: boolean) => {
 
     }, [integrity, glitchIntensity, isActive]);
 
-    const cleanup = () => {
-        if (pulseOsc.current) {
-            try { pulseOsc.current.stop(); } catch { }
-            pulseOsc.current = null;
-        }
-        pulseGain.current = null;
-    };
-
     useEffect(() => {
         return () => cleanup();
-    }, []);
+    }, [cleanup]);
 };

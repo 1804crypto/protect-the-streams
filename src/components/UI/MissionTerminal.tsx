@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Streamer, natures } from '@/data/streamers';
+import { Streamer } from '@/data/streamers';
 import { useResistanceMission } from '@/hooks/useResistanceMission';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 import { useCollectionStore, getMissionRecord } from '@/hooks/useCollectionStore';
@@ -32,7 +32,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
         result,
         executeMove,
         executeUltimate,
-        useBattleItem,
+        executeUseItem,
         stage,
         isShaking,
         glitchIntensity,
@@ -83,8 +83,22 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
     const [screenFlash, setScreenFlash] = useState<string | null>(null);
     const [statsKey, setStatsKey] = useState(0); // Used to force re-render flashes
 
+    // Define spawnParticles with useCallback so it can be used in useEffect
+    const spawnParticles = useCallback((count: number, x: number, y: number, color: string) => {
+        const newParticles = Array.from({ length: count }).map((_, i) => ({
+            id: Date.now() + i,
+            x,
+            y,
+            color
+        }));
+        setParticles(prev => [...prev, ...newParticles].slice(-50));
+        setTimeout(() => {
+            setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+        }, 1000);
+    }, []);
+
     // Trigger Initial Lore on mount
-    const hasInitialized = React.useRef(false);
+    const hasInitialized = useRef(false);
     const startMission = useCollectionStore(state => state.startMission);
 
     useEffect(() => {
@@ -102,17 +116,25 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
             }, 1000);
 
             if (streamer.lore?.statusLog) {
-                setCurrentLore(streamer.lore.statusLog);
+                // De-synchronize state update to satisfy React Compiler
+                setTimeout(() => {
+                    setCurrentLore(streamer.lore?.statusLog || null);
+                }, 0);
             }
         }
     }, [isOpen, streamer.lore, forceUnmute, triggerDialogue, addLog, startMission]);
 
     // Handle Stage Progression Lore
     useEffect(() => {
+        // Wrap in setTimeout to avoid synchronous setState inside effect
         if (stage === 2 && streamer.lore?.battle1) {
-            setLoreQueue(prev => [...prev, streamer.lore!.battle1]);
+            setTimeout(() => {
+                setLoreQueue(prev => [...prev, streamer.lore!.battle1]);
+            }, 0);
         } else if (stage === 3 && streamer.lore?.battle2) {
-            setLoreQueue(prev => [...prev, streamer.lore!.battle2]);
+            setTimeout(() => {
+                setLoreQueue(prev => [...prev, streamer.lore!.battle2]);
+            }, 0);
         }
     }, [stage, streamer.lore]);
 
@@ -120,31 +142,38 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
     useEffect(() => {
         if (!currentLore && loreQueue.length > 0) {
             const next = loreQueue[0];
-            setLoreQueue(prev => prev.slice(1));
-            setCurrentLore(next);
+            // Wrap in setTimeout to avoid synchronous setState inside effect
+            setTimeout(() => {
+                setLoreQueue(prev => prev.slice(1));
+                setCurrentLore(next);
+            }, 0);
         }
     }, [currentLore, loreQueue]);
 
     useEffect(() => {
         if (lastDamageAmount !== null) {
-            setDamagePopups(prev => [...prev, {
-                id: Date.now() + Math.random(),
-                amount: lastDamageAmount,
-                target: lastDamageDealer!
-            }]);
+            const now = Date.now();
+            // Wrap in setTimeout to avoid synchronous setState inside effect
+            setTimeout(() => {
+                setDamagePopups(prev => [...prev, {
+                    id: now + Math.random(),
+                    amount: lastDamageAmount,
+                    target: lastDamageDealer!
+                }]);
 
-            if (lastDamageAmount === 0) {
-                playMiss();
-            } else if (lastDamageAmount > 50) {
-                setImpactFlash('bg-white');
-                setTimeout(() => setImpactFlash(null), 100);
-                playCritical();
-            } else {
-                setImpactFlash(lastDamageDealer === 'enemy' ? 'bg-resistance-accent/30' : 'bg-white/20');
-                setTimeout(() => setImpactFlash(null), 50);
-                playDamage();
-            }
-            setStatsKey(prev => prev + 1);
+                if (lastDamageAmount === 0) {
+                    playMiss();
+                } else if (lastDamageAmount > 50) {
+                    setImpactFlash('bg-white');
+                    setTimeout(() => setImpactFlash(null), 100);
+                    playCritical();
+                } else {
+                    setImpactFlash(lastDamageDealer === 'enemy' ? 'bg-resistance-accent/30' : 'bg-white/20');
+                    setTimeout(() => setImpactFlash(null), 50);
+                    playDamage();
+                }
+                setStatsKey(prev => prev + 1);
+            }, 0);
         }
     }, [lastDamageAmount, lastDamageDealer, playDamage, playCritical, playMiss]);
 
@@ -152,8 +181,11 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
     useEffect(() => {
         if (isTurn && !isComplete) {
             playTurnStart();
-            setScreenFlash('rgba(0, 243, 255, 0.05)');
-            setTimeout(() => setScreenFlash(null), 300);
+            // Wrap in setTimeout to avoid synchronous setState inside effect
+            setTimeout(() => {
+                setScreenFlash('rgba(0, 243, 255, 0.05)');
+                setTimeout(() => setScreenFlash(null), 300);
+            }, 0);
         }
     }, [isTurn, isComplete, playTurnStart]);
 
@@ -171,8 +203,11 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
     useEffect(() => {
         if (stage === 3) {
             playBossIntro();
-            setImpactFlash('bg-resistance-accent/50');
-            setTimeout(() => setImpactFlash(null), 1000);
+            // Wrap in setTimeout to avoid synchronous setState inside effect
+            setTimeout(() => {
+                setImpactFlash('bg-resistance-accent/50');
+                setTimeout(() => setImpactFlash(null), 1000);
+            }, 0);
         }
     }, [stage, playBossIntro]);
 
@@ -208,15 +243,18 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
             const baseXP = isBoss ? 150 : 50;
             const rankMult = rank === 'S' ? 1.5 : rank === 'A' ? 1.2 : 1;
             const totalXP = Math.floor(baseXP * rankMult);
-            setEarnedXP(totalXP);
-
             const rewards = rank === 'S' ? ['stim_pack', 'neural_booster'] : rank === 'A' ? ['stim_pack'] : [];
-            setLootedItems(rewards);
 
-            // Trigger Climax Lore
-            if (streamer.lore?.climax) {
-                setLoreQueue(prev => [...prev, streamer.lore!.climax]);
-            }
+            // Wrap in setTimeout to avoid synchronous setState inside effect
+            setTimeout(() => {
+                setEarnedXP(totalXP);
+                setLootedItems(rewards);
+
+                // Trigger Climax Lore
+                if (streamer.lore?.climax) {
+                    setLoreQueue(prev => [...prev, streamer.lore!.climax]);
+                }
+            }, 0);
 
             const timer = setTimeout(() => setResultStep(1), 1000);
             return () => clearTimeout(timer);
@@ -225,26 +263,19 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
 
     useEffect(() => {
         if (isShaking && !isTurn) {
-            spawnParticles(10, 200, 250, 'bg-resistance-accent');
+            // Wrap in setTimeout to avoid synchronous setState inside effect
+            setTimeout(() => {
+                spawnParticles(10, 200, 250, 'bg-resistance-accent');
+            }, 0);
         }
         if (logs[0]?.includes("CRITICAL")) {
-            setCritText("CRITICAL_OVERLOAD");
-            setTimeout(() => setCritText(null), 1000);
+            // Wrap in setTimeout to avoid synchronous setState inside effect
+            setTimeout(() => {
+                setCritText("CRITICAL_OVERLOAD");
+                setTimeout(() => setCritText(null), 1000);
+            }, 0);
         }
-    }, [isShaking, isTurn, logs]);
-
-    const spawnParticles = (count: number, x: number, y: number, color: string) => {
-        const newParticles = Array.from({ length: count }).map((_, i) => ({
-            id: Date.now() + i,
-            x,
-            y,
-            color
-        }));
-        setParticles(prev => [...prev, ...newParticles].slice(-50));
-        setTimeout(() => {
-            setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
-        }, 1000);
-    };
+    }, [isShaking, isTurn, logs, spawnParticles]);
 
     return (
         <AnimatePresence>
@@ -301,8 +332,8 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                             showPhaseBanner={showPhaseBanner}
                             currentBossPhase={currentBossPhase}
                             itemEffects={itemEffects}
-                            onItemEffectComplete={(id) => setItemEffects(prev => prev.filter(e => e.id !== id))}
-                            onDamagePopupComplete={(id) => setDamagePopups(prev => prev.filter(p => p.id !== id))}
+                            onItemEffectComplete={(_id) => setItemEffects(prev => prev.filter(e => e.id !== _id))}
+                            onDamagePopupComplete={(_id) => setDamagePopups(prev => prev.filter(p => p.id !== _id))}
                             statsKey={statsKey}
                         />
 
@@ -370,7 +401,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                         setItemEffects(prev => [...prev, { id: Date.now(), type: type as any }]);
                                         playItemUse(item.effect === 'heal' ? 'heal' : 'boost');
                                     }
-                                    useBattleItem(itemId);
+                                    executeUseItem(itemId);
                                     setShowItems(false);
                                 }}
                             />

@@ -9,10 +9,10 @@ import {
     getEffectivenessMessage,
     getEnemyType,
     getStatForMoveType,
-    SUPER_EFFECTIVE
 } from '@/data/typeChart';
 import { toast } from 'react-hot-toast';
 import { useVisualEffects } from './useVisualEffects';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 
 export interface PvPPlayerState {
@@ -28,16 +28,19 @@ export interface PvPPlayerState {
 export const usePvPBattle = (matchId: string, opponentId: string | null, myStreamer: Streamer, playerId: string) => {
     // Use stable nature data
     const myNature = useCollectionStore(state => getNature(state, myStreamer.id));
-    const addWin = useCollectionStore(state => state.addWin);
-    const addLoss = useCollectionStore(state => state.addLoss);
-    const refreshStats = useCollectionStore(state => state.refreshStats);
+    const _refreshStats = useCollectionStore(state => state.refreshStats);
+
+    const completedMissions = useCollectionStore(state => state.completedMissions);
+    const missionRecord = completedMissions.find(m => m.id === myStreamer.id);
+    const streamerLevel = missionRecord?.level || 1;
+    const calculatedMaxHp = 100 + ((streamerLevel - 1) * 25);
 
     // 1. Local State
     const [player, setPlayer] = useState<PvPPlayerState>({
         id: playerId,
         name: myStreamer.name,
-        maxHp: 100,
-        hp: 100,
+        maxHp: calculatedMaxHp,
+        hp: calculatedMaxHp,
         stats: myNature
             ? applyNatureToStats(myStreamer.stats, myNature)
             : myStreamer.stats,
@@ -72,31 +75,26 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
     const addLog = (msg: string) => setLogs(prev => [msg, ...prev].slice(0, 5));
 
-    // Persist Match State to Source of Truth (DB)
-    const persistMatchState = useCallback(async (updates: any) => {
-        try {
-            // Attempt to update persistent match state in Supabase
-            // This allows for mid-match recovery if local state is wiped
-            await supabase
-                .from('pvp_matches')
-                .update({
-                    ...updates,
-                    last_update: new Date().toISOString()
-                })
-                .eq('id', matchId);
-        } catch (err) {
-            console.warn("DB_PERSIST_FAILED: Operating on ephemeral broadcast ONLY.", err);
-        }
-    }, [matchId]);
-
     // 7. Chat State
     const [chatLogs, setChatLogs] = useState<{ sender: string, message: string, timestamp: number }[]>([]);
 
     // 6. Last Action (for UI)
     const [lastAction, setLastAction] = useState<any>(null);
+    const { connected: _connected, publicKey, signMessage: _signMessage } = useWallet();
+
+    // Wallet Switch Detection
+    const prevWalletRef = useRef<string | null>(null);
+    useEffect(() => {
+        const currentWallet = publicKey?.toBase58() || null;
+        if (prevWalletRef.current && currentWallet !== prevWalletRef.current) {
+            console.warn("Wallet switched or disconnected during battle. Resetting auth state.");
+            useCollectionStore.getState().setAuthenticated(false);
+        }
+        prevWalletRef.current = currentWallet;
+    }, [publicKey]);
 
     // 2. Transmit Actions
-    const sendAction = (payload: any) => {
+    const sendAction = useCallback((payload: any) => {
         if (channelRef.current) {
             channelRef.current.send({
                 type: 'broadcast',
@@ -104,7 +102,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                 payload: { ...payload, senderId: playerId }
             });
         }
-    };
+    }, [playerId]);
 
     const sendChat = (message: string) => {
         if (!message.trim()) return;
@@ -183,7 +181,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         if (effectivenessMsg) addLog(effectivenessMsg);
 
         setIsTurn(true);
-    }, [opponent, playerId, player.hp, isTurn]);
+    }, [opponent, playerId, player.hp, isTurn, sendAction, triggerGlobalGlitch, triggerGlobalImpact]);
 
 
     useEffect(() => {
@@ -281,7 +279,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                 if (payload.senderId === playerId) return;
 
                 // Received opponent state
-                setOpponent(prev => ({
+                setOpponent(_prev => ({
                     id: opponentId,
                     name: payload.name,
                     maxHp: payload.maxHp,
@@ -352,7 +350,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [matchId, opponentId, playerId, myStreamer.id, myStreamer.name, player.stats, handleAction, battleStatus]);
+    }, [matchId, opponentId, playerId, myStreamer, player.hp, player.maxHp, player.name, player.stats, handleAction, battleStatus, turnLocked, sendAction]);
 
     // 5. Player Actions (Authoritative Server-Side Validation)
     const executeMove = useCallback(async (move: Move) => {
@@ -385,7 +383,10 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                 const opponentType = getEnemyType(opponent.stats);
                 effectiveness = getTypeEffectiveness(move.type, opponentType);
                 isCrit = Math.random() < 0.10;
-                damage = Math.floor(move.power * ((player.stats as any).influence / 100) * effectiveness * (isCrit ? 1.5 : 1));
+
+                const statKey = getStatForMoveType(move.type);
+                const relevantStatValue = (player.stats as any)[statKey] || 50;
+                damage = Math.floor(move.power * (relevantStatValue / 100) * effectiveness * (isCrit ? 1.5 : 1));
                 matchFinished = false;
             } else {
                 damage = data.damage;
@@ -423,7 +424,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             console.error("Combat Sync Error:", err);
             toast.error("COMM_LINK_ERROR: Action desynchronized.");
         }
-    }, [isTurn, opponent, isComplete, player.name, player.stats, playerId, matchId, opponentId, persistMatchState]);
+    }, [isTurn, opponent, isComplete, player.name, player.stats, playerId, matchId, sendAction]);
 
     // 6. Record Match Result
     useEffect(() => {
@@ -432,14 +433,14 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             const recordResult = async () => {
                 try {
                     console.log(`[MATCH RECORDED] Result: ${isWin ? 'WIN' : 'LOSS'} for ${player.name}`);
-                    await refreshStats(); // Server already updated the DB, just pull latest
+                    await _refreshStats(); // Server already updated the DB, just pull latest
                 } catch (err) {
                     console.error("Failed to record match stats", err);
                 }
             };
             recordResult();
         }
-    }, [isComplete, winnerId, player.name, player.maxHp, playerId]);
+    }, [isComplete, winnerId, player.name, _refreshStats]);
 
     return {
         player,
