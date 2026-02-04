@@ -16,6 +16,8 @@ import { LoreOverlay } from './MissionTerminal/VFX';
 import { ResultOverlay } from './MissionTerminal/ResultOverlay';
 import { useNeuralMusic } from '@/hooks/useNeuralMusic';
 import { useNeuralNarrative } from '@/hooks/useNeuralNarrative';
+import { GlitchOverlay } from './MissionTerminal/GlitchOverlay';
+import { FactionChatWidget } from './MissionTerminal/FactionChatWidget';
 
 interface MissionTerminalProps {
     streamer: Streamer;
@@ -59,8 +61,14 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
         addLog
     } = useResistanceMission(streamer);
 
+
     // Initialize Dynamic Neural Music
-    useNeuralMusic(isOpen && !isComplete);
+    const { intensity } = useNeuralMusic(isOpen && !isComplete, {
+        neuralSync: charge,
+        enemyCount: enemy.hp > 0 ? 1 : 0,
+        currentHp: player.hp,
+        maxHp: player.maxHp
+    });
 
     const {
         playVoiceLine, playClick, playItemUse, playMoveSound,
@@ -70,6 +78,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
 
     const { items } = useGameDataStore();
     const inventory = useCollectionStore(state => state.inventory);
+    const userFaction = useCollectionStore(state => state.userFaction);
     const triggerDialogue = useOperatorStore(state => state.triggerDialogue);
     const [showItems, setShowItems] = useState(false);
     const [particles, setParticles] = useState<{ id: number, x: number, y: number, color: string }[]>([]);
@@ -322,6 +331,17 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                     {/* Backdrop */}
                     <div className="absolute inset-0 bg-black/98 backdrop-blur-2xl" />
 
+                    {/* Glitch Shader Overlay - Phase 2 Advanced VFX */}
+                    <GlitchOverlay
+                        intensity={intensity}
+                        glitchStrength={glitchIntensity > 0 ? glitchIntensity : (isShaking ? 0.5 : 0)}
+                    />
+
+                    {/* Sonic Debug Overlay */}
+                    <div className="absolute top-20 left-4 bg-black/80 p-2 border border-neon-blue/40 text-[9px] font-mono z-[250] pointer-events-none">
+                        <div className="text-neon-blue font-black tracking-widest">SONIC_INTENSITY: <span className="text-white">{intensity.toFixed(2)}</span></div>
+                    </div>
+
                     {/* Dynamic Ambient Glow */}
                     <div className={`absolute inset-0 opacity-20 transition-colors duration-1000 ${isBoss ? 'bg-resistance-accent/20' : 'bg-neon-blue/10'}`} />
 
@@ -453,6 +473,12 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                 }}
                                 showItems={showItems}
                             />
+
+                            {/* Faction Chat Feed */}
+                            {/* Faction Chat Feed */}
+                            <div className="mt-4 flex-1 min-h-[200px]">
+                                <FactionChatWidget factionId={userFaction === 'NONE' ? 'RED' : userFaction} senderName="Operative" />
+                            </div>
                         </div>
                     </div>
 

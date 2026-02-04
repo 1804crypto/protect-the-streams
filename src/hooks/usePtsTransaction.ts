@@ -13,7 +13,7 @@ import { toast } from '@/hooks/useToastStore';
 // For this implementation, we will use a SOL transfer as a proxy for $PTS
 // to ensure it works without complex SPL-token-setup on Devnet immediately.
 // We can easily upgrade to SPL-Tokens later.
-export const TREASURY_ADDRESS = new PublicKey("Gv1p8uV1mY9T5V6c89p6X3o9wB1V6c89p6X3o9wB1V6c"); // Placeholder
+export const TREASURY_ADDRESS = new PublicKey("5E1cfq49jjMYTKdKhjfF9CSH3STCMUGR7VbzJYny2Zhq"); // Resistance Treasury
 
 export const usePtsTransaction = () => {
     const { connection } = useConnection();

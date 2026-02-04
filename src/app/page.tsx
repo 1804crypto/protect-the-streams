@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMintStreamer } from '@/hooks/useMintStreamer';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 import { useGameDataStore } from '@/hooks/useGameDataStore';
+import { useCollectionStore } from '@/hooks/useCollectionStore';
 
 const Scene = dynamic(() => import('@/components/Three/Scene'), { ssr: false });
 const WalletMultiButton = dynamic(
@@ -42,6 +43,10 @@ export default function Home() {
     const [isFactionOpen, setIsFactionOpen] = useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+
+    // Gated Rebellion Logic
+    const { securedIds, userFaction } = useCollectionStore();
+    const hasAccess = securedIds.length > 0 || userFaction !== 'NONE';
 
     const { triggerDialogue } = useOperatorStore();
 
@@ -255,7 +260,7 @@ export default function Home() {
                     </div>
                 </section>
 
-                {/* Resistance Map Section */}
+                {/* Resistance Map Section - GATED */}
                 <section className="relative z-10 px-6 md:px-12 mb-20">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex justify-between items-end mb-6">
@@ -268,7 +273,25 @@ export default function Home() {
                                 <p className="text-sm font-black text-neon-green">STABLE</p>
                             </div>
                         </div>
-                        <ResistanceMap onSectorClick={(s) => setActiveMissionStreamer(s as Streamer)} />
+
+                        {hasAccess ? (
+                            <ResistanceMap onSectorClick={(s) => setActiveMissionStreamer(s as Streamer)} />
+                        ) : (
+                            <div className="w-full h-[400px] border border-red-500/30 bg-red-500/5 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8 relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,0,0,0.05)_10px,rgba(255,0,0,0.05)_20px)]" />
+                                <div className="relative z-10">
+                                    <h3 className="text-4xl font-black text-red-500 mb-4 tracking-tighter flex items-center justify-center gap-4">
+                                        <span className="text-2xl">🔒</span> SIGNAL LOCKED
+                                    </h3>
+                                    <p className="text-red-400 font-mono text-sm max-w-lg mx-auto tracking-widest leading-relaxed">
+                                        "COMMANDER, SECURE YOUR SIGNAL (MINT STREAMER) AND JOIN A FACTION TO INITIATE THE REBELLION."
+                                    </p>
+                                    <div className="mt-8 animate-pulse">
+                                        <a href="#roster" className="text-neon-blue underline font-bold text-xs tracking-[0.2em]">[PROCEED_TO_UPLINK_TERMINAL]</a>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -319,12 +342,14 @@ export default function Home() {
                                     >
                                         MINT
                                     </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); playClick(); setActivePvPStreamer(streamer); }}
-                                        className="px-3 py-1 bg-neon-pink text-white text-[10px] font-black uppercase"
-                                    >
-                                        PVP
-                                    </button>
+                                    {hasAccess && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); playClick(); setActivePvPStreamer(streamer); }}
+                                            className="px-3 py-1 bg-neon-pink text-white text-[10px] font-black uppercase"
+                                        >
+                                            PVP
+                                        </button>
+                                    )}
                                 </div>
                             </motion.div>
                         ))}

@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Zap, X, CreditCard, CheckCircle2, Loader2 } from 'lucide-react';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { CONFIG } from '@/data/config';
 
 interface FactionSelectionProps {
     isOpen: boolean;
@@ -48,6 +51,10 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
     );
     const [memberId, setMemberId] = useState<number | null>(null);
 
+    // Wallet Hooks
+    const { connection } = useConnection();
+    const { publicKey, sendTransaction } = useWallet();
+
     React.useEffect(() => {
         setMemberId(Math.floor(Math.random() * 999));
     }, []);
@@ -61,12 +68,39 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
 
     const handleMint = async () => {
         playClick();
+        if (!publicKey) return;
+
         setStep('MINTING');
-        // Simulate USDC Transaction ($0.44 fee)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        mintFactionCard();
-        playSuccess();
-        setStep('SUCCESS');
+
+        try {
+            // Transaction Fee: 0.05 SOL (Matching Streamer Mint mostly, or cheaper for Faction)
+            // The UI said 0.44 USDC, we'll approximate to 0.005 SOL for now or use the config value.
+            // Let's use a fixed small fee for Faction ID.
+            const FACTION_FEE = 0.005;
+
+            const transaction = new Transaction().add(
+                SystemProgram.transfer({
+                    fromPubkey: publicKey,
+                    toPubkey: new PublicKey(CONFIG.TREASURY_WALLET),
+                    lamports: FACTION_FEE * LAMPORTS_PER_SOL,
+                })
+            );
+
+            const { blockhash } = await connection.getLatestBlockhash();
+            transaction.recentBlockhash = blockhash;
+            transaction.feePayer = publicKey;
+
+            const signature = await sendTransaction(transaction, connection);
+            await connection.confirmTransaction(signature, 'confirmed');
+
+            mintFactionCard();
+            playSuccess();
+            setStep('SUCCESS');
+        } catch (error) {
+            console.error("Faction Mint Failed:", error);
+            // Reset to confirm step on error
+            setStep('CONFIRM');
+        }
     };
 
     if (!isOpen) return null;
@@ -169,7 +203,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                                 <div className="space-y-4 pt-6 text-[10px] font-mono tracking-widest text-white/40 uppercase">
                                     <div className="flex justify-between border-b border-white/5 pb-2">
                                         <span>INITIATION_FEE</span>
-                                        <span className="text-white">0.44 USDC</span>
+                                        <span className="text-white">0.005 SOL</span>
                                     </div>
                                     <div className="flex justify-between border-b border-white/5 pb-2">
                                         <span>SIGNATURE_STATUS</span>
@@ -227,7 +261,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                                     className="h-full bg-neon-blue shadow-[0_0_15px_#00f3ff]"
                                 />
                             </div>
-                            <p className="mt-8 text-white/40 font-mono text-[10px] tracking-widest uppercase animate-pulse">Confirming 0.44 USDC on Solana L1...</p>
+                            <p className="mt-8 text-white/40 font-mono text-[10px] tracking-widest uppercase animate-pulse">Confirming 0.005 SOL on Solana L1...</p>
                         </motion.div>
                     )}
 
