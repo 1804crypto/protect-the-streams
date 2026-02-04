@@ -61,6 +61,16 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     const [wagerAmount, setWagerAmount] = useState<number>(0);
 
     const channelRef = useRef<any>(null);
+    // Refs for stable access inside subscriptions
+    const playerRef = useRef(player);
+    const opponentRef = useRef(opponent);
+    const isSpectatorRef = useRef(isSpectator);
+    const battleStatusRef = useRef(battleStatus);
+
+    useEffect(() => { playerRef.current = player; }, [player]);
+    useEffect(() => { opponentRef.current = opponent; }, [opponent]);
+    useEffect(() => { isSpectatorRef.current = isSpectator; }, [isSpectator]);
+    useEffect(() => { battleStatusRef.current = battleStatus; }, [battleStatus]);
 
     // Global Visual Sync
     const setIntegrity = useVisualEffects(state => state.setIntegrity);
@@ -397,16 +407,13 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
         channelRef.current = channel;
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [matchId, opponentId, playerId, myStreamer, player.hp, player.maxHp, player.name, player.stats, handleAction, battleStatus, turnLocked, sendAction, isSpectator]);
+    }, [matchId, opponentId, playerId, myStreamer, handleAction, battleStatus, turnLocked, sendAction, isSpectator]);
 
     // 5. Player Actions (Authoritative Server-Side Validation)
     const executeMove = useCallback(async (move: Move) => {
-        if (isSpectator || !isTurn || !opponent || isComplete) return;
+        if (isSpectatorRef.current || !isTurn || !opponentRef.current || isComplete) return;
 
-        addLog(`${player.name.toUpperCase()} uses ${move.name.toUpperCase()}!`);
+        addLog(`${playerRef.current.name.toUpperCase()} uses ${move.name.toUpperCase()}!`);
 
         try {
             const { data, error: rpcError } = await supabase.rpc('validate_pvp_move', {
@@ -434,7 +441,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             const matchFinished = data.is_complete;
             const glrGain = data.glr_change || 0;
 
-            // Update local opponent view
+            // Optimistic update using server data
             const nextOpponentHp = data.next_hp;
             setOpponent(prev => prev ? ({ ...prev, hp: nextOpponentHp }) : prev);
 
@@ -464,7 +471,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             console.error("Combat Sync Error:", err);
             toast.error("COMM_LINK_ERROR: Action desynchronized.");
         }
-    }, [isTurn, opponent, isComplete, player.name, player.stats, playerId, matchId, sendAction, isSpectator, wagerAmount]);
+    }, [isTurn, isComplete, playerId, matchId, sendAction, wagerAmount]); // Reduced dependencies
 
     // 6. Record Match Result
     useEffect(() => {
@@ -472,7 +479,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             const isWin = winnerId === playerId;
             const recordResult = async () => {
                 try {
-                    console.log(`[MATCH RECORDED] Result: ${isWin ? 'WIN' : 'LOSS'} for ${player.name}`);
+                    // console.log(`[MATCH RECORDED] Result: ${isWin ? 'WIN' : 'LOSS'} for ${player.name}`);
                     await refreshStoreStats(); // pulls latest wins/losses/glr
                 } catch (err) {
                     console.error("Failed to record match stats", err);
@@ -480,7 +487,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             };
             recordResult();
         }
-    }, [isComplete, winnerId, player.name, refreshStoreStats, isSpectator, playerId]);
+    }, [isComplete, winnerId, refreshStoreStats, isSpectator, playerId]);
 
     return {
         player,
