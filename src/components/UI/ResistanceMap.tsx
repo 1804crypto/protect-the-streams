@@ -1,15 +1,65 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
 import { streamers } from '@/data/streamers';
 import { MapEventOverlay, MapEventType } from './MapEventOverlay';
 import { DataStream } from './DataStream';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 import { BlackMarket } from './BlackMarket';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, List, Map as MapIcon, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+
+const LiveBattleFeed: React.FC = () => {
+    const [matches, setMatches] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchMatches = async () => {
+            const { data } = await supabase
+                .from('pvp_matches')
+                .select('id, attacker_id, defender_id, wager_amount, status')
+                .eq('status', 'ACTIVE')
+                .limit(3);
+            if (data) setMatches(data);
+        };
+        fetchMatches();
+
+        const channel = supabase
+            .channel('live_battles_feed')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'pvp_matches' }, fetchMatches)
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, []);
+
+    if (matches.length === 0) return null;
+
+    return (
+        <div className="bg-black/80 border border-neon-blue/20 p-3 rounded-sm pointer-events-auto backdrop-blur-md min-w-[200px] animate-in fade-in slide-in-from-left-4">
+            <div className="text-[7px] text-neon-blue mb-2 font-black tracking-[0.2em] flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-neon-blue rounded-full animate-pulse" />
+                ACTIVE_INTERCEPTS_FOUND
+            </div>
+            <div className="space-y-2">
+                {matches.map(m => (
+                    <div key={m.id} className="flex flex-col gap-1 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                        <div className="flex justify-between items-center text-[7px] font-mono">
+                            <span className="text-white/60">STAKES: {m.wager_amount || 0} $PTS</span>
+                            <span className="text-neon-pink">LIVE</span>
+                        </div>
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('SPECTATE_MATCH', { detail: m.id }))}
+                            className="w-full py-1.5 bg-neon-blue/10 border border-neon-blue/30 text-neon-blue text-[8px] font-black uppercase hover:bg-neon-blue hover:text-black transition-all"
+                        >
+                            INTERCEPT_UPLINK
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void }> = ({ onSectorClick }) => {
     const completedMissions = useCollectionStore(state => state.completedMissions);
@@ -17,6 +67,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void 
     const updateDifficulty = useCollectionStore(state => state.updateDifficulty);
     const { playEvent, playMapAmbient } = useAudioSystem();
     const [activeEvent, setActiveEvent] = useState<{ type: MapEventType, title: string, message: string, reward?: string } | null>(null);
+    const [viewMode, setViewMode] = useState<'MAP' | 'LIST'>('MAP');
     const [revealedBosses, setRevealedBosses] = useState<string[]>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('pts_revealed_bosses');
@@ -137,8 +188,8 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void 
         // AMP Sector (Top Left)
         'kaicenat': { x: 28, y: 25 },
         'dukedennis': { x: 20, y: 32 },
-        'fanum': { x: 32, y: 38 },
         'agent00': { x: 38, y: 28 },
+        'fanum': { x: 30, y: 38 },
 
         // W/L Community & Chaos (Bottom Left)
         'adinross': { x: 15, y: 65 },
@@ -205,7 +256,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void 
         ultimateMove: { name: "THE_FINAL_CLEANSE", type: "CHAOS", power: 500, pp: 1, description: "Complete system reset." }
     };
     return (
-        <div className="relative w-full aspect-square md:aspect-video bg-black/60 border-2 border-white/5 overflow-hidden group no-select rounded-lg shadow-2xl">
+        <div className="relative w-full aspect-square md:aspect-video bg-black/60 border-2 border-white/5 overflow-hidden group no-select rounded-lg shadow-2xl mobile-map-container">
             {/* Background Texture */}
             <div className="absolute inset-0 bg-[url('/grid_pattern.png')] opacity-20" />
 
@@ -271,7 +322,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void 
                     {/* Invisible Hit Area for better touch targets */}
                     <div className="absolute inset-0 -m-4 md:-m-2 z-[-1] rounded-full" />
 
-                    <div className={`w-4 h-4 md:w-5 md:h-5 border-2 rotate-45 transition-all duration-500 relative ${sector.control === 'RED' ? 'bg-red-600 border-red-400 shadow-[0_0_15px_#ff003c]' :
+                    <div className={`w-6 h-6 md:w-5 md:h-5 border-2 rotate-45 transition-all duration-500 relative ${sector.control === 'RED' ? 'bg-red-600 border-red-400 shadow-[0_0_15px_#ff003c]' :
                         sector.control === 'PURPLE' ? 'bg-purple-600 border-purple-400 shadow-[0_0_15px_#a855f7]' :
                             sector.cleared ? 'bg-neon-green border-neon-green shadow-[0_0_15px_#39ff14]' :
                                 'bg-black border-red-500/40 hover:border-red-500 shadow-[0_0_5px_rgba(255,0,60,0.2)]'
@@ -363,29 +414,35 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void 
                 </motion.button>
             </div>
 
-            {/* Status Legend & Global Progress */}
-            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
-                <div className="font-mono text-[8px] space-y-2 bg-black/90 p-3 border border-white/10 rounded-sm pointer-events-auto shadow-2xl backdrop-blur-md">
-                    <div className="text-[7px] text-white/40 mb-2 font-black tracking-widest border-b border-white/5 pb-1 uppercase">Tactical_Grid_Legend</div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-2.5 h-2.5 bg-red-600 border border-red-400 rotate-45 shadow-[0_0:5px_#ff003c]" />
-                        <span className="text-red-400 font-black">RED DOMINATED</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-2.5 h-2.5 bg-purple-600 border border-purple-400 rotate-45 shadow-[0_0:5px_#a855f7]" />
-                        <span className="text-purple-400 font-black">PURPLE DOMINATED</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-2.5 h-2.5 bg-neon-green border border-neon-green rotate-45 shadow-[0_0:5px_#39ff14]" />
-                        <span className="text-neon-green font-black">STRIKE TEAM SECURED</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-2.5 h-2.5 bg-black border border-red-500/50 rotate-45" />
-                        <span className="text-white/40 font-black tracking-tighter">CORPORATE_HEGEMONY</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-2.5 h-2.5 bg-resistance-accent border border-resistance-accent rotate-45 shadow-[0_0:5px_#ff003c]" />
-                        <span className="text-resistance-accent font-black tracking-tighter">CORPORATE_HQ</span>
+            {/* Status Legend & Live Battles */}
+            <div className="absolute bottom-4 left-4 right-4 flex flex-col md:flex-row justify-between items-end gap-4 pointer-events-none">
+                <div className="flex flex-col gap-4">
+                    {/* Live Battles Feature */}
+                    <LiveBattleFeed />
+
+                    <div className="font-mono text-[8px] space-y-2 bg-black/90 p-3 border border-white/10 rounded-sm pointer-events-auto shadow-2xl backdrop-blur-md">
+                        <div className="text-[7px] text-white/40 mb-2 font-black tracking-widest border-b border-white/5 pb-1 uppercase">Tactical_Grid_Legend</div>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 bg-red-600 border border-red-400 rotate-45 shadow-[0_0:5px_#ff003c]" />
+                                <span className="text-red-400 font-black">RED DOMINATED</span>
+                            </div>
+                            <span className="text-white/60 font-black">{Object.values(sectorControl).filter(v => v === 'RED').length}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 bg-purple-600 border border-purple-400 rotate-45 shadow-[0_0:5px_#a855f7]" />
+                                <span className="text-purple-400 font-black">PURPLE DOMINATED</span>
+                            </div>
+                            <span className="text-white/60 font-black">{Object.values(sectorControl).filter(v => v === 'PURPLE').length}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 bg-neon-green border border-neon-green rotate-45 shadow-[0_0:5px_#39ff14]" />
+                                <span className="text-neon-green font-black">STRIKE TEAM SECURED</span>
+                            </div>
+                            <span className="text-white/60 font-black">{sectors.filter(s => s.cleared).length}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -409,6 +466,75 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void 
                     </div>
                 </div>
             </div>
+
+            {/* Mobile View Toggle */}
+            <div className="md:hidden absolute top-4 left-4 z-50 flex gap-2">
+                <button
+                    onClick={() => setViewMode(viewMode === 'MAP' ? 'LIST' : 'MAP')}
+                    className="w-10 h-10 bg-black/80 border border-neon-blue/40 flex items-center justify-center text-neon-blue hover:bg-neon-blue/20 transition-all rounded-sm backdrop-blur-md"
+                >
+                    {viewMode === 'MAP' ? <List size={20} /> : <MapIcon size={20} />}
+                </button>
+            </div>
+
+            {/* Mobile List Overlay */}
+            <AnimatePresence>
+                {viewMode === 'LIST' && (
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className="md:hidden absolute inset-0 z[45] bg-resistance-dark/95 backdrop-blur-xl p-6 overflow-y-auto"
+                    >
+                        <div className="mb-8 mt-12">
+                            <h3 className="text-2xl font-black neon-text-blue uppercase italic tracking-tighter">Sector_List</h3>
+                            <p className="text-[9px] text-white/40 font-mono tracking-widest uppercase mt-1">// Tactical_Override_Active</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            {sectors.map((s) => (
+                                <button
+                                    key={s.id}
+                                    onClick={() => onSectorClick?.(s)}
+                                    className={`w-full p-4 border flex items-center justify-between transition-all ${s.cleared
+                                        ? 'bg-neon-green/5 border-neon-green/30 text-neon-green'
+                                        : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-2 h-8 ${s.control === 'RED' ? 'bg-red-500' : s.control === 'PURPLE' ? 'bg-purple-500' : s.cleared ? 'bg-neon-green' : 'bg-white/20'}`} />
+                                        <div className="text-left">
+                                            <div className="text-[10px] font-black uppercase tracking-[0.2em]">{s.name}</div>
+                                            <div className="text-[8px] font-mono opacity-50">{s.archetype}</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {s.cleared && <span className="text-[9px] font-black italic">SECURED</span>}
+                                        <ChevronRight size={14} className="opacity-30" />
+                                    </div>
+                                </button>
+                            ))}
+
+                            {isHQUnlocked && (
+                                <button
+                                    onClick={() => onSectorClick?.(ceoStreamer)}
+                                    className="w-full p-6 border-2 border-resistance-accent bg-resistance-accent/10 text-resistance-accent flex items-center justify-between mt-8 animate-pulse shadow-[0_0_20px_rgba(255,0,60,0.2)]"
+                                >
+                                    <div className="text-left">
+                                        <div className="text-xs font-black uppercase tracking-[0.3em]">{">>> CORPORATE_HQ <<<"}</div>
+                                        <div className="text-[8px] font-mono mt-1 opacity-60">TARGET_LOCKED: V.A.L.U.E.</div>
+                                    </div>
+                                    <ChevronRight size={18} />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="mt-12 text-center opacity-20">
+                            <p className="text-[8px] font-mono tracking-widest uppercase">End of Signal Stream</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* UI SCAN OVERLAY */}
             <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(transparent_0%,rgba(0,243,255,0.02)_50%,transparent_100%)] bg-[size:100%_4px] animate-scan" />

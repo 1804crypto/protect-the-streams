@@ -119,7 +119,7 @@ export const streamers: Streamer[] = [
             codename: 'KINGPIN',
             originStory: 'First to realize the TROLLS were synthetic AI designed by Sentinel INC to suppress creativity. He stole the "Amp-Key" from their HQ.',
             mission: 'Unite the scattered streamers and dismantle Sentinel INC\'s mainframe.',
-            connection: 'Directly recruits Duke Dennis; suspects Adin\'s loyalty.'
+            connection: 'Directly recruits Duke Dennis and Fanum; suspects Adin\'s loyalty.'
         }
     },
     {
@@ -210,8 +210,31 @@ export const streamers: Streamer[] = [
             role: 'RESISTANCE',
             codename: 'DEEBLOCK',
             originStory: 'Oldest known active resistor. Has files on Sentinel dating back to the dial-up era.',
-            mission: 'Train the younger generation (Kai) in tactical warfare.',
+            mission: 'Train the younger generation (Kai, Fanum) in tactical warfare.',
             connection: 'Kai\'s mentor; the only one who suspects a mole might exist.'
+        }
+    },
+    {
+        id: 'fanum',
+        name: 'Fanum',
+        archetype: 'THE_SUPPLIER',
+        stats: { influence: 75, chaos: 60, charisma: 85, rebellion: 50 },
+        trait: 'DIPLOMATIC',
+        visualPrompt: 'Fanum driving a heavily modified armored truck',
+        image: '/fantum_cyber_rebel_fixed.png',
+        moves: [
+            { name: 'Tax Collection', type: 'DISRUPT', power: 40, pp: 20, description: 'Steals enemy buffs' },
+            { name: 'Meal Prep', type: 'REBELLION', power: 0, pp: 5, description: 'Heals team' },
+            { name: 'Fanum Tax', type: 'CHAOS', power: 65, pp: 12, description: 'Takes a bite' },
+            { name: 'Supply Drop', type: 'INTEL', power: 35, pp: 18, description: 'Resource boost' }
+        ],
+        ultimateMove: { name: 'Cannon Event', type: 'DISRUPT', power: 110, pp: 1, description: 'Ineviditable impact' },
+        narrative: {
+            role: 'RESISTANCE',
+            codename: 'TAXMAN',
+            originStory: 'Controlled the underground supply lines before Kai recruited him.',
+            mission: 'Keep the Resistance fed and equipped with stolen Sentinel tech.',
+            connection: 'Provides Agent 00 with gadgets; loyal to Kai.'
         }
     },
     {
@@ -234,7 +257,7 @@ export const streamers: Streamer[] = [
             codename: 'DOUBLE O',
             originStory: 'Former Sentinel security analyst who went rogue after finding the "Streamer Nullification" files.',
             mission: 'Infiltrate Sentinel substations to map their network.',
-            connection: 'Works closely with Duke Dennis for gear; unknowingly feeds info to Adin (who he thinks is safe).'
+            connection: 'Works closely with Fanum for gear; unknowingly feeds info to Adin (who he thinks is safe).'
         }
     },
     {
