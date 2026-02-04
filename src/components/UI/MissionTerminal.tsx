@@ -15,6 +15,7 @@ import { BattleArena } from './MissionTerminal/BattleArena';
 import { LoreOverlay } from './MissionTerminal/VFX';
 import { ResultOverlay } from './MissionTerminal/ResultOverlay';
 import { useNeuralMusic } from '@/hooks/useNeuralMusic';
+import { useNeuralNarrative } from '@/hooks/useNeuralNarrative';
 
 interface MissionTerminalProps {
     streamer: Streamer;
@@ -23,6 +24,10 @@ interface MissionTerminalProps {
 }
 
 export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOpen, onClose }) => {
+    const { generateMission, getBattleCommentary, getMissionEndNarrative } = useNeuralNarrative();
+    const [missionContext, setMissionContext] = useState<any>(null);
+    const [neuralNarrative, setNeuralNarrative] = useState<string>("Establishing secure neural link...");
+
     const {
         player,
         enemy,
@@ -99,6 +104,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
 
     // Trigger Initial Lore on mount
     const hasInitialized = useRef(false);
+    const completedMissions = useCollectionStore(state => state.completedMissions);
     const startMission = useCollectionStore(state => state.startMission);
 
     useEffect(() => {
@@ -106,6 +112,14 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
             hasInitialized.current = true;
             forceUnmute();
             addLog("AUDIO_UPLINK: Syncing neural frequencies...");
+
+            // Generate Procedural Narrative Context
+            const initNarrative = async () => {
+                const context = await generateMission(streamer, completedMissions.length);
+                setMissionContext(context);
+                setNeuralNarrative(context.description);
+            };
+            initNarrative();
 
             // START MISSION TIMER (Anti-Cheat)
             startMission();
@@ -122,7 +136,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                 }, 0);
             }
         }
-    }, [isOpen, streamer.lore, forceUnmute, triggerDialogue, addLog, startMission]);
+    }, [isOpen, streamer, forceUnmute, triggerDialogue, addLog, startMission, generateMission, completedMissions.length]);
 
     // Handle Stage Progression Lore
     useEffect(() => {
@@ -172,10 +186,25 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                     setTimeout(() => setImpactFlash(null), 50);
                     playDamage();
                 }
+
+                if (lastDamageAmount > 0) {
+                    getBattleCommentary({
+                        playerName: player.name,
+                        enemyName: enemy.name,
+                        actionName: lastDamageDealer === 'player' ? 'Attack' : 'Retaliation',
+                        damage: lastDamageAmount,
+                        playerHp: player.hp,
+                        playerMaxHp: player.maxHp,
+                        enemyHp: enemy.hp,
+                        enemyMaxHp: enemy.maxHp,
+                        isCrit: lastDamageAmount > 50,
+                        isSuperEffective: effectivenessFlash === 'super'
+                    }).then(setNeuralNarrative);
+                }
                 setStatsKey(prev => prev + 1);
             }, 0);
         }
-    }, [lastDamageAmount, lastDamageDealer, playDamage, playCritical, playMiss]);
+    }, [lastDamageAmount, lastDamageDealer, playDamage, playCritical, playMiss, player.name, enemy.name, player.hp, player.maxHp, enemy.hp, enemy.maxHp, effectivenessFlash, getBattleCommentary]);
 
     // Handle Turn Starts
     useEffect(() => {
@@ -339,9 +368,51 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
 
                         {/* Right Section / Command Deck */}
                         <div className="relative flex-1 bg-[#050505] border-2 border-white/10 flex flex-col p-6 rounded-lg overflow-y-auto lg:overflow-visible">
+                            {/* Neural Narrator Overlay */}
+                            <div className="mb-4 p-3 bg-white/5 border-l-2 border-neon-blue rounded flex flex-col gap-1">
+                                <span className="text-[10px] text-neon-blue font-bold tracking-widest uppercase">// Neural_Narrator</span>
+                                <p className="text-sm text-white/90 italic font-mono leading-relaxed">
+                                    {neuralNarrative}
+                                </p>
+                            </div>
 
                             {/* Terminal Logs */}
                             <TerminalLogs logs={logs} />
+
+                            {/* Neural Briefing (AI Storytelling) */}
+                            {missionContext && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="mb-6 p-4 bg-neon-blue/5 border border-neon-blue/20 rounded-sm relative overflow-hidden group"
+                                >
+                                    <div className="absolute top-0 right-0 p-1 bg-neon-blue/20 text-neon-blue text-[8px] font-black uppercase tracking-widest">
+                                        NEURAL_BRIEF_v4.2
+                                    </div>
+                                    <h4 className="text-neon-blue font-black text-xs uppercase tracking-tighter mb-2 italic">
+                                        {missionContext.title}
+                                    </h4>
+                                    <p className="text-[10px] text-white/60 font-mono leading-relaxed mb-3">
+                                        {missionContext.description}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {missionContext.objectives.map((obj: string, i: number) => (
+                                            <div key={i} className="px-2 py-0.5 bg-white/5 border border-white/10 text-[8px] text-white/40 font-bold uppercase tracking-widest">
+                                                [ ] {obj}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-3 pt-2 border-t border-white/5 flex justify-between items-center">
+                                        <span className="text-[8px] text-white/20 font-mono">SECTOR_THREAT:</span>
+                                        <span className={`text-[9px] font-black ${missionContext.threatLevel === 'EXTREME' ? 'text-red-500 animate-pulse' :
+                                            missionContext.threatLevel === 'HIGH' ? 'text-orange-500' :
+                                                missionContext.threatLevel === 'MEDIUM' ? 'text-yellow-500' : 'text-neon-green'
+                                            }`}>
+                                            {missionContext.threatLevel}
+                                        </span>
+                                    </div>
+                                </motion.div>
+                            )}
 
                             {/* Commands */}
                             <CommandDeck

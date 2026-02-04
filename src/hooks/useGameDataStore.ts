@@ -45,18 +45,24 @@ export const useGameDataStore = create<GameDataState>((set) => ({
 
             if (itemsError) throw itemsError;
 
-            // Process Data: Link moves to streamers
-            const processedStreamers: Streamer[] = streamersData.map(s => {
+            // Process Data: Link moves to streamers and ensure uniqueness
+            const uniqueMap = new Map<string, Streamer>();
+            const seenNames = new Set<string>();
+
+            streamersData.forEach(s => {
+                // Deduplicate by ID and Name to fix roster duplication bug
+                if (uniqueMap.has(s.id) || seenNames.has(s.name.trim().toLowerCase())) return;
+
                 const streamerMoves = movesData.filter(m => m.streamer_id === s.id && !m.is_ultimate);
                 const ultimateMove = movesData.find(m => m.streamer_id === s.id && m.is_ultimate);
 
-                return {
+                uniqueMap.set(s.id, {
                     id: s.id,
                     name: s.name,
                     archetype: s.archetype,
-                    stats: s.stats, // JSONB comes back as object
+                    stats: s.stats,
                     trait: s.trait,
-                    visualPrompt: s.visual_prompt, // Mapped from snake_case
+                    visualPrompt: s.visual_prompt,
                     image: s.image,
                     lore: s.lore,
                     moves: streamerMoves.map(m => ({
@@ -86,8 +92,11 @@ export const useGameDataStore = create<GameDataState>((set) => ({
                         mission: 'Awaiting directive.',
                         connection: 'Signal lost.'
                     }
-                };
+                });
+                seenNames.add(s.name.trim().toLowerCase());
             });
+
+            const processedStreamers = Array.from(uniqueMap.values());
 
             // Process Items
             const processedItems: Record<string, BattleItem> = {};
@@ -106,7 +115,7 @@ export const useGameDataStore = create<GameDataState>((set) => ({
             }
 
             set({
-                streamers: processedStreamers.length > 0 ? processedStreamers : localStreamers,
+                streamers: processedStreamers.length > 0 ? processedStreamers : localStreamers.filter((s, i, a) => a.findIndex(t => t.id === s.id) === i),
                 items: Object.keys(processedItems).length > 0 ? processedItems : localItems,
                 isLoading: false,
                 isInitialized: true

@@ -26,9 +26,12 @@ export interface PvPPlayerState {
 }
 
 export const usePvPBattle = (matchId: string, opponentId: string | null, myStreamer: Streamer, playerId: string) => {
+    // Determine if I am a player or a spectator
+    const [isSpectator, setIsSpectator] = useState(false);
+
     // Use stable nature data
     const myNature = useCollectionStore(state => getNature(state, myStreamer.id));
-    const _refreshStats = useCollectionStore(state => state.refreshStats);
+    const refreshStoreStats = useCollectionStore(state => state.refreshStats);
 
     const completedMissions = useCollectionStore(state => state.completedMissions);
     const missionRecord = completedMissions.find(m => m.id === myStreamer.id);
@@ -52,8 +55,10 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     const [isTurn, setIsTurn] = useState(false); // Determined by handshake
     const [isComplete, setIsComplete] = useState(false);
     const [winnerId, setWinnerId] = useState<string | null>(null);
-    const [battleStatus, setBattleStatus] = useState<'INITIATING' | 'SYNCING' | 'ACTIVE' | 'RECOVERING' | 'FINISHED'>('INITIATING');
+    const [battleStatus, setBattleStatus] = useState<'INITIATING' | 'SYNCING' | 'ACTIVE' | 'RECOVERING' | 'FINISHED' | 'ERROR'>('INITIATING');
     const [turnLocked, setTurnLocked] = useState(false);
+    const [glrChange, setGlrChange] = useState<number | null>(null);
+    const [wagerAmount, setWagerAmount] = useState<number>(0);
 
     const channelRef = useRef<any>(null);
 
@@ -65,8 +70,10 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
     // Sync HP to global store
     useEffect(() => {
-        setIntegrity(player.hp / player.maxHp);
-    }, [player.hp, player.maxHp, setIntegrity]);
+        if (!isSpectator) {
+            setIntegrity(player.hp / player.maxHp);
+        }
+    }, [player.hp, player.maxHp, setIntegrity, isSpectator]);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -93,8 +100,9 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         prevWalletRef.current = currentWallet;
     }, [publicKey]);
 
-    // 2. Transmit Actions
+    // 2. Transmit Actions (Disabled for Spectators)
     const sendAction = useCallback((payload: any) => {
+        if (isSpectator) return;
         if (channelRef.current) {
             channelRef.current.send({
                 type: 'broadcast',
@@ -102,9 +110,10 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                 payload: { ...payload, senderId: playerId }
             });
         }
-    }, [playerId]);
+    }, [playerId, isSpectator]);
 
     const sendChat = (message: string) => {
+        if (isSpectator) return;
         if (!message.trim()) return;
         const payload = {
             type: 'CHAT',
@@ -132,7 +141,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         }
 
         // Handle Recovery Request (Neural Handshake)
-        if (type === 'RECOVERY_REQUEST') {
+        if (type === 'RECOVERY_REQUEST' && !isSpectator) {
             addLog("RECOVERY_DETECTION: Peer signal re-establishing...");
             // Send current known state to the re-joining peer
             sendAction({
@@ -160,32 +169,47 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         // Expose action for UI animations
         setLastAction({ ...payload, timestamp: Date.now() });
 
-        addLog(`OPPONENT uses ${moveName.toUpperCase()}!`);
+        addLog(`${senderId === opponentId ? 'OPPONENT' : 'ATTACKER'} uses ${moveName.toUpperCase()}!`);
 
-        // Apply Damage to Player
-        setPlayer(prev => {
-            const nextHp = Math.max(0, prev.hp - damage);
-            if (nextHp === 0) {
-                setIsComplete(true);
-                setWinnerId(opponent?.name || 'Opponent');
-                setBattleStatus('FINISHED');
-                addLog("SIGNAL_LOST: Combat concluded.");
-                triggerGlobalGlitch(2.0);
-            } else if (damage > 10) {
-                triggerGlobalImpact(0.8);
-            }
-            return { ...prev, hp: nextHp };
-        });
+        // Update health based on who sent the action
+        if (senderId === opponentId) {
+            // My opponent attacked me
+            setPlayer(prev => {
+                const nextHp = Math.max(0, prev.hp - damage);
+                if (nextHp === 0) {
+                    setIsComplete(true);
+                    setWinnerId(opponentId as string);
+                    setBattleStatus('FINISHED');
+                    addLog("SIGNAL_LOST: Combat concluded.");
+                    triggerGlobalGlitch(2.0);
+                } else if (damage > 10) {
+                    triggerGlobalImpact(0.8);
+                }
+                return { ...prev, hp: nextHp };
+            });
+            setIsTurn(!isSpectator);
+        } else if (isSpectator) {
+            // I am watching, so payload target must be the defender
+            setOpponent(prev => {
+                if (!prev) return prev;
+                const nextHp = Math.max(0, prev.hp - damage);
+                if (nextHp === 0) {
+                    setIsComplete(true);
+                    setWinnerId(senderId);
+                    setBattleStatus('FINISHED');
+                    addLog("SPECTATOR_SIGNAL: Target eliminated.");
+                }
+                return { ...prev, hp: nextHp };
+            });
+        }
 
         const effectivenessMsg = getEffectivenessMessage(effectiveness);
         if (effectivenessMsg) addLog(effectivenessMsg);
 
-        setIsTurn(true);
-    }, [opponent, playerId, player.hp, isTurn, sendAction, triggerGlobalGlitch, triggerGlobalImpact]);
-
+    }, [opponent, playerId, player.hp, isTurn, sendAction, triggerGlobalGlitch, triggerGlobalImpact, isSpectator, opponentId]);
 
     useEffect(() => {
-        if (!opponentId || !playerId) return; // Wait for match
+        if (!playerId) return;
 
         const initSync = async () => {
             setBattleStatus('SYNCING');
@@ -197,69 +221,91 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                     .eq('id', matchId)
                     .single();
 
-                if (fetchError) {
-                    console.warn("MATCH_FETCH_FAILED: Initializing fresh state.", fetchError);
-                } else if (matchData) {
-                    const isAttacker = matchData.attacker_id === playerId;
-                    const opponentIdReal = isAttacker ? matchData.defender_id : matchData.attacker_id;
-
-                    // 1. Restore Player HP
-                    const mySavedHp = isAttacker ? matchData.attacker_hp : matchData.defender_hp;
-                    setPlayer(prev => ({ ...prev, hp: mySavedHp }));
-
-                    // 2. Determine Turn Authoritatively
-                    if (matchData.turn_player_id) {
-                        setIsTurn(matchData.turn_player_id === playerId);
-                        setTurnLocked(true);
-                    } else {
-                        // Deterministic Turn if not yet set in DB: Lower ID goes first
-                        const amIFirst = playerId < opponentIdReal;
-                        setIsTurn(amIFirst);
-                        // We don't lock yet because the first move will lock it in DB
-                    }
-
-                    // 3. Partial Opponent Restore (Visuals come from SYNC broadcast)
-                    if (matchData.attacker_stats && matchData.defender_stats) {
-                        const oppStats = isAttacker ? matchData.defender_stats : matchData.attacker_stats;
-                        const oppHp = isAttacker ? matchData.defender_hp : matchData.attacker_hp;
-
-                        setOpponent(prev => prev ? {
-                            ...prev,
-                            hp: oppHp,
-                            stats: oppStats
-                        } : {
-                            id: opponentIdReal,
-                            name: "Agent Detected",
-                            maxHp: 100,
-                            hp: oppHp,
-                            stats: oppStats,
-                            streamerId: ""
-                        } as any);
-                    }
-
-                    if (matchData.status === 'ACTIVE') {
-                        addLog("SIGNAL_STABILITY: Neural link verified with server.");
-                        if (matchData.last_update) {
-                            addLog("RECOVERY_MODE: Restoring combat state from archive.");
-                            setBattleStatus('ACTIVE');
-                        }
-                    } else if (matchData.status === 'FINISHED') {
-                        setIsComplete(true);
-                        setBattleStatus('FINISHED');
-                        setWinnerId(matchData.winner_id === playerId ? player.name : "Opponent");
-                    }
+                if (fetchError || !matchData) {
+                    console.warn("MATCH_FETCH_FAILED", fetchError);
+                    setBattleStatus('ERROR');
+                    return;
                 }
 
-                // Update my own stats in the record if they aren't there
-                const isAttackerInDB = matchData?.attacker_id === playerId;
-                const updateCol = isAttackerInDB ? 'attacker_stats' : 'defender_stats';
-                const hpCol = isAttackerInDB ? 'attacker_hp' : 'defender_hp';
+                // Determine role
+                const isAttacker = matchData.attacker_id === playerId;
+                const isDefender = matchData.defender_id === playerId;
 
-                await supabase.from('pvp_matches').update({
-                    [updateCol]: player.stats,
-                    [hpCol]: player.hp,
-                    last_update: new Date().toISOString()
-                }).eq('id', matchId);
+                if (!isAttacker && !isDefender) {
+                    setIsSpectator(true);
+                    addLog("SPECTATOR_LINK: Established read-only connection.");
+                    // Setup spectator view using attacker as player, defender as opponent
+                    setPlayer(prev => ({ ...prev, id: matchData.attacker_id, hp: matchData.attacker_hp }));
+                    setWagerAmount(matchData.wager_amount || 0);
+                } else {
+                    setWagerAmount(matchData.wager_amount || 0);
+                    const mySavedHp = isAttacker ? matchData.attacker_hp : matchData.defender_hp;
+                    setPlayer(prev => ({ ...prev, hp: mySavedHp }));
+                }
+
+                // Determine Turn Authoritatively
+                if (matchData.turn_player_id) {
+                    setIsTurn(matchData.turn_player_id === playerId);
+                    setTurnLocked(true);
+                } else {
+                    const amIFirst = playerId === matchData.attacker_id;
+                    setIsTurn(amIFirst);
+                }
+
+                // Restore Opponent Data
+                const opponentIdReal = isAttacker ? matchData.defender_id : matchData.attacker_id;
+                const oppStatsObj = isAttacker ? matchData.defender_stats : matchData.attacker_stats;
+                const myStatsObj = isAttacker ? matchData.attacker_stats : matchData.defender_stats;
+
+                const oppHp = isAttacker ? matchData.defender_hp : matchData.attacker_hp;
+
+                // Sync my state if it was already in the record (Recovery)
+                if (!isSpectator) {
+                    const mySavedHp = isAttacker ? matchData.attacker_hp : matchData.defender_hp;
+                    setPlayer(prev => ({
+                        ...prev,
+                        name: myStatsObj?.name || prev.name,
+                        stats: myStatsObj || prev.stats,
+                        hp: mySavedHp
+                    }));
+                } else {
+                    // Spectator view: Attacker is "player", Defender is "opponent"
+                    const attackerStats = matchData.attacker_stats;
+                    setPlayer(prev => ({
+                        ...prev,
+                        id: matchData.attacker_id,
+                        name: attackerStats?.name || 'ATTACKER',
+                        stats: attackerStats,
+                        hp: matchData.attacker_hp
+                    }));
+                }
+
+                setOpponent({
+                    id: opponentIdReal,
+                    name: oppStatsObj?.name || "Agent Detected",
+                    maxHp: 100,
+                    hp: oppHp,
+                    stats: oppStatsObj,
+                    streamerId: ""
+                } as any);
+
+                if (matchData.status === 'FINISHED') {
+                    setIsComplete(true);
+                    setBattleStatus('FINISHED');
+                    setWinnerId(matchData.winner_id);
+                } else {
+                    setBattleStatus('ACTIVE');
+                }
+
+                // Update my own HP in the record if I'm a participant (Heartbeat)
+                if (!isSpectator) {
+                    const hpCol = isAttacker ? 'attacker_hp' : 'defender_hp';
+
+                    await supabase.from('pvp_matches').update({
+                        [hpCol]: player.hp,
+                        last_update: new Date().toISOString()
+                    }).eq('id', matchId);
+                }
 
             } catch (err) {
                 console.error("SYNC_CRITICAL_FAILURE", err);
@@ -278,39 +324,41 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             .on('broadcast', { event: 'SYNC' }, ({ payload }) => {
                 if (payload.senderId === playerId) return;
 
-                // Received opponent state
-                setOpponent(_prev => ({
-                    id: opponentId,
-                    name: payload.name,
-                    maxHp: payload.maxHp,
-                    hp: payload.hp,
-                    stats: payload.stats,
-                    streamerId: payload.streamerId,
-                    image: payload.image
-                } as any)); // Type casting for now as we expand state
-
-                // If Battle is just starting, set to ACTIVE
-                if (battleStatus === 'INITIATING' || battleStatus === 'SYNCING') {
-                    setBattleStatus('ACTIVE');
-                    addLog("PEER_LINK_ESTABLISHED: Engaging hostiles.");
-
-                    // Only set deterministic turn if it hasn't been set by authoritative recovery
-                    if (!turnLocked) {
-                        const amIFirst = playerId < (opponentId as string);
-                        setIsTurn(amIFirst);
-                        if (amIFirst) addLog("INITIATIVE_ROLL: You have the first move.");
-                    }
+                // Update whichever entity the broadcast represents
+                if (payload.senderId === opponentId) {
+                    setOpponent(prev => ({
+                        ...prev,
+                        id: payload.senderId,
+                        name: payload.name,
+                        maxHp: payload.maxHp,
+                        hp: payload.hp,
+                        stats: payload.stats,
+                        streamerId: payload.streamerId,
+                        image: payload.image
+                    } as any));
+                } else if (isSpectator) {
+                    // Update the "player" (attacker) state for spectators
+                    setPlayer(prev => ({
+                        ...prev,
+                        id: payload.senderId,
+                        name: payload.name,
+                        maxHp: payload.maxHp,
+                        hp: payload.hp,
+                        stats: payload.stats,
+                        streamerId: payload.streamerId,
+                        image: payload.image
+                    }));
                 }
             })
             .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+                if (isSpectator) return;
                 const opponentLeft = leftPresences.find((p: any) => p.playerId === opponentId);
                 if (opponentLeft) {
-                    // Don't finish immediately, wait for possible recovery period
                     addLog("PEER_SIGNAL_WEAK: Awaiting reconnection...");
                     setTimeout(() => {
                         if (battleStatus !== 'FINISHED') {
                             setIsComplete(true);
-                            setWinnerId(player.name);
+                            setWinnerId(playerId);
                             setBattleStatus('FINISHED');
                             addLog("OPPONENT_STALED: Victory by timeout.");
                         }
@@ -320,28 +368,30 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             .subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
                     await initSync();
-                    // Broadcast my state immediately on join so opponent sees me
-                    await channel.send({
-                        type: 'broadcast',
-                        event: 'SYNC',
-                        payload: {
-                            senderId: playerId,
-                            streamerId: myStreamer.id,
-                            name: myStreamer.name,
-                            maxHp: player.maxHp,
-                            hp: player.hp,
-                            stats: player.stats,
-                            image: myStreamer.image
-                        }
-                    });
 
-                    // Also track presence for disconnection handling
-                    await channel.track({
-                        playerId,
-                        name: myStreamer.name,
-                        streamerId: myStreamer.id,
-                        status: 'FIGHTING'
-                    });
+                    if (!isSpectator) {
+                        // Broadcast my state
+                        await channel.send({
+                            type: 'broadcast',
+                            event: 'SYNC',
+                            payload: {
+                                senderId: playerId,
+                                streamerId: myStreamer.id,
+                                name: myStreamer.name,
+                                maxHp: player.maxHp,
+                                hp: player.hp,
+                                stats: player.stats,
+                                image: myStreamer.image
+                            }
+                        });
+
+                        await channel.track({
+                            playerId,
+                            name: myStreamer.name,
+                            streamerId: myStreamer.id,
+                            status: 'FIGHTING'
+                        });
+                    }
                 }
             });
 
@@ -350,16 +400,15 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [matchId, opponentId, playerId, myStreamer, player.hp, player.maxHp, player.name, player.stats, handleAction, battleStatus, turnLocked, sendAction]);
+    }, [matchId, opponentId, playerId, myStreamer, player.hp, player.maxHp, player.name, player.stats, handleAction, battleStatus, turnLocked, sendAction, isSpectator]);
 
     // 5. Player Actions (Authoritative Server-Side Validation)
     const executeMove = useCallback(async (move: Move) => {
-        if (!isTurn || !opponent || isComplete) return;
+        if (isSpectator || !isTurn || !opponent || isComplete) return;
 
         addLog(`${player.name.toUpperCase()} uses ${move.name.toUpperCase()}!`);
 
         try {
-            // AUTHORITATIVE VALIDATION: Call Supabase RPC to calculate damage server-side
             const { data, error: rpcError } = await supabase.rpc('validate_pvp_move', {
                 p_match_id: matchId,
                 p_sender_id: playerId,
@@ -368,42 +417,34 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                 p_move_power: move.power
             });
 
-            let damage: number;
-            let effectiveness: number;
-            let isCrit: boolean;
-            let matchFinished: boolean;
-
             if (data?.error === 'NOT_YOUR_TURN') {
                 addLog("SIGNAL_SYNC_ERROR: Wait for your turn.");
                 return;
             }
 
             if (rpcError || data?.error) {
-                console.warn("Security Uplink Failed. Attempting ephemeral calculation.", rpcError || data?.error);
-                const opponentType = getEnemyType(opponent.stats);
-                effectiveness = getTypeEffectiveness(move.type, opponentType);
-                isCrit = Math.random() < 0.10;
-
-                const statKey = getStatForMoveType(move.type);
-                const relevantStatValue = (player.stats as any)[statKey] || 50;
-                damage = Math.floor(move.power * (relevantStatValue / 100) * effectiveness * (isCrit ? 1.5 : 1));
-                matchFinished = false;
-            } else {
-                damage = data.damage;
-                effectiveness = data.effectiveness;
-                isCrit = data.is_crit;
-                matchFinished = data.is_complete;
+                console.warn("Security Uplink Failed.", rpcError || data?.error);
+                toast.error("COMM_LINK_ERROR: Action desynchronized.");
+                return;
             }
 
-            // Update local opponent view (RPC result is authoritative)
-            const nextOpponentHp = data?.next_hp !== undefined ? data.next_hp : Math.max(0, opponent.hp - damage);
+            const damage = data.damage;
+            const effectiveness = data.effectiveness;
+            const isCrit = data.is_crit;
+            const matchFinished = data.is_complete;
+            const glrGain = data.glr_change || 0;
+
+            // Update local opponent view
+            const nextOpponentHp = data.next_hp;
             setOpponent(prev => prev ? ({ ...prev, hp: nextOpponentHp }) : prev);
 
             if (matchFinished) {
                 setIsComplete(true);
-                setWinnerId(player.name);
+                setWinnerId(playerId);
                 setBattleStatus('FINISHED');
-                addLog("CRITICAL_DELETION: PvP Objective Achieved.");
+                setGlrChange(glrGain);
+                addLog(`CRITICAL_DELETION: PvP Objective Achieved. +${glrGain} GLR`);
+                if (wagerAmount > 0) addLog(`WAGER_SECURED: ${wagerAmount} $PTS claimed.`);
             }
 
             const actionPayload = {
@@ -416,7 +457,6 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                 senderId: playerId
             };
 
-            // Broadcast Validated Action to Peer
             sendAction(actionPayload);
             setIsTurn(false);
 
@@ -424,23 +464,23 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             console.error("Combat Sync Error:", err);
             toast.error("COMM_LINK_ERROR: Action desynchronized.");
         }
-    }, [isTurn, opponent, isComplete, player.name, player.stats, playerId, matchId, sendAction]);
+    }, [isTurn, opponent, isComplete, player.name, player.stats, playerId, matchId, sendAction, isSpectator, wagerAmount]);
 
     // 6. Record Match Result
     useEffect(() => {
-        if (isComplete && winnerId) {
-            const isWin = winnerId === player.name;
+        if (isComplete && winnerId && !isSpectator) {
+            const isWin = winnerId === playerId;
             const recordResult = async () => {
                 try {
                     console.log(`[MATCH RECORDED] Result: ${isWin ? 'WIN' : 'LOSS'} for ${player.name}`);
-                    await _refreshStats(); // Server already updated the DB, just pull latest
+                    await refreshStoreStats(); // pulls latest wins/losses/glr
                 } catch (err) {
                     console.error("Failed to record match stats", err);
                 }
             };
             recordResult();
         }
-    }, [isComplete, winnerId, player.name, _refreshStats]);
+    }, [isComplete, winnerId, player.name, refreshStoreStats, isSpectator, playerId]);
 
     return {
         player,
@@ -453,6 +493,9 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         winnerId,
         executeMove,
         sendChat,
-        lastAction
+        lastAction,
+        isSpectator,
+        glrChange,
+        wagerAmount
     };
 };

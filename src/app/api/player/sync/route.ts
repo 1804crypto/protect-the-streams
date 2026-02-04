@@ -55,9 +55,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Suspicious Cycle Time: Uplink Rejected.' }, { status: 400 });
         }
 
-        console.log(`Syncing for user ${userId}: XP+${deltaXp}`);
+        // 4. Calculate Rewards
+        let ptsReward = 0;
+        if (missionId && rank) {
+            const rewardMap: Record<string, number> = {
+                'S': 100,
+                'A': 50,
+                'B': 25,
+                'F': 0
+            };
+            ptsReward = rewardMap[rank] || 0;
+            console.log(`Mission ${missionId} Rank ${rank}: Awarding ${ptsReward} $PTS`);
+        }
 
-        // 4. Update DB
+        // 5. Update DB
         const { data: user, error: fetchError } = await supabase
             .from('users')
             .select('*')
@@ -70,17 +81,19 @@ export async function POST(req: NextRequest) {
 
         // Calculate New State
         const newXp = (user.xp || 0) + (deltaXp || 0);
+        const newPtsBalance = (user.pts_balance || 0) + ptsReward;
 
         // SERVER AUTHORITATIVE LEVEL CALCULATION
         const newLevel = calculateLevel(newXp);
 
-        // Inventory Merge (Simple overwrite for now, can be improved with merge logic)
+        // Inventory Merge
         const newInventory = inventory || user.inventory;
 
         const updates: any = {
             xp: newXp,
             level: newLevel,
             inventory: newInventory,
+            pts_balance: newPtsBalance,
             updated_at: new Date().toISOString()
         };
 
@@ -102,7 +115,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Failed to persist' }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, newXp, newLevel });
+        return NextResponse.json({
+            success: true,
+            newXp,
+            newLevel,
+            newPtsBalance,
+            ptsGained: ptsReward
+        });
 
     } catch (error) {
         console.error("Sync API Error:", error);

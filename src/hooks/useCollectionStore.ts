@@ -24,9 +24,11 @@ interface CollectionState {
     level: number; // Global Player Level
     userFaction: 'RED' | 'PURPLE' | 'NONE';
     isFactionMinted: boolean;
-    activeMissionStart: number | null; // Anti-Cheat: Track start time
+    activeMissionStart: number | null;
+    lastMissionComplete: number | null; // Anti-Cheat: Track cooldown
     wins: number;
     losses: number;
+    ptsBalance: number;
     unlockedNarratives: string[];
 
     // Actions
@@ -91,11 +93,16 @@ const syncStateToCloud = async (
         const data = await res.json();
 
         if (data.success && set) {
-            set((_state: any) => ({
+            set((state: any) => ({
                 totalResistanceScore: data.newXp,
                 level: data.newLevel,
-                isAuthenticated: true // Confirm we are authenticated
+                ptsBalance: data.newPtsBalance !== undefined ? data.newPtsBalance : state.ptsBalance,
+                isAuthenticated: true
             }));
+
+            if (data.ptsGained > 0) {
+                console.log(`[ECONOMY] +${data.ptsGained} $PTS secured.`);
+            }
             console.log("Cloud Sync Verified. Level:", data.newLevel);
         } else if (data.error) {
             if (data.error === "Unauthorized" || res.status === 401) {
@@ -124,8 +131,10 @@ export const useCollectionStore = create<CollectionState>()(
             userFaction: 'NONE',
             isFactionMinted: false,
             activeMissionStart: null,
+            lastMissionComplete: null,
             wins: 0,
             losses: 0,
+            ptsBalance: 0,
             unlockedNarratives: [],
             isAuthenticated: false,
 
@@ -215,7 +224,16 @@ export const useCollectionStore = create<CollectionState>()(
                 }
             },
 
-            startMission: () => set({ activeMissionStart: Date.now() }),
+            startMission: () => {
+                const { lastMissionComplete } = get();
+                const now = Date.now();
+                // 10 second cooldown between missions
+                if (lastMissionComplete && (now - lastMissionComplete) < 10000) {
+                    console.warn("MISSION_COOLDOWN_ACTIVE: Scanning frequencies...");
+                    return;
+                }
+                set({ activeMissionStart: now });
+            },
 
             markMissionComplete: (_id: string, rank = 'B', xpGained = 50) => {
                 const { completedMissions, activeMissionStart } = get();
@@ -224,8 +242,15 @@ export const useCollectionStore = create<CollectionState>()(
                 const now = Date.now();
                 const duration = activeMissionStart ? (now - activeMissionStart) : 0;
 
-                // Reset Start Time
-                set({ activeMissionStart: null });
+                // Anti-Cheat: Minimum mission duration (5 seconds)
+                if (duration < 5000 && rank !== 'F') {
+                    console.error("MISSION_GLITCH_DETECTED: Signal terminated. Anomalous activity found.");
+                    set({ activeMissionStart: null });
+                    return;
+                }
+
+                // Reset Start Time and Update Cooldown
+                set({ activeMissionStart: null, lastMissionComplete: now });
 
                 const existingIndex = completedMissions.findIndex(m => m.id === _id);
                 let newMissions = [...completedMissions];
@@ -314,6 +339,7 @@ export const useCollectionStore = create<CollectionState>()(
                 if (userData.streamer_natures) updates.streamerNatures = userData.streamer_natures;
                 if (userData.completed_missions) updates.completedMissions = userData.completed_missions;
                 if (userData.faction) updates.userFaction = userData.faction;
+                if (userData.pts_balance !== undefined) updates.ptsBalance = userData.pts_balance;
                 if (userData.is_faction_minted !== undefined) updates.isFactionMinted = userData.is_faction_minted;
 
                 updates.isAuthenticated = true;

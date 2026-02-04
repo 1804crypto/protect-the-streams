@@ -15,7 +15,7 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
     const unlockedNarratives = useCollectionStore(state => state.unlockedNarratives);
     const [selectedStreamer, setSelectedStreamer] = useState<Streamer | null>(null);
 
-    const starter5Ids = ['kaicenat', 'ishowspeed', 'dukedennis', 'fanum', 'agent00'];
+    const starter5Ids = ['kaicenat', 'ishowspeed', 'dukedennis', 'druski', 'agent00'];
     const starter5 = streamers.filter(s => starter5Ids.includes(s.id));
 
     if (!isOpen) return null;
@@ -56,10 +56,10 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
                                         key={s.id}
                                         onClick={() => isUnlocked && setSelectedStreamer(s)}
                                         className={`w-full p-4 flex items-center gap-4 border transition-all relative group ${selectedStreamer?.id === s.id
-                                                ? 'bg-neon-blue/10 border-neon-blue text-white'
-                                                : isUnlocked
-                                                    ? 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:border-white/20'
-                                                    : 'bg-black/40 border-white/5 text-white/20 cursor-not-allowed'
+                                            ? 'bg-neon-blue/10 border-neon-blue text-white'
+                                            : isUnlocked
+                                                ? 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:border-white/20'
+                                                : 'bg-black/40 border-white/5 text-white/20 cursor-not-allowed'
                                             }`}
                                     >
                                         <div className="relative">

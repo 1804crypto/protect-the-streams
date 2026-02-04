@@ -7,7 +7,9 @@ import { streamers, Streamer } from '@/data/streamers';
 import { MissionTerminal } from './MissionTerminal';
 import { ResistanceMap } from './ResistanceMap';
 import { Leaderboard } from './Leaderboard';
-import { Trophy } from 'lucide-react';
+import { PvPTerminal } from './PvPTerminal';
+import { Trophy, ShoppingCart, Zap, Users } from 'lucide-react';
+import { BlackMarket } from './BlackMarket';
 
 interface CollectionHubProps {
     isOpen: boolean;
@@ -18,13 +20,24 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
     const securedIds = useCollectionStore(state => state.securedIds);
     const completedMissions = useCollectionStore(state => state.completedMissions);
     const totalResistanceScore = useCollectionStore(state => state.totalResistanceScore);
+    const ptsBalance = useCollectionStore(state => state.ptsBalance);
+    const userFaction = useCollectionStore(state => state.userFaction);
+    const setFaction = useCollectionStore(state => state.setFaction);
     const getMissionRecordLocal = (id: string) => completedMissions.find(m => m.id === id);
     const [activeMissionStreamer, setActiveMissionStreamer] = React.useState<Streamer | null>(null);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
+    const [isMarketOpen, setIsMarketOpen] = React.useState(false);
+    const [spectateMatchId, setSpectateMatchId] = React.useState<string | null>(null);
     const [authId, setAuthId] = React.useState<string>('');
 
     React.useEffect(() => {
         setAuthId(Math.random().toString(36).substring(7).toUpperCase());
+
+        const handleSpectate = (e: any) => {
+            setSpectateMatchId(e.detail);
+        };
+        window.addEventListener('SPECTATE_MATCH', handleSpectate);
+        return () => window.removeEventListener('SPECTATE_MATCH', handleSpectate);
     }, []);
     const securedAssets = streamers.filter(s => securedIds.includes(s.id));
 
@@ -66,6 +79,10 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                         <div className="flex items-center gap-2">
                                             <span className="text-[10px] text-yellow-400 font-black">RESISTANCE_SCORE: {totalResistanceScore.toLocaleString()}</span>
                                         </div>
+                                        <div className="h-3 w-px bg-white/10" />
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] text-neon-pink font-black">STAKES: {ptsBalance.toLocaleString()} $PTS</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
@@ -84,6 +101,91 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                     </button>
                                 </div>
                             </header>
+
+                            {/* HIGH-COMMAND DASHBOARD */}
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-sm relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-1 bg-neon-blue/20 text-neon-blue text-[7px] font-black uppercase tracking-widest">
+                                    HIGH_COMMAND_v1.0
+                                </div>
+                                <h3 className="text-[10px] font-black tracking-[0.3em] text-white/60 mb-4 uppercase flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-neon-blue rounded-full animate-pulse" />
+                                    OPERATIVE_PROFILE
+                                </h3>
+
+                                {userFaction === 'NONE' ? (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                        <div className="p-3 bg-resistance-accent/10 border border-resistance-accent/30 text-resistance-accent text-[9px] font-mono leading-relaxed">
+                                            [WARNING]: NEURAL_AFFILIATION_NOT_DETECTED. <br />
+                                            CHOOSE_LOYALTY_TO_ENABLE_FACTION_WAR_PROTOCOL.
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <button
+                                                onClick={() => setFaction('RED')}
+                                                className="flex-1 py-3 bg-red-600/20 border border-red-500 text-red-500 font-black text-[10px] hover:bg-red-500 hover:text-white transition-all group/red"
+                                            >
+                                                <div className="flex flex-col items-center">
+                                                    <span>JOIN RED</span>
+                                                    <span className="text-[6px] opacity-60 font-mono tracking-tighter mt-1 group-hover/red:opacity-100">STORM_ORDER</span>
+                                                </div>
+                                            </button>
+                                            <button
+                                                onClick={() => setFaction('PURPLE')}
+                                                className="flex-1 py-3 bg-purple-600/20 border border-purple-500 text-purple-400 font-black text-[10px] hover:bg-purple-500 hover:text-white transition-all group/purple"
+                                            >
+                                                <div className="flex flex-col items-center">
+                                                    <span>JOIN PURPLE</span>
+                                                    <span className="text-[6px] opacity-60 font-mono tracking-tighter mt-1 group-hover/purple:opacity-100">SHADOW_REIGN</span>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[8px] text-white/30 font-mono uppercase">Faction_Affiliation:</span>
+                                            <span className={`text-[10px] font-black tracking-widest ${userFaction === 'RED' ? 'text-red-500 shadow-[0_0_10px_#ff003c]' :
+                                                userFaction === 'PURPLE' ? 'text-purple-500 shadow-[0_0_10px_#a855f7]' :
+                                                    'text-white/40 italic'
+                                                }`}>
+                                                {`FACTION_${userFaction}`}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 text-right">
+                                            <span className="text-[8px] text-white/30 font-mono uppercase">Global_Liberation_Rating:</span>
+                                            <span className="text-[10px] font-black text-neon-green">
+                                                {totalResistanceScore.toLocaleString()} GLR
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black text-white">
+                                            #{completedMissions.length > 5 ? 'Elite' : 'Rookie'}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[8px] text-white/60 font-black uppercase tracking-tighter">Status: Active_Operative</span>
+                                            <span className="text-[6px] text-white/20 font-mono">ID: {authId?.slice(0, 12)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setIsMarketOpen(true)}
+                                            className="px-3 py-1 bg-purple-600/10 border border-purple-500/20 text-purple-400 text-[8px] font-black uppercase hover:bg-purple-600 hover:text-white transition-all flex items-center gap-2"
+                                        >
+                                            <ShoppingCart size={10} />
+                                            TACTICAL_MARKET
+                                        </button>
+                                        <button
+                                            onClick={() => setIsLeaderboardOpen(true)}
+                                            className="px-3 py-1 bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-[8px] font-black uppercase hover:bg-neon-blue hover:text-black transition-all"
+                                        >
+                                            RECORDS_Apex
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* Resistance Strategic Map */}
                             <div className="mb-12">
@@ -206,6 +308,23 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                             <Leaderboard isOpen={true} onClose={() => setIsLeaderboardOpen(false)} />
                         )}
                     </AnimatePresence>
+
+                    {/* Black Market Instance */}
+                    <AnimatePresence>
+                        {isMarketOpen && (
+                            <BlackMarket onClose={() => setIsMarketOpen(false)} />
+                        )}
+                    </AnimatePresence>
+
+                    {/* PvP Terminal Instance (Used for Matchmaking OR Spectating) */}
+                    {spectateMatchId && (
+                        <PvPTerminal
+                            streamer={streamers[0]} // Fallback streamer for assets
+                            matchId={spectateMatchId}
+                            isOpen={true}
+                            onClose={() => setSpectateMatchId(null)}
+                        />
+                    )}
                 </>
             )}
         </AnimatePresence>

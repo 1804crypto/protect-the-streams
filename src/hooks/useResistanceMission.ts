@@ -115,6 +115,16 @@ export const useResistanceMission = (streamer: Streamer) => {
     const [showPhaseBanner, setShowPhaseBanner] = useState(false);
     const [lastDamageAmount, setLastDamageAmount] = useState<number | null>(null);
     const [lastDamageDealer, setLastDamageDealer] = useState<'player' | 'enemy' | null>(null);
+    const [lastActionTime, setLastActionTime] = useState<number>(0);
+
+    const isRateLimited = useCallback(() => {
+        const now = Date.now();
+        if (now - lastActionTime < 400) {
+            return true;
+        }
+        setLastActionTime(now);
+        return false;
+    }, [lastActionTime]);
 
     // Global Visual Sync
     const setIntegrity = useVisualEffects(state => state.setIntegrity);
@@ -252,7 +262,7 @@ export const useResistanceMission = (streamer: Streamer) => {
 
     // Action Executors
     const executeMove = useCallback((move: Move) => {
-        if (!isTurn || isComplete) return;
+        if (!isTurn || isComplete || isRateLimited()) return;
 
         // Check PP
         if (movePP[move.name] <= 0) {
@@ -373,7 +383,7 @@ export const useResistanceMission = (streamer: Streamer) => {
     }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, attackBoost, movePP, currentBossPhase, streamer.name, addLog, triggerGlitch, triggerShake]);
 
     const executeUltimate = useCallback(() => {
-        if (charge < 100 || !isTurn || isComplete) return;
+        if (charge < 100 || !isTurn || isComplete || isRateLimited()) return;
 
         setIsTurn(false);
         setCharge(0);
@@ -417,7 +427,7 @@ export const useResistanceMission = (streamer: Streamer) => {
     }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel, enemy.hp, addLog, triggerGlitch]);
 
     const executeUseItem = useCallback((itemId: string) => {
-        if (!isTurn || isComplete) return false;
+        if (!isTurn || isComplete || isRateLimited()) return false;
 
         const item = items[itemId];
         if (!item) return false;
