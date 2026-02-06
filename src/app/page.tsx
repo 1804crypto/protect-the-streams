@@ -9,8 +9,10 @@ import { CollectionHub } from '@/components/UI/CollectionHub';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMintStreamer } from '@/hooks/useMintStreamer';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
+import { useVoiceOperator } from '@/hooks/useVoiceOperator';
 import { useGameDataStore } from '@/hooks/useGameDataStore';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
+import { useCheckUplinkStatus } from '@/hooks/useCheckUplinkStatus';
 
 const Scene = dynamic(() => import('@/components/Three/Scene'), { ssr: false });
 const WalletMultiButton = dynamic(
@@ -44,10 +46,12 @@ export default function Home() {
     const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
-    // Gated Rebellion Logic
-    const { securedIds, userFaction } = useCollectionStore();
-    const hasAccess = securedIds.length > 0 || userFaction !== 'NONE';
+    // Gated Rebellion Logic - ON-CHAIN NFT VERIFICATION (Signal Lock)
+    const { userFaction } = useCollectionStore();
+    const { hasNFT, loading: nftLoading, error: nftError } = useCheckUplinkStatus();
+    const hasAccess = hasNFT || userFaction !== 'NONE';
 
+    const { initAida } = useVoiceOperator();
     const { triggerDialogue } = useOperatorStore();
 
     useEffect(() => {
@@ -62,11 +66,12 @@ export default function Home() {
             setIsTutorialOpen(true);
         }
 
-        // Trigger Operator Onboarding
+        // Trigger Operator Onboarding & Aida Greeting
         setTimeout(() => {
-            triggerDialogue('onboarding');
+            initAida(); // Vocal Greeting
+            triggerDialogue('onboarding'); // Visual Dialogue
         }, 2000);
-    }, [triggerDialogue, fetchGameData, isInitialized]);
+    }, [triggerDialogue, fetchGameData, isInitialized, initAida]);
 
     useEffect(() => {
         if (status && status.includes("Secured")) {
@@ -284,7 +289,7 @@ export default function Home() {
                                         <span className="text-2xl">🔒</span> SIGNAL LOCKED
                                     </h3>
                                     <p className="text-red-400 font-mono text-sm max-w-lg mx-auto tracking-widest leading-relaxed">
-                                        "COMMANDER, SECURE YOUR SIGNAL (MINT STREAMER) AND JOIN A FACTION TO INITIATE THE REBELLION."
+                                        SIGNAL LOCKED: MINT TO UNLOCK TERMINAL.
                                     </p>
                                     <div className="mt-8 animate-pulse">
                                         <a href="#roster" className="text-neon-blue underline font-bold text-xs tracking-[0.2em]">[PROCEED_TO_UPLINK_TERMINAL]</a>

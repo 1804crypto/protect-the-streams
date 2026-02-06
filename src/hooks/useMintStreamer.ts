@@ -16,7 +16,7 @@ export const useMintStreamer = () => {
     const [signature, setSignature] = useState<string | null>(null);
     const [error, setError] = useState<{ code: string; message: string } | null>(null);
 
-    const mint = async (streamerId?: string) => {
+    const mint = async (streamerId?: string, currency: 'SOL' | 'USDC' | 'PTS' = 'SOL') => {
         if (!connected || !publicKey || !wallet) {
             setError({
                 code: "UPLINK_TERMINATED",
@@ -44,7 +44,8 @@ export const useMintStreamer = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     streamerId,
-                    userPublicKey: publicKey.toBase58()
+                    userPublicKey: publicKey.toBase58(),
+                    currency
                 })
             });
 

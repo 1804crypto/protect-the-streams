@@ -5,6 +5,10 @@ export const CONFIG = {
     FEES: {
         PRIORITY: 0.00001 // SOL
     },
+    TOKENS: {
+        USDC: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU', // Devnet USDC
+        PTS: 'PtsT0ken111111111111111111111111111111111' // Placeholder for PTS Token
+    },
     THEME: {
         PRIMARY: '#00f3ff',
         ACCENT: '#ff003c',

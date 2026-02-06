@@ -246,6 +246,18 @@ export const useResistanceMission = (streamer: Streamer) => {
         }
     }, [isTurn, isComplete, enemy.hp, handleEnemyTurn]);
 
+    // Safety Watchdog: If turn is lost for > 5s, force reset
+    useEffect(() => {
+        if (!isTurn && !isComplete) {
+            const safetyTimer = setTimeout(() => {
+                console.warn("Watchdog: Forcing Turn Reset");
+                addLog("SYSTEM_OVERRIDE: Manual Override Engaged.");
+                setIsTurn(true);
+            }, 5000);
+            return () => clearTimeout(safetyTimer);
+        }
+    }, [isTurn, isComplete, addLog]);
+
     const calculateRank = useCallback((): 'S' | 'A' | 'B' | 'F' => {
         if (result === 'FAILURE') return 'F';
         const hpPercent = (player.hp / player.maxHp) * 100;

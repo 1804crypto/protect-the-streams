@@ -4,16 +4,34 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOperatorStore } from '@/hooks/useOperatorStore';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
+import { useVoiceOperator } from '@/hooks/useVoiceOperator';
 
 export const OperatorComms: React.FC = () => {
     const { currentDialogue, isMessageOpen, nextDialogue, closeDialogue: _closeDialogue } = useOperatorStore();
-    const { playVoiceLine, playClick, forceUnmute } = useAudioSystem();
+    const { playClick, forceUnmute } = useAudioSystem();
+    const { speakOperator, speakUrgent, stop: stopVoice, initTTS } = useVoiceOperator();
 
+    // Voice Operator 7 TTS - Speak dialogue when message opens
     useEffect(() => {
         if (isMessageOpen && currentDialogue) {
-            playVoiceLine(currentDialogue.speaker);
+            // Determine voice style based on trigger type
+            const isUrgent = currentDialogue.trigger === 'battle_near_loss';
+
+            // Small delay for transmission burst effect
+            const timer = setTimeout(() => {
+                if (isUrgent) {
+                    speakUrgent(currentDialogue.text);
+                } else {
+                    speakOperator(currentDialogue.text);
+                }
+            }, 200);
+
+            return () => {
+                clearTimeout(timer);
+                stopVoice();
+            };
         }
-    }, [isMessageOpen, currentDialogue, playVoiceLine]);
+    }, [isMessageOpen, currentDialogue, speakOperator, speakUrgent, stopVoice]);
 
     if (!isMessageOpen || !currentDialogue) return null;
 

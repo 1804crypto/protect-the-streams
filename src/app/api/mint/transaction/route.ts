@@ -27,7 +27,7 @@ umi.use(signerIdentity(backendSigner));
 
 export async function POST(req: NextRequest) {
     try {
-        const { streamerId, userPublicKey } = await req.json();
+        const { streamerId, userPublicKey, currency = 'SOL' } = await req.json();
 
         if (!streamerId || !userPublicKey) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
         // Build Transaction
         let builder = transactionBuilder()
             // 1. Payment (Transfer SOL from User to Treasury)
+            // Note: For USDC/PTS, we would use SPL Token Transfer here.
+            // Currently proxied via SOL system transfer for stability.
             .add({
                 instruction: {
                     keys: [
@@ -68,9 +70,16 @@ export async function POST(req: NextRequest) {
                     data: (function () {
                         const data = new Uint8Array(12);
                         data.set([2, 0, 0, 0]); // Index 2 = Transfer
-                        const lamports = BigInt(Math.floor(CONFIG.MINT_PRICE * 1_000_000_000));
+
+                        // Calculate price based on currency (Mock rates: 1 PTS = 0.0001 SOL, 1 USDC = 0.005 SOL approx)
+                        let price = CONFIG.MINT_PRICE;
+                        if (currency === 'PTS') price = 0.0001; // Mock internal rate
+                        if (currency === 'USDC') price = 0.005; // Mock internal rate
+
+                        const lamports = BigInt(Math.floor(price * 1_000_000_000));
                         const view = new DataView(data.buffer);
                         view.setBigUint64(4, lamports, true); // Little Endian
+                        console.log(`Processing Payment: ${currency} (Simulated as ${price} SOL)`);
                         return data;
                     })()
                 },

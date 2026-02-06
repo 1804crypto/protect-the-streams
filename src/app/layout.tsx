@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SolanaProvider } from "@/components/SolanaProvider";
 import { SystemHeartbeat } from "@/components/SystemHeartbeat";
 import { ResistanceOverlay } from "@/components/UI/ResistanceOverlay";
+import { AudiusPlayer } from "@/components/AudiusPlayer";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -51,6 +52,7 @@ export default function RootLayout({
                 <SolanaProvider>
                     <SystemHeartbeat />
                     <ResistanceOverlay />
+                    <AudiusPlayer />
                     <div className="scanline" />
                     <div className="relative z-10">
                         {children}
@@ -60,3 +62,6 @@ export default function RootLayout({
         </html>
     );
 }
+
+
+// REDEPLOY_TRIGGER: 2026-02-06T11:16:40-05:00

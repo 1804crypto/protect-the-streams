@@ -71,6 +71,21 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     useEffect(() => { opponentRef.current = opponent; }, [opponent]);
     useEffect(() => { isSpectatorRef.current = isSpectator; }, [isSpectator]);
     useEffect(() => { battleStatusRef.current = battleStatus; }, [battleStatus]);
+    useEffect(() => {
+        // Watchdog: If stuck in SYNCING for > 5s, force ACTIVE
+        if (battleStatus === 'SYNCING' || battleStatus === 'INITIATING') {
+            const timer = setTimeout(() => {
+                if (battleStatusRef.current !== 'ACTIVE' && battleStatusRef.current !== 'FINISHED') {
+                    console.warn("Watchdog: Forcing ACTIVE state");
+                    addLog("SYSTEM_OVERRIDE: Forcing Link Active...");
+                    setBattleStatus('ACTIVE');
+                    // Fallback turn logic if undefined
+                    if (player.id === matchId.split('_')[0]) setIsTurn(true);
+                }
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [battleStatus, matchId, player.id]);
 
     // Global Visual Sync
     const setIntegrity = useVisualEffects(state => state.setIntegrity);
@@ -233,6 +248,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
                 if (fetchError || !matchData) {
                     console.warn("MATCH_FETCH_FAILED", fetchError);
+                    addLog(`SYNC_ERROR: ${fetchError?.message || 'Match not found'}`);
                     setBattleStatus('ERROR');
                     return;
                 }

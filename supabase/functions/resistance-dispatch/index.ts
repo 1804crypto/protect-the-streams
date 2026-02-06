@@ -62,82 +62,118 @@ serve(async (req) => {
             if (record.status === 'FINISHED' && old_record.status !== 'FINISHED' && record.winner_id) {
 
                 const winnerId = record.winner_id;
+                const loserId = winnerId === record.attacker_id ? record.defender_id : record.attacker_id;
                 const isAttackerWin = winnerId === record.attacker_id;
 
                 // Get Winner's Streamer Persona
-                const stats = isAttackerWin ? record.attacker_stats : record.defender_stats;
-                const streamerName = stats?.name || "Unknown Agent";
+                const winnerStats = isAttackerWin ? record.attacker_stats : record.defender_stats;
+                const loserStats = isAttackerWin ? record.defender_stats : record.attacker_stats;
+                const winnerName = winnerStats?.name || "Unknown Agent";
+                const loserName = loserStats?.name || "Unknown Agent";
 
-                // Avoid generic names if possible, but fallback is safe
-                if (streamerName === "Unknown Agent") {
-                    return new Response(JSON.stringify({ message: "Skipped: Unknown Streamer" }), { headers: corsHeaders });
-                }
-
-                // Fetch Faction from User Profile
-                const { data: userData, error: userError } = await supabaseClient
+                // Fetch Faction from Winner's User Profile
+                const { data: winnerData } = await supabaseClient
                     .from('users')
                     .select('faction')
                     .eq('id', winnerId)
                     .single();
 
-                const factionId = userData?.faction || 'RED'; // Fallback to RED if lookup fails (or user has no faction)
+                const winnerFaction = winnerData?.faction || 'RED';
 
-                const prompt = `
-                PROTOCOL: BOONDOCKS_SENTIENCE
-                IDENTITY: Streamer "${streamerName}" (Cyberpunk Resistance Commander)
-                EVENT: VICTORIOUS in High-Stakes PvP Battle.
-                
-                PERSONA DATABASE (STRICT ADHERENCE REQUIRED):
-                
-                1. **KAI CENAT** ("The W" Protocol):
-                   - Keywords: "W", "Chat", "Motion", "God did", "On my soul", "Wrrt", "Mafia".
-                   - Vibe: High energy, hype, loud, leader of the new school.
-                   - Example: "W IN THE CHAT! WE TAKING OVER THE WHOLE GRID ON GOD!"
-                
-                2. **ISHOWSPEED** ("Glitch" Protocol):
-                   - Keywords: "SEWEY", "Bark", "Ronaldo", "Gang", "Speed bitc*", "Arf-Arf".
-                   - Vibe: Chaotic, aggressive, unintentional glitch art, barking.
-                   - Style: USE UPPERCASE. ACT LIKE YOU ARE GLITCHING.
-                   - Example: "SEWEYYY! GET OFF MY SERVER! *BARK* *BARK* WHO GON STOP ME?!"
-                   
-                3. **JAZZY** ("The Culture" Protocol):
-                   - Keywords: "Clip that", "Easy work", "Tactical", "Locked in", "Sentinels".
-                   - Vibe: Calculated, fierce, strategic, queen of the grid.
-                   - Example: "Scanning for opps... sector clear. We move silent. Lock in."
-                
-                4. **ADIN ROSS** ("Whale" Protocol):
-                   - Keywords: "W/L", "Connex", "Flex", "Brand risk", "Too rich".
-                   - Vibe: Arrogant but surprisingly effective, obsessed with status.
+                // Fetch Faction from Loser's User Profile
+                const { data: loserData } = await supabaseClient
+                    .from('users')
+                    .select('faction')
+                    .eq('id', loserId)
+                    .single();
 
-                DIRECTIVE:
-                Generate a single, high-intensity faction chat message (max 15 words) based on the streamer's persona.
-                If the streamer is not in the database, default to a generic "Resistance Commander" tone (Gritty, Cyberpunk).
-                
-                INPUT CONTEXT:
-                - Winner: ${streamerName}
-                - Faction: ${factionId}
-                - Outcome: VICTORY
-                
-                OUTPUT_FORMAT:
-                Just the message text. No quotes.
-                `;
+                const loserFaction = loserData?.faction || 'PURPLE';
 
-                const reactionMessage = await generateGeminiText(geminiApiKey, prompt);
+                // === BOONDOCKS PROTOCOL v3.5 ===
+                const buildPrompt = (streamerName: string, outcome: 'WIN' | 'LOSS') => `
+PROTOCOL: BOONDOCKS_SENTIENCE_v3.5
+IDENTITY: Streamer "${streamerName}" (Cyberpunk Resistance Commander)
+EVENT: ${outcome === 'WIN' ? 'VICTORIOUS' : 'DEFEATED'} in High-Stakes PvP Battle.
 
-                await supabaseClient.from('faction_chat').insert({
-                    faction_id: factionId,
-                    sender_name: streamerName,
-                    message: reactionMessage,
-                    type: 'STREAMER',
-                    metadata: {
-                        match_id: record.id,
-                        result: 'WIN',
-                        protocol: 'BOONDOCKS',
-                        persona: streamerName
-                    }
-                });
+PERSONA DATABASE (STRICT ADHERENCE REQUIRED):
 
-                return new Response(JSON.stringify({ success: true, message: reactionMessage }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+1. **KAI CENAT** (Nature: Rebellious - "The W" Protocol):
+   - WIN Keywords: "W", "Chat", "Motion", "God did", "On my soul", "Wrrt", "Mafia", "W Uplink"
+   - WIN Example: "W IN THE CHAT! WE TAKING OVER THE WHOLE GRID ON GOD! W UPLINK SECURED!"
+   - LOSS Keywords: "L", "crashed", "next signal", "run it back", "they caught us slipping"
+   - LOSS Example: "NAH CHAT WE GOT CAUGHT SLIPPING... CRASHING THE NEXT SIGNAL FR FR"
+   - Vibe: High energy, hyper-focused on "The W", uses Chat lingo
+
+2. **ISHOWSPEED** (Nature: Aggressive - "Glitch" Protocol):
+   - WIN Keywords: "SEWEY", "*BARK*", "Ronaldo", "WHO GON STOP ME", "*ARF ARF*"
+   - WIN Example: "SEWEYYY! *BARK* *BARK* GET OFF MY SERVER! WHO GON STOP SPEED?!"
+   - LOSS Keywords: "*GLITCH*", "NOOOO", "*BARK BARK*", "THIS IS RIGGED", "*STATIC*"
+   - LOSS Example: "*GLITCH* NOOOO HOW DID I LOSE?! *BARK* *ARF* *STATIC* RIGGED SERVER!!!"
+   - Vibe: Chaotic, aggressive, digital riot energy. USE UPPERCASE. Include glitch-text markers.
+   - STYLE: Always CAPS. Add *BARK*, *ARF*, *GLITCH*, *STATIC* markers for chaos.
+
+3. **JAZZY** (Nature: Cunning - "The Culture" Protocol):
+   - WIN Keywords: "Easy work", "Clip that", "Locked in", "Sentinels on point", "Intel secured"
+   - WIN Example: "Easy work. Clip that for the archives. Sentinels, lock in for the next sector."
+   - LOSS Keywords: "Recalculating", "Intel compromised", "Fall back", "Regroup", "Next time"
+   - LOSS Example: "Intel compromised... Fall back, Sentinels. Recalculating. We move smarter next time."
+   - Vibe: Tactical, smooth, focused on "The Culture" and long-term strategy
+
+4. **ADIN ROSS** (Nature: Status-Driven - "Whale" Protocol):
+   - WIN Keywords: "W/L", "Connex", "Flex", "Too rich for this"
+   - LOSS Keywords: "Brand risk", "This is bad for the brand", "Next contract"
+
+DIRECTIVE:
+Generate a single, high-intensity faction chat message (max 15 words) based on the streamer's persona and ${outcome} outcome.
+If the streamer is not in the database, default to a generic "Resistance Commander" tone.
+
+OUTPUT_FORMAT:
+Just the message text. No quotes. No explanations.
+`;
+
+                const messages = [];
+
+                // Generate Winner Reaction
+                if (winnerName !== "Unknown Agent") {
+                    const winPrompt = buildPrompt(winnerName, 'WIN');
+                    const winMessage = await generateGeminiText(geminiApiKey, winPrompt);
+
+                    await supabaseClient.from('faction_chat').insert({
+                        faction_id: winnerFaction,
+                        sender_name: winnerName,
+                        message: winMessage,
+                        type: 'STREAMER',
+                        metadata: {
+                            match_id: record.id,
+                            result: 'WIN',
+                            protocol: 'BOONDOCKS_v3.5',
+                            persona: winnerName
+                        }
+                    });
+                    messages.push({ role: 'WINNER', name: winnerName, message: winMessage });
+                }
+
+                // Generate Loser Reaction
+                if (loserName !== "Unknown Agent") {
+                    const lossPrompt = buildPrompt(loserName, 'LOSS');
+                    const lossMessage = await generateGeminiText(geminiApiKey, lossPrompt);
+
+                    await supabaseClient.from('faction_chat').insert({
+                        faction_id: loserFaction,
+                        sender_name: loserName,
+                        message: lossMessage,
+                        type: 'STREAMER',
+                        metadata: {
+                            match_id: record.id,
+                            result: 'LOSS',
+                            protocol: 'BOONDOCKS_v3.5',
+                            persona: loserName
+                        }
+                    });
+                    messages.push({ role: 'LOSER', name: loserName, message: lossMessage });
+                }
+
+                return new Response(JSON.stringify({ success: true, messages }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
             }
         }
 
