@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ text: text.trim() });
     } catch (error) {
         console.error("Gemini API Error:", error);
-        return NextResponse.json({ error: 'Signal Interrupted' }, { status: 500 });
+        // Fallback for mission critical stability
+        return NextResponse.json({ text: "NEURAL_UPLINK_OFFLINE... SYSTEM_DEFAULT_RESPONSE_INITIATED." });
     }
 }
