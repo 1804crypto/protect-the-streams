@@ -239,6 +239,12 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         const initSync = async () => {
             setBattleStatus('SYNCING');
             try {
+                if (matchId === 'waiting') {
+                    // Waiting for matchmaking...
+                    setBattleStatus('INITIATING');
+                    return;
+                }
+
                 // Attempt to fetch existing match data for recovery
                 const { data: matchData, error: fetchError } = await supabase
                     .from('pvp_matches')
@@ -247,8 +253,11 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                     .single();
 
                 if (fetchError || !matchData) {
-                    console.warn("MATCH_FETCH_FAILED", fetchError);
-                    addLog(`SYNC_ERROR: ${fetchError?.message || 'Match not found'}`);
+                    // Ignore invalid UUID errors which happen during transition
+                    if (fetchError?.code !== '22P02') {
+                        console.warn("MATCH_FETCH_FAILED", fetchError);
+                        addLog(`SYNC_ERROR: ${fetchError?.message || 'Match not found'}`);
+                    }
                     setBattleStatus('ERROR');
                     return;
                 }
