@@ -57,6 +57,8 @@ export const useGameDataStore = create<GameDataState>((set) => ({
                 const ultimateMove = movesData.find(m => m.streamer_id === s.id && m.is_ultimate);
 
                 uniqueMap.set(s.id, {
+                    // OVERRIDE: Prioritize local image assets (to fix DB mismatch)
+                    image: localStreamers.find(ls => ls.id === s.id)?.image || s.image,
                     id: s.id,
                     name: s.name,
                     archetype: s.archetype,
