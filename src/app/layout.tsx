@@ -58,6 +58,9 @@ export default function RootLayout({
                         {children}
                     </div>
                 </SolanaProvider>
+                <div className="fixed bottom-0 right-0 p-1 text-[10px] text-white/20 pointer-events-none z-[9999]">
+                    v_2026_02_08_0630_FIX
+                </div>
             </body>
         </html>
     );
