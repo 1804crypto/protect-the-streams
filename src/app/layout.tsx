@@ -59,7 +59,7 @@ export default function RootLayout({
                     </div>
                 </SolanaProvider>
                 <div className="fixed bottom-0 right-0 p-1 text-[10px] text-white/20 pointer-events-none z-[9999]">
-                    v_2026_02_08_0630_FIX
+                    v_2026_02_08_0655_FINAL
                 </div>
             </body>
         </html>
@@ -67,4 +67,4 @@ export default function RootLayout({
 }
 
 
-// REDEPLOY_TRIGGER: 2026-02-08T06:30:00-05:00
+// REDEPLOY_TRIGGER: 2026-02-08T06:55:00-05:00
