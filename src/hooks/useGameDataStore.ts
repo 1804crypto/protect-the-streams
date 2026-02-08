@@ -65,7 +65,7 @@ export const useGameDataStore = create<GameDataState>((set) => ({
                     stats: s.stats,
                     trait: s.trait,
                     visualPrompt: s.visual_prompt,
-                    image: s.image,
+                    // image property moved to top to force override
                     lore: s.lore,
                     moves: streamerMoves.map(m => ({
                         name: m.name,
