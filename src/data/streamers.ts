@@ -382,7 +382,7 @@ export const streamers: Streamer[] = [
         stats: { influence: 88, chaos: 75, charisma: 85, rebellion: 80 },
         trait: 'AGGRESSIVE',
         visualPrompt: 'Valkyrae with dual energy swords',
-        image: '/tylil_cyber_rebel_fixed.png',
+        image: '/rakai_anime_upgrade.png',
         moves: [
             { name: 'Scream', type: 'REBELLION', power: 60, pp: 15, description: 'Sonic damage' },
             { name: 'Blade Dance', type: 'CHAOS', power: 80, pp: 10, description: 'Multi-hit' },
@@ -520,7 +520,7 @@ export const streamers: Streamer[] = [
         stats: { influence: 88, chaos: 95, charisma: 70, rebellion: 95 },
         trait: 'AGGRESSIVE',
         visualPrompt: 'Tyler1 screaming',
-        image: '/rakai_cyber_rebel_fixed.png',
+        image: '/tylil_cyber_rebel_fixed.png',
         moves: [
             { name: 'Reform', type: 'REBELLION', power: 20, pp: 5, description: 'Heals self' },
             { name: 'Alpha Scream', type: 'CHAOS', power: 85, pp: 10, description: 'Terrifies enemy' },

@@ -239,9 +239,33 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         const initSync = async () => {
             setBattleStatus('SYNCING');
             try {
-                if (matchId === 'waiting') {
-                    // Waiting for matchmaking...
+                // STRICT UUID TYPE GUARD: Prevent invalid matchId from triggering Supabase queries
+                const isValidUuid = (id: string): boolean => {
+                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                    return uuidRegex.test(id);
+                };
+
+                if (matchId === 'waiting' || (!matchId.startsWith('bot_match_') && !isValidUuid(matchId))) {
+                    // Waiting for matchmaking or invalid UUID...
                     setBattleStatus('INITIATING');
+                    addLog("MATCHMAKING_ACTIVE: Awaiting valid peer connection...");
+                    return;
+                }
+
+                if (matchId.startsWith('bot_match_')) {
+                    // BOT SIMULATION INIT
+                    setBattleStatus('ACTIVE');
+                    setOpponent({
+                        id: 'AI_SENTINEL_V3',
+                        name: 'SENTINEL_PRIME',
+                        maxHp: 200,
+                        hp: 200,
+                        stats: { influence: 80, chaos: 20, charisma: 10, rebellion: 90 },
+                        streamerId: '',
+                        image: null // Use fallback
+                    } as any);
+                    setIsTurn(true);
+                    addLog("SIMULATION_UPLINK: Training Protocol Active.");
                     return;
                 }
 
@@ -436,7 +460,71 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
     // 5. Player Actions (Authoritative Server-Side Validation)
     const executeMove = useCallback(async (move: Move) => {
-        if (isSpectatorRef.current || !isTurn || !opponentRef.current || isComplete) return;
+        if (isSpectatorRef.current || !isTurn || (!opponentRef.current && !matchId.startsWith('bot_match_')) || isComplete) return;
+
+        // BOT SIMULATION MOVE
+        if (matchId.startsWith('bot_match_')) {
+            setIsTurn(false);
+            addLog(`${playerRef.current.name.toUpperCase()} uses ${move.name.toUpperCase()}!`);
+
+            // Calculate Damage Locally
+            const damage = Math.floor(move.power * (Math.random() * 0.4 + 0.8));
+            const isCrit = Math.random() > 0.9;
+            const finalDamage = isCrit ? damage * 2 : damage;
+
+            setOpponent(prev => {
+                if (!prev) return null;
+                const nextHp = Math.max(0, prev.hp - finalDamage);
+                if (nextHp === 0) {
+                    setIsComplete(true);
+                    setWinnerId(playerId);
+                    setBattleStatus('FINISHED');
+                    addLog("TARGET_NEUTRALIZED: Simulation Complete.");
+                }
+                return { ...prev, hp: nextHp };
+            });
+
+            setLastAction({
+                type: 'MOVE',
+                moveName: move.name,
+                moveType: move.type,
+                damage: finalDamage,
+                senderId: playerId,
+                timestamp: Date.now()
+            });
+
+            if (isCrit) addLog("CRITICAL_HIT: System Overload!");
+
+            // Bot Retaliation
+            setTimeout(() => {
+                if (isComplete) return;
+
+                const botDamage = Math.floor(Math.random() * 20 + 10);
+                setPlayer(prev => {
+                    const nextHp = Math.max(0, prev.hp - botDamage);
+                    if (nextHp === 0) {
+                        setIsComplete(true);
+                        setWinnerId('AI_SENTINEL_V3');
+                        setBattleStatus('FINISHED');
+                        addLog("MISSION_FAILURE: Simulation Failed.");
+                    }
+                    return { ...prev, hp: nextHp };
+                });
+
+                addLog(`SENTINEL_PRIME attacks! -${botDamage} HP`);
+                setLastAction({
+                    type: 'MOVE',
+                    moveName: 'Firewall Breach',
+                    moveType: 'CHAOS',
+                    damage: botDamage,
+                    senderId: 'AI_SENTINEL_V3',
+                    timestamp: Date.now()
+                });
+
+                setIsTurn(true);
+            }, 2000);
+            return;
+        }
 
         // OPTIMISTIC LOCK: Prevent double-submit
         setIsTurn(false);
