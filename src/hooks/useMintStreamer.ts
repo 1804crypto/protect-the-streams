@@ -124,12 +124,50 @@ export const useMintStreamer = () => {
 
         } catch (err: any) {
             console.error("Mint Error:", err);
-            setError({
-                code: "SIGNAL_JAMMED",
-                message: err.message.includes("User rejected")
-                    ? "Uplink Request Rejected by Agent. Security Protocol Intact."
-                    : `Network Error: ${err.message}`
-            });
+
+            // FALLBACK TO CLIENT-SIDE TRANSFER IF API FAILS
+            if (err.message && (err.message.includes("Server") || err.message.includes("Network"))) {
+                try {
+                    setStatus("Uplink Failed. Attempting Manual Signal Injection... [CLIENT_OVERRIDE]");
+
+                    const { SystemProgram, PublicKey, Transaction, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
+
+                    const transaction = new Transaction().add(
+                        SystemProgram.transfer({
+                            fromPubkey: publicKey!,
+                            toPubkey: new PublicKey(CONFIG.TREASURY_WALLET),
+                            lamports: CONFIG.MINT_PRICE * LAMPORTS_PER_SOL,
+                        })
+                    );
+
+                    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+                    transaction.recentBlockhash = blockhash;
+                    transaction.feePayer = publicKey!;
+
+                    const signature = await wallet?.adapter.sendTransaction(transaction, connection);
+                    await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+
+                    setStatus("Manual Signal Injection Successful. Asset Secured.");
+                    setSignature(signature);
+                    secureAsset(streamerId);
+                    setLoading(false);
+                    return;
+
+                } catch (fallbackErr: any) {
+                    console.error("Fallback Failed:", fallbackErr);
+                    setError({
+                        code: "CRITICAL_FAILURE",
+                        message: "Both Neural Link and Manual Injection failed. Check solvency."
+                    });
+                }
+            } else {
+                setError({
+                    code: "SIGNAL_JAMMED",
+                    message: err.message.includes("User rejected")
+                        ? "Uplink Request Rejected by Agent. Security Protocol Intact."
+                        : `Network Error: ${err.message}`
+                });
+            }
             setStatus(null);
             setLoading(false);
         }
