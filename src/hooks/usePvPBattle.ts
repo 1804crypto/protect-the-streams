@@ -438,6 +438,9 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     const executeMove = useCallback(async (move: Move) => {
         if (isSpectatorRef.current || !isTurn || !opponentRef.current || isComplete) return;
 
+        // OPTIMISTIC LOCK: Prevent double-submit
+        setIsTurn(false);
+
         addLog(`${playerRef.current.name.toUpperCase()} uses ${move.name.toUpperCase()}!`);
 
         try {
@@ -457,6 +460,8 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             if (rpcError || data?.error) {
                 console.warn("Security Uplink Failed.", rpcError || data?.error);
                 toast.error("COMM_LINK_ERROR: Action desynchronized.");
+                // REVERT LOCK on failure (if match not finished)
+                if (!isComplete) setIsTurn(true);
                 return;
             }
 
@@ -490,11 +495,13 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             };
 
             sendAction(actionPayload);
-            setIsTurn(false);
+            // setIsTurn(false); // Already set at start
 
         } catch (err) {
             console.error("Combat Sync Error:", err);
             toast.error("COMM_LINK_ERROR: Action desynchronized.");
+            // REVERT LOCK on crash
+            if (!isComplete) setIsTurn(true);
         }
     }, [isTurn, isComplete, playerId, matchId, sendAction, wagerAmount]); // Reduced dependencies
 

@@ -35,7 +35,7 @@ import { NarrativeArchive } from '@/components/UI/NarrativeArchive';
 
 export default function Home() {
     const { mint, loading, status, error, signature } = useMintStreamer();
-    const { isMuted, toggleMute, playHover, playClick, playSuccess } = useAudioSystem();
+    const { isMuted, toggleMute, playHover, playClick, playSuccess, forceUnmute } = useAudioSystem();
     const [isHubOpen, setIsHubOpen] = useState(false);
     const [activeMissionStreamer, setActiveMissionStreamer] = useState<Streamer | null>(null);
     const [activePvPStreamer, setActivePvPStreamer] = useState<Streamer | null>(null);
@@ -107,7 +107,7 @@ export default function Home() {
 
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => { playClick(); setIsTutorialOpen(true); }}
+                            onClick={() => { playClick(); forceUnmute(); setIsTutorialOpen(true); }}
                             className="px-4 py-2 border border-neon-green/40 text-[10px] font-bold tracking-widest hover:bg-neon-green/10 transition-all hidden md:block text-neon-green"
                         >
                             [HOW_TO_PLAY]
