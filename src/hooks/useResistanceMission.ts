@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Streamer, Move, applyNatureToStats } from '@/data/streamers';
 import { useCollectionStore, getNature, getItemCount } from './useCollectionStore';
-import { bosses } from '@/data/bosses';
+import { bosses, BossMove } from '@/data/bosses';
 import {
     getTypeEffectiveness,
     getEffectivenessMessage,
@@ -21,7 +21,7 @@ export interface EntityState {
     name: string;
     maxHp: number;
     hp: number;
-    stats: any;
+    stats: import('@/data/streamers').StreamerStats;
     image?: string;
 }
 
@@ -89,7 +89,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         stats: modifiedStats,
     });
 
-    const [enemy, setEnemy] = useState<EntityState & { moves?: any[] }>({
+    const [enemy, setEnemy] = useState<EntityState & { moves?: (Move | BossMove)[] }>({
         id: 'corp_sentinel',
         name: 'Authority Sentinel',
         maxHp: 120 + (threatLevel * 20),
@@ -115,16 +115,18 @@ export const useResistanceMission = (streamer: Streamer) => {
     const [showPhaseBanner, setShowPhaseBanner] = useState(false);
     const [lastDamageAmount, setLastDamageAmount] = useState<number | null>(null);
     const [lastDamageDealer, setLastDamageDealer] = useState<'player' | 'enemy' | null>(null);
-    const [lastActionTime, setLastActionTime] = useState<number>(0);
+    const lastActionTimeRef = useRef<number>(0);
+    const [missionStartTime] = useState<number>(Date.now());
 
+    // FREEZE FIX: Use ref-based rate limiter for stable function reference
     const isRateLimited = useCallback(() => {
         const now = Date.now();
-        if (now - lastActionTime < 400) {
+        if (now - lastActionTimeRef.current < 400) {
             return true;
         }
-        setLastActionTime(now);
+        lastActionTimeRef.current = now;
         return false;
-    }, [lastActionTime]);
+    }, []);
 
     // Global Visual Sync
     const setIntegrity = useVisualEffects(state => state.setIntegrity);
@@ -155,6 +157,12 @@ export const useResistanceMission = (streamer: Streamer) => {
 
     const isBoss = stage >= 3;
 
+    // BUG 13 FIX: Refs for frequently changing values used in callbacks
+    const playerRef = useRef(player);
+    const enemyRef = useRef(enemy);
+    useEffect(() => { playerRef.current = player; }, [player]);
+    useEffect(() => { enemyRef.current = enemy; }, [enemy]);
+
     const addLog = useCallback((msg: string) => setLogs(prev => [msg, ...prev].slice(0, 5)), []);
 
     const triggerShake = useCallback(() => {
@@ -184,7 +192,7 @@ export const useResistanceMission = (streamer: Streamer) => {
             const move = enemy.moves[Math.floor(Math.random() * enemy.moves.length)];
             moveName = move.name;
             moveDesc = move.description;
-            enemyDamage = move.damage;
+            enemyDamage = 'power' in move ? move.power : move.damage;
         } else {
             const baseEnemyDamage = 15;
             enemyDamage = Math.floor((baseEnemyDamage + (threatLevel * 5)) * (1 + Math.random()));
@@ -198,16 +206,18 @@ export const useResistanceMission = (streamer: Streamer) => {
         // Authority Sweep / Difficulty Multiplier
         enemyDamage = Math.floor(enemyDamage * difficultyMultiplier);
 
-        // Apply defense boost
+        // BUG 18 FIX: Divide by multiplier to reduce damage (1.5 → take 66% damage, not 150%)
         if (defenseBoost.turnsLeft > 0) {
-            enemyDamage = Math.floor(enemyDamage * defenseBoost.multiplier);
+            enemyDamage = Math.floor(enemyDamage / defenseBoost.multiplier);
         }
 
         const newHp = Math.max(0, player.hp - enemyDamage);
 
-        if (newHp === 0) {
+        // BUG 14 FIX: Guard against double markMissionComplete on failure
+        if (newHp === 0 && !hasMarkedComplete) {
             setIsComplete(true);
             setResult('FAILURE');
+            setHasMarkedComplete(true);
             markMissionComplete(streamer.id, 'F', 10);
             addLog("SIGNAL_LOST: Retreat for recalibration.");
         }
@@ -232,7 +242,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         // Decrement boost counters
         setAttackBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
         setDefenseBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
-    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, defenseBoost, player, difficultyMultiplier, streamer.id, markMissionComplete, addLog, triggerShake, triggerGlitch]);
+    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, defenseBoost, player, difficultyMultiplier, streamer.id, markMissionComplete, addLog, triggerShake, triggerGlitch, hasMarkedComplete]);
 
 
 
@@ -309,7 +319,7 @@ export const useResistanceMission = (streamer: Streamer) => {
             const critMult = isCrit ? 1.5 : 1;
 
             const statKey = getStatForMoveType(move.type);
-            const relevantStatValue = (player.stats as any)[statKey] || 50;
+            const relevantStatValue = player.stats[statKey as keyof typeof player.stats] || 50;
             const baseDamage = Math.floor(move.power * (relevantStatValue / 100) * (0.8 + Math.random() * 0.4));
 
             // Apply modifiers
@@ -380,9 +390,9 @@ export const useResistanceMission = (streamer: Streamer) => {
 
             setEnemy(prev => ({ ...prev, hp: nextHp }));
 
-            // Charge Update
+            // BUG 13 FIX: Use ref for enemy name to avoid stale closure during stage transitions
             setCharge(prev => Math.min(100, prev + Math.floor(damage / 5)));
-            addLog(`Inflicted ${damage} disruption to ${enemy.name}.`);
+            addLog(`Inflicted ${damage} disruption to ${enemyRef.current.name}.`);
 
         } else {
             // Support Move
@@ -496,14 +506,20 @@ export const useResistanceMission = (streamer: Streamer) => {
             // Wrap in setTimeout to avoid React 'setState in effect' warning
             setTimeout(() => {
                 setHasMarkedComplete(true);
-                markMissionComplete(streamer.id, rank, xp);
+                markMissionComplete(streamer.id, rank, xp, {
+                    hpRemaining: player.hp,
+                    maxHp: player.maxHp,
+                    turnsUsed: turns,
+                    isBoss,
+                    duration: Date.now() - missionStartTime
+                });
 
                 if (difficultyMultiplier > 1) {
                     updateDifficulty(1);
                 }
             }, 0);
         }
-    }, [result, streamer.id, markMissionComplete, hasMarkedComplete, calculateRank, calculateXP, difficultyMultiplier, updateDifficulty]);
+    }, [result, streamer.id, markMissionComplete, hasMarkedComplete, calculateRank, calculateXP, difficultyMultiplier, updateDifficulty, player.hp, player.maxHp, turns, isBoss]);
 
     return {
         player,

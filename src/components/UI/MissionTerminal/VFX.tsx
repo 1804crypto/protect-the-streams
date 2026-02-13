@@ -94,7 +94,7 @@ export const LoreOverlay = ({ text, onComplete }: { text: string, onComplete: ()
             <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 2.5 }}
+                transition={{ delay: 0.8 }}
                 onClick={onComplete}
                 className="mt-12 px-8 py-3 border border-neon-blue text-neon-blue font-black tracking-widest text-xs hover:bg-neon-blue hover:text-black transition-all uppercase"
             >

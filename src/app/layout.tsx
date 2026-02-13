@@ -3,6 +3,7 @@ import { SolanaProvider } from "@/components/SolanaProvider";
 import { SystemHeartbeat } from "@/components/SystemHeartbeat";
 import { ResistanceOverlay } from "@/components/UI/ResistanceOverlay";
 import { AudiusPlayer } from "@/components/AudiusPlayer";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -55,7 +56,9 @@ export default function RootLayout({
                     <AudiusPlayer />
                     <div className="scanline" />
                     <div className="relative z-10">
-                        {children}
+                        <ErrorBoundary>
+                            {children}
+                        </ErrorBoundary>
                     </div>
                 </SolanaProvider>
                 <div className="fixed bottom-0 right-0 p-1 text-[10px] text-white/20 pointer-events-none z-[9999]">

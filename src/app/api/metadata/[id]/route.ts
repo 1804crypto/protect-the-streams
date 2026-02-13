@@ -16,7 +16,7 @@ export async function GET(
     }
 
     const hostHeader = request.headers.get('host');
-    const host = process.env.NEXT_PUBLIC_HOST_URL || (hostHeader ? `https://${hostHeader}` : 'https://protect-the-streams.vercel.app');
+    const host = process.env.NEXT_PUBLIC_HOST_URL || (hostHeader ? `https://${hostHeader}` : 'https://protectthestreamers.xyz');
 
     // Construct Metadata (Metaplex Core Standard / JSON Standard)
     const metadata = {

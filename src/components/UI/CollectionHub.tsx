@@ -33,8 +33,8 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
     React.useEffect(() => {
         setAuthId(Math.random().toString(36).substring(7).toUpperCase());
 
-        const handleSpectate = (e: any) => {
-            setSpectateMatchId(e.detail);
+        const handleSpectate = (e: Event) => {
+            setSpectateMatchId((e as CustomEvent<string>).detail);
         };
         window.addEventListener('SPECTATE_MATCH', handleSpectate);
         return () => window.removeEventListener('SPECTATE_MATCH', handleSpectate);

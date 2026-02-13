@@ -134,17 +134,53 @@ const GlitchScreen = ({ intensity, glitchStrength }: { intensity: number, glitch
     );
 };
 
+// Error Boundary to prevent WebGL crashes from killing the entire MissionTerminal
+class GlitchErrorBoundary extends React.Component<
+    { children: React.ReactNode },
+    { hasError: boolean }
+> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error: Error) {
+        console.warn('[GlitchOverlay] WebGL Canvas crashed, rendering fallback:', error.message);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            // Silent fallback — no visual disruption, just skip the glitch effect
+            return null;
+        }
+        return this.props.children;
+    }
+}
+
 export const GlitchOverlay = ({ intensity, glitchStrength = 0 }: { intensity: number, glitchStrength?: number }) => {
     return (
-        <div className="absolute inset-0 pointer-events-none z-[500] overflow-hidden rounded-lg">
-            <Canvas
-                orthographic
-                camera={{ zoom: 1, position: [0, 0, 1] }}
-                gl={{ alpha: true, antialias: false }}
-                style={{ width: '100%', height: '100%' }}
-            >
-                <GlitchScreen intensity={intensity} glitchStrength={glitchStrength} />
-            </Canvas>
-        </div>
+        <GlitchErrorBoundary>
+            <div className="absolute inset-0 pointer-events-none z-[500] overflow-hidden rounded-lg">
+                <Canvas
+                    orthographic
+                    camera={{ zoom: 1, position: [0, 0, 1] }}
+                    gl={{ alpha: true, antialias: false }}
+                    style={{ width: '100%', height: '100%' }}
+                    onCreated={({ gl }) => {
+                        // Defensive: if context is lost, don't crash the app
+                        gl.domElement.addEventListener('webglcontextlost', (e) => {
+                            e.preventDefault();
+                            console.warn('[GlitchOverlay] WebGL context lost');
+                        });
+                    }}
+                >
+                    <GlitchScreen intensity={intensity} glitchStrength={glitchStrength} />
+                </Canvas>
+            </div>
+        </GlitchErrorBoundary>
     );
 };

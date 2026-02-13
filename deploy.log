@@ -1,0 +1,117 @@
+[96m[1m​[22m[39m
+[96m[1mNetlify Build                                                 [22m[39m
+[96m[1m────────────────────────────────────────────────────────────────[22m[39m
+[36m[1m​[22m[39m
+[36m[1m❯ Version[22m[39m
+  @netlify/build 35.5.10
+[36m[1m​[22m[39m
+[36m[1m❯ Flags[22m[39m
+  accountId: 686feb271c093e1a3dd14af5
+  deployId: 698a193a5413e656cb1dd09b
+[36m[1m​[22m[39m
+[36m[1m❯ Current directory[22m[39m
+  /Users/freeemall/Desktop/PROTECT THE STREAMS APP
+[36m[1m​[22m[39m
+[36m[1m❯ Config file[22m[39m
+  /Users/freeemall/Desktop/PROTECT THE STREAMS APP/netlify.toml
+[36m[1m​[22m[39m
+[36m[1m❯ Context[22m[39m
+  production
+[36m[1m​[22m[39m
+[36m[1m❯ Using Next.js Runtime - v5.15.8[22m[39m
+[96m[1m​[22m[39m
+[96m[1mbuild.command from netlify.toml                               [22m[39m
+[96m[1m────────────────────────────────────────────────────────────────[22m[39m
+​
+[36m$ npm run build[39m
+
+> pts-app@1.0.0 build
+> next build
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/freeemall/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/freeemall/Desktop/PROTECT THE STREAMS APP/package-lock.json
+
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 33.9s
+  Running TypeScript ...
+  Collecting page data using 9 workers ...
+  Generating static pages using 9 workers (0/8) ...
+  Generating static pages using 9 workers (2/8) 
+  Generating static pages using 9 workers (4/8) 
+  Generating static pages using 9 workers (6/8) 
+✓ Generating static pages using 9 workers (8/8) in 5.9s
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/ai/narrate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/session
+├ ƒ /api/metadata/[id]
+├ ƒ /api/mint/transaction
+└ ƒ /api/player/sync
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+​
+[90m(build.command completed in 1m 15.3s)[39m
+[96m[1m​[22m[39m
+[96m[1mFunctions bundling                                            [22m[39m
+[96m[1m────────────────────────────────────────────────────────────────[22m[39m
+​
+Packaging Functions from [36m.netlify/functions-internal[39m directory:
+ - ___netlify-server-handler/___netlify-server-handler.mjs
+​
+​
+[90m(Functions bundling completed in 8.9s)[39m
+
+Deploying to Netlify
+────────────────────────────────────────────────────────────────
+
+[32mDeploy path: [39m       /Users/freeemall/Desktop/PROTECT THE STREAMS APP/.next
+[32mConfiguration path: [39m/Users/freeemall/Desktop/PROTECT THE STREAMS APP/netlify.toml
+
+⠋ Uploading blobs to deploy store...
+
+✔ Finished uploading blobs to deploy store
+⠋ Hashing files...
+⠋ Looking for a functions cache...
+✔ Deploying functions from cache (use --skip-functions-cache to override)
+✔ Finished hashing 68 files and 1 functions
+⠋ CDN diffing files...
+✔ CDN requesting 4 files and 1 functions
+⠋ Uploading 5 files
+✔ Finished uploading 5 assets
+⠋ Waiting for deploy to go live...
+✔ Deploy is live!
+[96m[1m​[22m[39m
+[96m[1mNetlify Build Complete                                        [22m[39m
+[96m[1m────────────────────────────────────────────────────────────────[22m[39m
+​
+[90m(Netlify Build completed in 1m 56.3s)[39m
+
+🚀 Deploy complete
+────────────────────────────────────────────────────────────────
+
+ ╭───────────────────── ⬥  Production deploy is live ⬥  ──────────────────────╮
+ │                                                                            │
+ │        Deployed to production URL: https://protectthestreamers.xyz         │
+ │                                                                            │
+ │                             Unique deploy URL:                             │
+ │   https://698a193a5413e656cb1dd09b--endearing-syrniki-7788ed.netlify.app   │
+ │                                                                            │
+ ╰────────────────────────────────────────────────────────────────────────────╯
+
+[32mBuild logs: [39m        https://app.netlify.com/projects/endearing-syrniki-7788ed/deploys/698a193a5413e656cb1dd09b
+[32mFunction logs: [39m     https://app.netlify.com/projects/endearing-syrniki-7788ed/logs/functions
+[32mEdge function Logs: [39mhttps://app.netlify.com/projects/endearing-syrniki-7788ed/logs/edge-functions

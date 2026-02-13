@@ -123,9 +123,16 @@ export const useGameDataStore = create<GameDataState>((set) => ({
                 isInitialized: true
             });
 
-        } catch (err: any) {
+        } catch (err: unknown) {
+            // BUG 16 FIX: Explicitly set local fallbacks on error so game data is always populated
             console.error("Failed to fetch game data:", err);
-            set({ error: err.message, isLoading: false, isInitialized: true }); // Set initialized even on error to stop spinner
+            set({
+                streamers: localStreamers.filter((s, i, a) => a.findIndex(t => t.id === s.id) === i),
+                items: localItems,
+                error: err instanceof Error ? err.message : 'Unknown error',
+                isLoading: false,
+                isInitialized: true
+            });
         }
     }
 }));

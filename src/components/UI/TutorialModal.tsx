@@ -41,6 +41,28 @@ const tutorialSteps = [
     }
 ];
 
+// Static class lookups to prevent Tailwind purge issues with dynamic classes
+const highlightBg: Record<string, string> = {
+    'neon-blue': 'bg-neon-blue',
+    'neon-pink': 'bg-neon-pink',
+    'neon-green': 'bg-neon-green',
+    'resistance-accent': 'bg-resistance-accent',
+};
+
+const highlightText: Record<string, string> = {
+    'neon-blue': 'text-neon-blue',
+    'neon-pink': 'text-neon-pink',
+    'neon-green': 'text-neon-green',
+    'resistance-accent': 'text-resistance-accent',
+};
+
+const highlightShadow: Record<string, string> = {
+    'neon-blue': 'shadow-[0_0_20px_var(--color-neon-blue)]',
+    'neon-pink': 'shadow-[0_0_20px_var(--color-neon-pink)]',
+    'neon-green': 'shadow-[0_0_20px_var(--color-neon-green)]',
+    'resistance-accent': 'shadow-[0_0_20px_var(--color-resistance-accent)]',
+};
+
 export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -77,7 +99,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
     useEffect(() => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, currentStep]);
 
     const step = tutorialSteps[currentStep];
 
@@ -105,7 +128,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                         className="relative w-full max-w-lg bg-resistance-dark border border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden"
                     >
                         {/* Glowing top border */}
-                        <div className={`absolute top-0 inset-x-0 h-1 bg-${step.highlight} shadow-[0_0_20px_var(--color-${step.highlight})]`} />
+                        <div className={`absolute top-0 inset-x-0 h-1 ${highlightBg[step.highlight]} ${highlightShadow[step.highlight]}`} />
 
                         {/* Header */}
                         <div className="p-6 pb-0">
@@ -141,7 +164,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <h2 className={`text-2xl md:text-3xl font-black tracking-tight mb-4 text-${step.highlight}`}>
+                                    <h2 className={`text-2xl md:text-3xl font-black tracking-tight mb-4 ${highlightText[step.highlight]}`}>
                                         {step.title.replace(/_/g, ' ')}
                                     </h2>
                                     <p className="text-white/70 text-sm md:text-base leading-relaxed font-cyber">

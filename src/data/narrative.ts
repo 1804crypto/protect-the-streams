@@ -10,38 +10,38 @@ export const OPERATOR_DIALOGUES: Record<string, DialogueLine[]> = {
     onboarding: [
         {
             id: 'ob_1',
-            speaker: 'VOICE_OPERATOR_7',
-            text: "Uplink established. Signal is faint, but you're in. I'm Terminal 7, your tactical coordinator from Center.",
+            speaker: 'SOPHIA',
+            text: "Yo, signal's clean. Use the overlay. I'm Sophia — basically your eye in the sky. I've been running comms since the first blackout.",
             trigger: 'first_load'
         },
         {
             id: 'ob_2',
-            speaker: 'VOICE_OPERATOR_7',
-            text: "The Corporate Authority has localized the streamers' frequencies. If we don't shield them now, the influence pool will be drained. Forever.",
+            speaker: 'SOPHIA',
+            text: "The Corp Authority is literally stream-sniping our entire network. These creators are the last real ones left. We gotta keep them live.",
             trigger: 'first_load'
         }
     ],
     mission_brief: [
         {
             id: 'mb_1',
-            speaker: 'VOICE_OPERATOR_7',
-            text: "Detecting heavy encryption in this sector. This streamer is a key node in the multiversal relay. Support them at all costs.",
+            speaker: 'SOPHIA',
+            text: "Heads up, chat — uh, I mean Operative. This sector's got heavy corporate mods patrolling. The streamer here is legendary. Let's not let them get banned, yeah?",
             trigger: 'mission_start'
         }
     ],
     danger_warnings: [
         {
             id: 'dw_1',
-            speaker: 'VOICE_OPERATOR_7',
-            text: "WARNING: Authoritative feedback detected. Their counter-measures are bypassing our shields. Defensive maneuvers recommended!",
+            speaker: 'SOPHIA',
+            text: "Yo, you're taking heavy damage! Don't throw. Rotate your strategy or use an item. We can still clutch this.",
             trigger: 'battle_near_loss'
         }
     ],
     encouragement: [
         {
             id: 'en_1',
-            speaker: 'VOICE_OPERATOR_7',
-            text: "Signal integrity at 90%. Breach detected in the Sentinel's firewall. Finish the sync!",
+            speaker: 'SOPHIA',
+            text: "You're absolutely cooking right now! Their firewall is cooked. One more W and this sector is ours.",
             trigger: 'battle_near_win'
         }
     ]

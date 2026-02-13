@@ -83,6 +83,18 @@ const ToastItem = ({ toast }: { toast: ToastMessage }) => {
                             {toast.description}
                         </p>
                     )}
+                    {toast.action && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                toast.action?.onClick();
+                                removeToast(toast.id);
+                            }}
+                            className="mt-2 px-3 py-1 text-xs font-mono font-bold tracking-widest uppercase bg-resistance-accent/20 border border-resistance-accent text-resistance-accent hover:bg-resistance-accent/40 transition-colors"
+                        >
+                            {toast.action.label}
+                        </button>
+                    )}
                 </div>
             </div>
 

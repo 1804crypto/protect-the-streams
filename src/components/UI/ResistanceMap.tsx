@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
-import { streamers } from '@/data/streamers';
+import { streamers, Streamer } from '@/data/streamers';
 import { MapEventOverlay, MapEventType } from './MapEventOverlay';
 import { DataStream } from './DataStream';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
@@ -61,7 +61,7 @@ const LiveBattleFeed: React.FC = () => {
     );
 };
 
-export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void }> = ({ onSectorClick }) => {
+export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: { id: string }) => void }> = ({ onSectorClick }) => {
     const completedMissions = useCollectionStore(state => state.completedMissions);
     const addItem = useCollectionStore(state => state.addItem);
     const updateDifficulty = useCollectionStore(state => state.updateDifficulty);
@@ -484,7 +484,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: any) => void 
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
-                        className="md:hidden absolute inset-0 z[45] bg-resistance-dark/95 backdrop-blur-xl p-6 overflow-y-auto"
+                        className="md:hidden absolute inset-0 z-[45] bg-resistance-dark/95 backdrop-blur-xl p-6 overflow-y-auto"
                     >
                         <div className="mb-8 mt-12">
                             <h3 className="text-2xl font-black neon-text-blue uppercase italic tracking-tighter">Sector_List</h3>

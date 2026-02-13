@@ -22,7 +22,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
     const [neuralNarrative, setNeuralNarrative] = useState<string>("Scanning for viable combatants...");
 
     // 1. Matchmaking (Only enabled when user clicks 'Engage')
-    const { status: matchStatus, roomId: matchedRoomId, opponentId, opponentWager, playerId } = usePvPMatchmaking(streamer.id, isOpen && isSearching, wagerDraft);
+    const { status: matchStatus, roomId: matchedRoomId, opponentId, opponentWager, playerId, retry: retryMatchmaking } = usePvPMatchmaking(streamer.id, isOpen && isSearching, wagerDraft);
 
     // 2. Battle Hook
     const {
@@ -72,9 +72,9 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
 
         // If the action happened very recently (within 1000ms), play effects
         const now = Date.now();
-        if (now - lastAction.timestamp < 1000) {
+        if (now - (lastAction.timestamp ?? 0) < 1000) {
             // Play Sound based on type
-            if (lastAction.damage > 0) {
+            if ((lastAction.damage ?? 0) > 0) {
                 playDamage(); // Impact sound
             }
             if (lastAction.moveType) {
@@ -90,23 +90,24 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                 }, 0);
 
                 // Show Damage
+                const dmg = lastAction.damage ?? 0;
                 setTimeout(() => {
-                    setDamageNumber({ value: lastAction.damage, id: now });
+                    setDamageNumber({ value: dmg, id: now });
                     setTimeout(() => setDamageNumber(null), 1500);
                 }, 0);
 
                 // AI Commentary
-                if (lastAction.damage > 0 && opponent) {
+                if (dmg > 0 && opponent) {
                     getBattleCommentary({
                         playerName: player.name,
                         enemyName: opponent.name,
                         actionName: lastAction.senderId === playerId ? 'Attack' : 'Retaliation',
-                        damage: lastAction.damage,
+                        damage: dmg,
                         playerHp: player.hp,
                         playerMaxHp: player.maxHp,
                         enemyHp: opponent.hp,
                         enemyMaxHp: opponent.maxHp,
-                        isCrit: lastAction.damage > 20,
+                        isCrit: dmg > 20,
                         isSuperEffective: false
                     }).then(setNeuralNarrative);
                 }
@@ -205,6 +206,34 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                         >
                             RETURN_TO_BASE
                         </button>
+                    </div>
+                )}
+
+                {/* 2b. ERROR STATE */}
+                {matchStatus === 'ERROR' && (
+                    <div className="flex flex-col items-center justify-center space-y-8 text-center p-8 bg-black border-2 border-resistance-accent/50 rounded-lg max-w-md">
+                        <div className="text-6xl mb-4">⚠</div>
+                        <div>
+                            <h2 className="text-2xl font-black italic text-resistance-accent uppercase tracking-tighter mb-2">UPLINK_FAILURE</h2>
+                            <p className="text-white/60 font-mono text-[10px] tracking-widest leading-relaxed">
+                                MATCH_INITIALIZATION_REJECTED. <br />
+                                CHECK_BALANCE_OR_RETRY.
+                            </p>
+                        </div>
+                        <div className="flex gap-4 w-full">
+                            <button
+                                onClick={() => { setIsSearching(false); retryMatchmaking(); }}
+                                className="flex-1 py-4 bg-neon-blue text-black font-black uppercase tracking-[0.2em] hover:bg-white transition-all rounded-sm"
+                            >
+                                RETRY_UPLINK
+                            </button>
+                            <button
+                                onClick={onClose}
+                                className="flex-1 py-4 bg-white/5 border border-white/10 text-white/60 font-black uppercase tracking-[0.2em] hover:bg-white/10 transition-all rounded-sm"
+                            >
+                                ABORT
+                            </button>
+                        </div>
                     </div>
                 )}
 

@@ -75,13 +75,14 @@ export const useCheckUplinkStatus = (): UplinkStatus => {
                 error: null
             });
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Uplink Scan Failed:", err);
 
             // GVA Interference Report (Solana RPC failure handling)
-            const isRpcError = err.message?.includes('fetch') ||
-                err.message?.includes('timeout') ||
-                err.message?.includes('429');
+            const errMsg = err instanceof Error ? err.message : '';
+            const isRpcError = errMsg.includes('fetch') ||
+                errMsg.includes('timeout') ||
+                errMsg.includes('429');
 
             setStatus({
                 hasNFT: false,
@@ -89,21 +90,15 @@ export const useCheckUplinkStatus = (): UplinkStatus => {
                 assets: [],
                 error: isRpcError
                     ? "GVA_INTERFERENCE: RPC node congested. Try switching to Helius/Quicknode RPC."
-                    : `SCAN_FAILURE: ${err.message}`
+                    : `SCAN_FAILURE: ${errMsg}`
             });
         }
     }, [connected, walletPubkey, collectionAddress, connection]);
 
+    // BUG 22 FIX: Single effect handles both initial scan and wallet changes
     useEffect(() => {
         scanWallet();
     }, [scanWallet]);
-
-    // Re-scan when wallet changes
-    useEffect(() => {
-        if (connected && walletPubkey) {
-            scanWallet();
-        }
-    }, [connected, walletPubkey, scanWallet]);
 
     return status;
 };

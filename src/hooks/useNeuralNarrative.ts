@@ -26,18 +26,28 @@ const THREAT_DESCRIPTIONS = [
 ];
 
 export const useNeuralNarrative = () => {
-    const fetchNarrative = async (type: string, context: any) => {
+    const fetchNarrative = async (type: string, context: Record<string, string | number | boolean>) => {
         try {
+            // FREEZE FIX: AbortController with 8s timeout prevents indefinite hangs
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+
             const res = await fetch('/api/ai/narrate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, context })
+                body: JSON.stringify({ type, context }),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             const data = await res.json();
-            return data.text || "SIGNAL_LOST: Re-linking to main neural feed...";
+            return data.text || "Hold on, signal's fading... Let me re-establish the link.";
         } catch (err) {
-            console.error("Narrative Fetch Failure:", err);
-            return "SIGNAL_LOST: Re-linking to main neural feed...";
+            if (err instanceof DOMException && err.name === 'AbortError') {
+                console.warn("[NeuralNarrative] AI narrate request timed out after 8s");
+            } else {
+                console.error("Narrative Fetch Failure:", err);
+            }
+            return "Hold on, signal's fading... Let me re-establish the link.";
         }
     };
 
@@ -66,7 +76,7 @@ export const useNeuralNarrative = () => {
         };
     }, []);
 
-    const getBattleCommentary = async (battleContext: any) => {
+    const getBattleCommentary = async (battleContext: Record<string, string | number | boolean>) => {
         return await fetchNarrative('BATTLE_ACTION', battleContext);
     };
 

@@ -68,7 +68,7 @@ export const usePtsTransaction = () => {
 
             // --- Clear from Recovery after success ---
             const updatedPending = JSON.parse(localStorage.getItem('pts_pending_txs') || '[]')
-                .filter((tx: any) => tx.signature !== signature);
+                .filter((tx: { signature: string }) => tx.signature !== signature);
             localStorage.setItem('pts_pending_txs', JSON.stringify(updatedPending));
             // ------------------------------------------
 
@@ -77,12 +77,13 @@ export const usePtsTransaction = () => {
             setTxStatus('CONFIRMED');
             setIsProcessing(false);
             return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Uplink failure:", error);
-            toast.error('Uplink Failed', error.message || 'Transaction could not be processed.');
+            const errMsg = error instanceof Error ? error.message : 'Transaction could not be processed.';
+            toast.error('Uplink Failed', errMsg);
 
             // Specific check for user rejection
-            if (error.name === 'WalletSendTransactionError' && error.message.includes('User rejected')) {
+            if (error instanceof Error && error.name === 'WalletSendTransactionError' && error.message.includes('User rejected')) {
                 toast.warning('Uplink Cancelled', 'Transaction rejected by user.');
             }
 

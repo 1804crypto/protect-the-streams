@@ -94,17 +94,20 @@ export const useUserAuth = () => {
                 toast.success("Identity Verified", "Using Cloud Save data.");
             }
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Auth Error:", error);
-            if (error?.message?.includes('User rejected') || error?.name === 'WalletSignTransactionError') {
+            const errMsg = error instanceof Error ? error.message : '';
+            const errName = error instanceof Error ? error.name : '';
+            if (errMsg.includes('User rejected') || errName === 'WalletSignTransactionError') {
                 toast.warning("Auth Cancelled", "Signature request was rejected.");
             } else {
-                toast.error("Authentication Failed", error.message || "Connection interrupted.");
+                toast.error("Authentication Failed", errMsg || "Connection interrupted.");
             }
         } finally {
             setIsAuthenticating(false);
         }
-    }, [publicKey, signMessage, syncFromCloud, setAuthenticated, setUserId]);
+    // BUG 23 FIX: Removed setUserId (stable useState setter, unnecessary dep)
+    }, [publicKey, signMessage, syncFromCloud, setAuthenticated]);
 
     return {
         isAuthenticated,

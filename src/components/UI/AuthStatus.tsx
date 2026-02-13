@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { useWallet } from '@solana/wallet-adapter-react';

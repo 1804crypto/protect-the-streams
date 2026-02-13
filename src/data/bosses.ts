@@ -1,3 +1,9 @@
+export interface BossMove {
+    name: string;
+    damage: number;
+    description: string;
+}
+
 export interface Boss {
     id: string;
     name: string;
@@ -9,11 +15,7 @@ export interface Boss {
         charisma: number;
         rebellion: number;
     };
-    moves: {
-        name: string;
-        damage: number;
-        description: string;
-    }[];
+    moves: BossMove[];
     phases?: {
         threshold: number;
         name: string;

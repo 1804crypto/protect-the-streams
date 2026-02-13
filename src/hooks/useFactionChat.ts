@@ -8,7 +8,7 @@ export interface ChatMessage {
     message: string;
     type: 'USER' | 'DISPATCH' | 'STREAMER';
     timestamp: string;
-    metadata?: any;
+    metadata?: Record<string, string | number | boolean>;
 }
 
 export const useFactionChat = (factionId: string) => {

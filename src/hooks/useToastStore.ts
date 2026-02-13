@@ -9,6 +9,7 @@ export interface ToastMessage {
     description?: string;
     type: ToastType;
     duration?: number;
+    action?: { label: string; onClick: () => void };
 }
 
 interface ToastState {
@@ -40,4 +41,12 @@ export const toast = {
     info: (title: string, description?: string) => useToastStore.getState().addToast({ title, description, type: 'info' }),
     warning: (title: string, description?: string) => useToastStore.getState().addToast({ title, description, type: 'warning' }),
     loot: (title: string, description?: string) => useToastStore.getState().addToast({ title, description, type: 'loot' }),
+    withRetry: (title: string, description: string, retryFn: () => void) =>
+        useToastStore.getState().addToast({
+            title,
+            description,
+            type: 'error',
+            duration: 10000,
+            action: { label: '[RETRY]', onClick: retryFn }
+        }),
 };

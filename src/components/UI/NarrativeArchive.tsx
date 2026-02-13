@@ -21,8 +21,9 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
     if (!isOpen) return null;
 
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
             <motion.div
+                key="narrative-archive"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

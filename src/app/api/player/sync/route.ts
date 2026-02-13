@@ -2,11 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifySession } from '@/lib/auth';
 import { calculateLevel } from '@/lib/gameMechanics';
+import { sanitizeInventory } from '@/lib/sanitizeInventory';
+import { Logger } from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+// DB-based rate limit: minimum 2s between syncs (survives serverless cold starts)
+const MIN_SYNC_INTERVAL_MS = 2000;
+
+// Valid streamer IDs for mission validation
+export const VALID_STREAMER_IDS = new Set([
+    'kaicenat', 'adinross', 'ishowspeed', 'xqc', 'dukedennis',
+    'fanum', 'agent00', 'druski', 'hasanabi', 'zoey',
+    'sneako', 'plaqueboymax', 'rakai', 'reggie', 'bendadonnn',
+    'ddg', 'extraemily', 'rayasianboy', 'tylil', 'jazzygunz'
+]);
 
 export async function POST(req: NextRequest) {
     try {
@@ -24,18 +37,14 @@ export async function POST(req: NextRequest) {
         const userId = session.userId as string;
 
         // 2. Parse Body
-        // We ignore 'deltaLevel' from client. Server validates progression.
-        // 2. Parse Body
-        // We ignore 'deltaLevel' from client. Server validates progression.
         const {
             deltaXp,
             inventory,
             missionId,
             rank,
             duration,
-            wins,
-            losses,
-            securedIds,
+            deltaWins,
+            deltaLosses,
             streamerNatures,
             completedMissions,
             faction,
@@ -47,12 +56,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Suspicious Activity Detected: XP gain too high' }, { status: 400 });
         }
 
+        // BUG 7 FIX: Validate delta values are 0 or 1 (not arbitrary numbers)
+        if (deltaWins !== undefined && (deltaWins < 0 || deltaWins > 1)) {
+            return NextResponse.json({ error: 'Invalid win delta' }, { status: 400 });
+        }
+        if (deltaLosses !== undefined && (deltaLosses < 0 || deltaLosses > 1)) {
+            return NextResponse.json({ error: 'Invalid loss delta' }, { status: 400 });
+        }
+
         // ANTI-CHEAT: Duration Check
-        // If a mission was completed (missionId sent), we require a reasonable duration.
-        // 30 seconds (30000ms) is the minimum realistic time for a battle.
         if (missionId && (!duration || duration < 30000)) {
-            console.warn(`Suspicious Mission Duration: ${duration}ms for User ${userId}`);
+            Logger.warn('API_Sync', `Suspicious Mission Duration: ${duration}ms for User ${userId}`);
             return NextResponse.json({ error: 'Suspicious Cycle Time: Uplink Rejected.' }, { status: 400 });
+        }
+
+        // Validate missionId is a real streamer ID (if provided)
+        if (missionId && !VALID_STREAMER_IDS.has(missionId)) {
+            return NextResponse.json({ error: 'Invalid mission target' }, { status: 400 });
         }
 
         // 4. Calculate Rewards
@@ -65,10 +85,10 @@ export async function POST(req: NextRequest) {
                 'F': 0
             };
             ptsReward = rewardMap[rank] || 0;
-            console.log(`Mission ${missionId} Rank ${rank}: Awarding ${ptsReward} $PTS`);
+            Logger.info('API_Sync', `Mission ${missionId} Rank ${rank}: Awarding ${ptsReward} $PTS`);
         }
 
-        // 5. Update DB
+        // 5. Fetch user from DB
         const { data: user, error: fetchError } = await supabase
             .from('users')
             .select('*')
@@ -79,6 +99,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        // DB-BASED RATE LIMIT: Check updated_at timestamp
+        if (user.updated_at) {
+            const lastUpdate = new Date(user.updated_at).getTime();
+            if (Date.now() - lastUpdate < MIN_SYNC_INTERVAL_MS) {
+                return NextResponse.json({ error: 'Rate limit exceeded. Slow down.' }, { status: 429 });
+            }
+        }
+
         // Calculate New State
         const newXp = (user.xp || 0) + (deltaXp || 0);
         const newPtsBalance = (user.pts_balance || 0) + ptsReward;
@@ -86,10 +114,12 @@ export async function POST(req: NextRequest) {
         // SERVER AUTHORITATIVE LEVEL CALCULATION
         const newLevel = calculateLevel(newXp);
 
-        // Inventory Merge
-        const newInventory = inventory || user.inventory;
+        // HARDENED INVENTORY: Sanitize client inventory against whitelist
+        const newInventory = inventory
+            ? sanitizeInventory(inventory, user.inventory)
+            : user.inventory;
 
-        const updates: any = {
+        const updates: Record<string, unknown> = {
             xp: newXp,
             level: newLevel,
             inventory: newInventory,
@@ -97,12 +127,17 @@ export async function POST(req: NextRequest) {
             updated_at: new Date().toISOString()
         };
 
-        if (wins !== undefined) updates.wins = wins;
-        if (losses !== undefined) updates.losses = losses;
-        if (securedIds !== undefined) updates.secured_ids = securedIds;
+        // BUG 7 FIX: Server-side increment for wins/losses
+        if (deltaWins === 1) updates.wins = (user.wins || 0) + 1;
+        if (deltaLosses === 1) updates.losses = (user.losses || 0) + 1;
         if (streamerNatures !== undefined) updates.streamer_natures = streamerNatures;
-        if (completedMissions !== undefined) updates.completed_missions = completedMissions;
-        if (faction !== undefined) updates.faction = faction;
+        // HARDENED: Only accept completedMissions when a valid missionId accompanies the request
+        if (completedMissions !== undefined && missionId) {
+            updates.completed_missions = completedMissions;
+        }
+        if (faction !== undefined && (faction === 'RED' || faction === 'PURPLE' || faction === 'NONE')) {
+            updates.faction = faction;
+        }
         if (isFactionMinted !== undefined) updates.is_faction_minted = isFactionMinted;
 
         const { error: updateError } = await supabase
@@ -111,7 +146,7 @@ export async function POST(req: NextRequest) {
             .eq('id', userId);
 
         if (updateError) {
-            console.error("Sync Update Error:", updateError);
+            Logger.error('API_Sync', "Sync Update Error", updateError);
             return NextResponse.json({ error: 'Failed to persist' }, { status: 500 });
         }
 
@@ -124,7 +159,8 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error) {
-        console.error("Sync API Error:", error);
+        Logger.error('API_Sync', "Sync API Error", error);
+
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

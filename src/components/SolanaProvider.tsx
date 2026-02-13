@@ -7,16 +7,16 @@ import {
     WalletModalProvider,
 } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
+import { CONFIG } from '@/data/config';
 
 // Default styles that can be overridden by your app
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { toast } from '@/hooks/useToastStore';
 
 export const SolanaProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
-    // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-    const network = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as WalletAdapterNetwork) || WalletAdapterNetwork.Devnet;
+    // BUG 24 FIX: Use CONFIG.NETWORK as single source of truth to prevent divergence
+    const network = (CONFIG.NETWORK as WalletAdapterNetwork) || WalletAdapterNetwork.Devnet;
 
-    // You can also provide a custom RPC endpoint.
     const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
     // most modern wallets now implement the Wallet Standard and are automatically detected

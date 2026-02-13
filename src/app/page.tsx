@@ -54,6 +54,16 @@ export default function Home() {
     const { initAida } = useVoiceOperator();
     const { triggerDialogue } = useOperatorStore();
 
+    // First-Click Audio Unlock
+    useEffect(() => {
+        const handleFirstClick = () => {
+            forceUnmute();
+            document.removeEventListener('click', handleFirstClick);
+        };
+        document.addEventListener('click', handleFirstClick, { once: true });
+        return () => document.removeEventListener('click', handleFirstClick);
+    }, [forceUnmute]);
+
     useEffect(() => {
         setMounted(true);
         if (!isInitialized) {
@@ -67,11 +77,14 @@ export default function Home() {
         }
 
         // Trigger Operator Onboarding & Aida Greeting
-        setTimeout(() => {
+        const greetingTimer = setTimeout(() => {
             initAida(); // Vocal Greeting
             triggerDialogue('onboarding'); // Visual Dialogue
         }, 2000);
-    }, [triggerDialogue, fetchGameData, isInitialized, initAida]);
+
+        return () => clearTimeout(greetingTimer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         if (status && status.includes("Secured")) {
@@ -207,7 +220,7 @@ export default function Home() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onMouseEnter={playHover}
-                                onClick={() => { playClick(); mint(); }}
+                                onClick={() => { playClick(); document.getElementById('roster')?.scrollIntoView({ behavior: 'smooth' }); }}
                                 disabled={loading}
                                 className={`btn-resistance text-xl ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
@@ -280,7 +293,11 @@ export default function Home() {
                         </div>
 
                         {hasAccess ? (
-                            <ResistanceMap onSectorClick={(s) => setActiveMissionStreamer(s as Streamer)} />
+                            <ResistanceMap onSectorClick={(s) => {
+                                // BUG 20 FIX: Look up full streamer data instead of blind cast
+                                const fullStreamer = streamers.find(st => st.id === s.id);
+                                if (fullStreamer) setActiveMissionStreamer(fullStreamer);
+                            }} />
                         ) : (
                             <div className="w-full h-[400px] border border-red-500/30 bg-red-500/5 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8 relative overflow-hidden group">
                                 <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,0,0,0.05)_10px,rgba(255,0,0,0.05)_20px)]" />
@@ -343,7 +360,8 @@ export default function Home() {
                                 <div className="absolute inset-x-0 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex justify-center gap-2">
                                     <button
                                         onClick={(e) => { e.stopPropagation(); playClick(); mint(streamer.id); }}
-                                        className="px-3 py-1 bg-neon-blue text-black text-[10px] font-black uppercase"
+                                        disabled={loading}
+                                        className={`px-3 py-1 text-[10px] font-black uppercase ${loading ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-neon-blue text-black hover:bg-white'}`}
                                     >
                                         MINT
                                     </button>
@@ -376,6 +394,7 @@ export default function Home() {
                 {/* Mission Terminal Instance */}
                 {activeMissionStreamer && (
                     <MissionTerminal
+                        key={activeMissionStreamer.id}
                         streamer={activeMissionStreamer}
                         isOpen={!!activeMissionStreamer}
                         onClose={() => setActiveMissionStreamer(null)}
