@@ -62,7 +62,7 @@ export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, imageUrl, 
                 rotateY,
                 transformStyle: "preserve-3d",
             }}
-            className="relative w-[280px] md:w-[320px] h-[420px] md:h-[460px] cursor-pointer group card-mobile-active"
+            className="relative w-full max-w-[280px] md:max-w-[320px] aspect-[2/3] cursor-pointer group card-mobile-active"
         >
             {/* Outer Glow */}
             <div className={`absolute -inset-2 blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-[2rem] 
@@ -81,7 +81,7 @@ export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, imageUrl, 
                         <img
                             src={imageUrl || streamer.image}
                             alt={streamer.name}
-                            className={`w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100 
+                            className={`w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500 scale-105 md:scale-110 group-hover:scale-100 
                                 ${secured ? 'grayscale-0' : ''} 
                                 ${isArchived ? 'animate-glitch-slow opacity-80' : ''}`}
                         />

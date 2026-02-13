@@ -166,7 +166,7 @@ export default function Home() {
                 </nav>
 
                 {/* Mobile Buttons */}
-                <div className="md:hidden fixed bottom-24 right-6 z-50 flex flex-col gap-3">
+                <div className="md:hidden fixed bottom-6 right-4 z-50 flex flex-col gap-3 safe-padding-bottom">
                     <button
                         onClick={() => { playClick(); setIsTutorialOpen(true); }}
                         className="w-14 h-14 rounded-full bg-neon-green shadow-[0_0_20px_rgba(0,255,159,0.5)] flex items-center justify-center font-black text-xl"
@@ -205,10 +205,10 @@ export default function Home() {
                         viewport={{ once: true }}
                         transition={{ duration: 1, ease: "easeOut" }}
                     >
-                        <h1 className="text-6xl md:text-9xl font-black mb-6 animate-glitch neon-text-blue leading-none tracking-tighter">
+                        <h1 className="text-4xl sm:text-6xl md:text-9xl font-black mb-6 animate-glitch neon-text-blue leading-none tracking-tighter">
                             PROTECT THE <br /> <span className="text-neon-pink">STREAMERS</span>
                         </h1>
-                        <p className="text-xl md:text-2xl mb-12 text-white/60 max-w-3xl mx-auto tracking-[0.2em] leading-relaxed font-cyber">
+                        <p className="text-base sm:text-xl md:text-2xl mb-8 sm:mb-12 text-white/60 max-w-3xl mx-auto tracking-[0.1em] sm:tracking-[0.2em] leading-relaxed font-cyber">
                             THE CORPORATE AUTHORITY HAS INITIATED THE BLACKOUT. <br />
                             MINT YOUR <span className="text-white font-bold">DEFENSE CARDS</span>. SHIELD THE INFLUENCE.
                         </p>
@@ -357,18 +357,18 @@ export default function Home() {
                                     streamer={streamer}
                                     onHover={playHover}
                                 />
-                                <div className="absolute inset-x-0 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex justify-center gap-2">
+                                <div className="absolute inset-x-0 bottom-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 mobile-action-visible transition-opacity z-20 flex justify-center gap-2">
                                     <button
                                         onClick={(e) => { e.stopPropagation(); playClick(); mint(streamer.id); }}
                                         disabled={loading}
-                                        className={`px-3 py-1 text-[10px] font-black uppercase ${loading ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-neon-blue text-black hover:bg-white'}`}
+                                        className={`px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm ${loading ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-neon-blue text-black hover:bg-white'}`}
                                     >
                                         MINT
                                     </button>
                                     {hasAccess && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); playClick(); setActivePvPStreamer(streamer); }}
-                                            className="px-3 py-1 bg-neon-pink text-white text-[10px] font-black uppercase"
+                                            className="px-4 py-2 min-h-[44px] bg-neon-pink text-white text-xs font-black uppercase rounded-sm"
                                         >
                                             PVP
                                         </button>
@@ -380,14 +380,14 @@ export default function Home() {
                 </section>
 
                 {/* Footer / Status Bar */}
-                <footer className="fixed bottom-0 inset-x-0 z-40 bg-background/80 backdrop-blur-md border-t border-white/10 p-4 flex justify-between items-center px-12 text-[10px] font-mono text-white/40 uppercase tracking-widest">
-                    <div>© 2025 THE_RESISTANCE // ALL_RIGHTS_RESERVED</div>
-                    <div className="flex gap-8">
+                <footer className="fixed bottom-0 inset-x-0 z-40 bg-background/80 backdrop-blur-md border-t border-white/10 p-3 md:p-4 flex justify-between items-center px-4 md:px-12 text-[9px] md:text-[10px] font-mono text-white/40 uppercase tracking-widest safe-padding-bottom">
+                    <div className="hidden sm:block">© 2025 THE_RESISTANCE</div>
+                    <div className="flex gap-4 md:gap-8">
                         <span className="flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse" />
-                            NETWORK: {CONFIG.NETWORK.toUpperCase().replace('-', '_')}
+                            {CONFIG.NETWORK.toUpperCase().replace('-', '_')}
                         </span>
-                        <span className="text-resistance-accent">THREAT_LEVEL: OMEGA</span>
+                        <span className="text-resistance-accent hidden sm:inline">THREAT_LEVEL: OMEGA</span>
                     </div>
                 </footer>
 

@@ -239,7 +239,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
 
                 {/* 3. BATTLE STATE */}
                 {matchStatus === 'MATCH_FOUND' && (
-                    <div className="w-full max-w-[1240px] h-[800px] flex flex-col lg:flex-row gap-4 relative">
+                    <div className="w-full max-w-[1240px] h-[calc(100vh-2rem)] h-[calc(100dvh-2rem)] lg:h-[800px] flex flex-col lg:flex-row gap-4 relative">
                         {isSpectator && (
                             <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-neon-yellow text-black px-4 py-1 text-[10px] font-black uppercase tracking-widest rounded-b-lg animate-pulse z-[400]">
                                 👁 SPECTATOR_MODE: ENCRYPTION_TAP_ACTIVE
@@ -257,7 +257,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                         >
                             {/* Status Bar */}
                             <div className="absolute top-0 inset-x-0 p-4 flex justify-between z-50 bg-gradient-to-b from-black/80 to-transparent">
-                                <div className="hud-node min-w-[200px]">
+                                <div className="hud-node min-w-0 w-full max-w-[200px]">
                                     <p className="text-[10px] font-black text-neon-pink uppercase tracking-widest mb-1">{opponent?.name || 'SEARCHING_PEER...'}</p>
                                     <div className="h-2 bg-white/5 border border-white/10 rounded-sm overflow-hidden">
                                         <motion.div
@@ -290,7 +290,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                                         <motion.div
                                             initial={{ opacity: 0, scale: 0.8 }}
                                             animate={isOpponentAttacking ? { scale: [1, 1.2, 1], y: [0, 20, 0] } : { opacity: 1, scale: 1 }}
-                                            className="absolute top-20 right-20 w-64 h-64 contrast-125 z-10"
+                                            className="absolute top-8 right-8 w-32 h-32 md:w-48 md:h-48 lg:w-64 lg:h-64 contrast-125 z-10"
                                         >
                                             {opponent.image ? (
                                                 <img
@@ -309,7 +309,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
 
                                 {/* Player */}
                                 <motion.div
-                                    className="absolute bottom-10 left-10 w-80 h-80 z-20"
+                                    className="absolute bottom-4 left-4 w-40 h-40 md:w-60 md:h-60 lg:w-80 lg:h-80 z-20"
                                     animate={
                                         isAttacking ? { x: [0, 100, 0], scale: 1.1 } :
                                             isTurn ? { y: [0, -10, 0] } : {}
@@ -329,7 +329,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                                                 initial={{ opacity: 0, y: 0, scale: 0.5 }}
                                                 animate={{ opacity: 1, y: -100, scale: 1.5 }}
                                                 exit={{ opacity: 0 }}
-                                                className="absolute top-0 left-1/2 -translate-x-1/2 text-6xl font-black text-resistance-accent drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] z-50 italic"
+                                                className="absolute top-0 left-1/2 -translate-x-1/2 text-3xl md:text-6xl font-black text-resistance-accent drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] z-50 italic"
                                             >
                                                 -{damageNumber.value}
                                             </motion.div>
@@ -339,7 +339,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                             </div>
 
                             {/* Player HP */}
-                            <div className="absolute bottom-6 right-6 hud-node min-w-[250px] z-50">
+                            <div className="absolute bottom-3 right-3 md:bottom-6 md:right-6 hud-node min-w-0 w-full max-w-[250px] z-50">
                                 <div className="flex justify-between mb-1">
                                     <span className="text-[12px] font-black text-neon-blue uppercase">{player.name}</span>
                                     <span className="text-[10px] font-mono text-white/60">{player.hp} HP</span>
@@ -354,7 +354,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                         </motion.div>
 
                         {/* Controls & Chat */}
-                        <div className="flex-1 bg-black/40 border border-white/10 rounded-lg p-6 flex flex-col min-w-[300px]">
+                        <div className="flex-1 bg-black/40 border border-white/10 rounded-lg p-3 md:p-6 flex flex-col min-w-0 lg:min-w-[300px]">
                             {/* Tab Switcher */}
                             <div className="flex space-x-2 mb-4">
                                 <button

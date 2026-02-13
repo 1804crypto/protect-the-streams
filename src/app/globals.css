@@ -315,6 +315,15 @@ h6 {
   }
 }
 
+@media (min-width: 481px) and (max-width: 1023px) {
+  .ds-terminal {
+    max-width: 100%;
+    aspect-ratio: auto;
+    min-height: calc(100vh - 2rem);
+    min-height: calc(100dvh - 2rem);
+  }
+}
+
 @media (max-width: 480px) {
   .ds-terminal {
     max-width: 100%;
@@ -341,4 +350,19 @@ h6 {
   backdrop-filter: blur(12px);
   padding: 0.75rem;
   border-radius: 4px;
+}
+
+/* Mobile HUD scaling */
+@media (max-width: 480px) {
+  .hud-node {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Always-show action buttons on touch devices */
+@media (hover: none) {
+  .mobile-action-visible {
+    opacity: 1 !important;
+  }
 }

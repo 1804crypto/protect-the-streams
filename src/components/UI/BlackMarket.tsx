@@ -41,7 +41,7 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                 {/* Header */}
                 <div className="p-6 border-b border-purple-500/20 flex justify-between items-center bg-gradient-to-r from-purple-950/30 to-transparent">
                     <div>
-                        <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 tracking-tighter italic uppercase">
+                        <h2 className="text-xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 tracking-tighter italic uppercase">
                             Black Market Terminal
                         </h2>
                         <p className="text-xs text-purple-400 font-mono flex items-center gap-2 mt-1">
@@ -66,28 +66,28 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                             whileHover={{ scale: 1.02 }}
                             className="p-4 rounded-lg bg-gray-900/50 border border-purple-500/20 hover:border-cyan-500/50 transition-all group relative overflow-hidden"
                         >
-                            <div className="relative z-10 flex justify-between items-start">
+                            <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0">
                                 <div className="flex gap-4">
-                                    <div className="w-12 h-12 rounded bg-purple-500/10 flex items-center justify-center text-3xl border border-purple-500/20">
+                                    <div className="w-12 h-12 rounded bg-purple-500/10 flex items-center justify-center text-3xl border border-purple-500/20 shrink-0">
                                         {item.icon}
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-white group-hover:text-cyan-400 transition-colors uppercase tracking-tight">
                                             {item.name}
                                         </h3>
-                                        <p className="text-xs text-gray-400 mt-1 max-w-[200px]">
+                                        <p className="text-xs text-gray-400 mt-1 max-w-full sm:max-w-[200px]">
                                             {item.description}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-lg font-black text-cyan-400 font-mono">
+                                <div className="text-left sm:text-right w-full sm:w-auto flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end">
+                                    <p className="text-lg font-black text-cyan-400 font-mono order-2 sm:order-1">
                                         {item.pricePts} <span className="text-[10px]">PTS</span>
                                     </p>
                                     <button
                                         disabled={isProcessing}
                                         onClick={() => handlePurchase(item)}
-                                        className="mt-2 px-3 py-1 bg-purple-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded uppercase tracking-widest transition-all disabled:opacity-50"
+                                        className="mt-0 sm:mt-2 px-3 py-1 bg-purple-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded uppercase tracking-widest transition-all disabled:opacity-50 order-1 sm:order-2"
                                     >
                                         Infiltrate
                                     </button>
@@ -116,7 +116,7 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                                 {txStatus === 'CONFIRMED' && <CheckCircle2 size={24} className="text-green-400" />}
                                 {txStatus === 'ERROR' && <AlertCircle size={24} className="text-red-400" />}
 
-                                <div>
+                                <div className="flex-1">
                                     <p className="text-sm font-bold text-white uppercase tracking-tighter italic">
                                         {txStatus === 'PROCESSING' ? `DIVERDING FUNDS FOR ${selectedItem?.name}...` :
                                             txStatus === 'CONFIRMED' ? 'UPLINK SUCCESSFUL // ITEM ACQUIRED' :

@@ -15,7 +15,9 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { publicKey, signature, message } = body;
 
-        console.log("Login attempt:", { publicKey, message });
+        if (process.env.NODE_ENV !== 'production') {
+            console.log("Login attempt:", { publicKey, message });
+        }
 
         if (!publicKey || !signature || !message) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });

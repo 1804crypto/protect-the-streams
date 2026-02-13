@@ -60,28 +60,30 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 h-full w-full md:w-[480px] z-[101] bg-resistance-dark border-l border-white/10 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] flex flex-col pt-24 "
+                        className="fixed top-0 right-0 h-full w-full md:w-[480px] z-[101] bg-resistance-dark border-l border-white/10 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] flex flex-col pt-20 md:pt-24"
                     >
                         <div className="flex-1 overflow-y-auto px-8 py-10 space-y-8">
                             {/* Header */}
                             <header className="flex justify-between items-start mb-8">
                                 <div>
                                     <h2 className="text-3xl font-black neon-text-blue uppercase tracking-tighter">Secured Intel</h2>
-                                    <div className="flex items-center gap-4 mt-2">
+                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mt-2">
                                         <p className="text-[10px] text-white/40 font-mono tracking-[0.3em]">
                                             {"// " + completedMissions.length + " OF " + streamers.length + " SECTORS_LIBERATED"}
                                         </p>
-                                        <div className="h-3 w-px bg-white/10" />
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] text-resistance-accent font-black animate-pulse">THREAT_LEVEL: {Math.floor(completedMissions.length / 2) + 1}</span>
-                                        </div>
-                                        <div className="h-3 w-px bg-white/10" />
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] text-yellow-400 font-black">RESISTANCE_SCORE: {totalResistanceScore.toLocaleString()}</span>
-                                        </div>
-                                        <div className="h-3 w-px bg-white/10" />
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] text-neon-pink font-black">STAKES: {ptsBalance.toLocaleString()} $PTS</span>
+                                        <div className="hidden md:block h-3 w-px bg-white/10" />
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-resistance-accent font-black animate-pulse">THREAT_LEVEL: {Math.floor(completedMissions.length / 2) + 1}</span>
+                                            </div>
+                                            <div className="hidden md:block h-3 w-px bg-white/10" />
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-yellow-400 font-black">RESISTANCE_SCORE: {totalResistanceScore.toLocaleString()}</span>
+                                            </div>
+                                            <div className="hidden md:block h-3 w-px bg-white/10" />
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-neon-pink font-black">STAKES: {ptsBalance.toLocaleString()} $PTS</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -118,7 +120,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                             [WARNING]: NEURAL_AFFILIATION_NOT_DETECTED. <br />
                                             CHOOSE_LOYALTY_TO_ENABLE_FACTION_WAR_PROTOCOL.
                                         </div>
-                                        <div className="flex gap-4">
+                                        <div className="flex gap-2 flex-col md:flex-row">
                                             <button
                                                 onClick={() => setFaction('RED')}
                                                 className="flex-1 py-3 bg-red-600/20 border border-red-500 text-red-500 font-black text-[10px] hover:bg-red-500 hover:text-white transition-all group/red"
@@ -140,7 +142,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                                         <div className="flex flex-col gap-1">
                                             <span className="text-[8px] text-white/30 font-mono uppercase">Faction_Affiliation:</span>
                                             <span className={`text-[10px] font-black tracking-widest ${userFaction === 'RED' ? 'text-red-500 shadow-[0_0_10px_#ff003c]' :
@@ -150,7 +152,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                                 {`FACTION_${userFaction}`}
                                             </span>
                                         </div>
-                                        <div className="flex flex-col gap-1 text-right">
+                                        <div className="flex flex-col gap-1 md:text-right">
                                             <span className="text-[8px] text-white/30 font-mono uppercase">Global_Liberation_Rating:</span>
                                             <span className="text-[10px] font-black text-neon-green">
                                                 {totalResistanceScore.toLocaleString()} GLR
@@ -159,7 +161,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                     </div>
                                 )}
 
-                                <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                                <div className="mt-4 pt-4 border-t border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
                                     <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black text-white">
                                             #{completedMissions.length > 5 ? 'Elite' : 'Rookie'}
@@ -211,7 +213,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                     securedAssets.map((asset) => {
                                         const record = getMissionRecordLocal(asset.id);
                                         return (
-                                            <div key={asset.id} className="glass-card p-4 border-neon-green/20 flex gap-4 group">
+                                            <div key={asset.id} className="glass-card p-4 border-neon-green/20 flex flex-col md:flex-row gap-4 group">
                                                 <div className="w-16 h-16 bg-resistance-dark border border-white/10 overflow-hidden relative">
                                                     <img
                                                         src={asset.image}

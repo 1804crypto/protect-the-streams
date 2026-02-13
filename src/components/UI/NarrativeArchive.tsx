@@ -97,7 +97,7 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
                             <div className="p-8 md:p-12 space-y-10">
                                 {/* Hero Header */}
                                 <div className="flex flex-col md:flex-row gap-8 items-start">
-                                    <div className="w-48 h-48 border-4 border-neon-blue/40 shadow-[0_0_30px_rgba(0,243,255,0.2)] relative flex-shrink-0">
+                                    <div className="w-32 h-32 md:w-48 md:h-48 border-4 border-neon-blue/40 shadow-[0_0_30px_rgba(0,243,255,0.2)] relative flex-shrink-0 mx-auto md:mx-0">
                                         <img src={selectedStreamer.image} alt={selectedStreamer.name} className="w-full h-full object-cover" />
                                         <div className="absolute -bottom-4 -right-4 bg-neon-blue px-3 py-1 text-black font-black text-xs uppercase tracking-tighter italic">
                                             {selectedStreamer.narrative.codename}
@@ -111,7 +111,7 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
                                             <span className="w-2 h-2 rounded-full bg-neon-green animate-pulse" />
                                             <span className="text-[9px] text-neon-green font-mono uppercase tracking-widest italic">Neural_Link_Verified</span>
                                         </div>
-                                        <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter mb-4">
+                                        <h2 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter mb-4">
                                             {selectedStreamer.name}
                                         </h2>
                                         <div className="grid grid-cols-2 gap-4">
@@ -132,7 +132,7 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
                                 </div>
 
                                 {/* Lore Sections */}
-                                <div className="grid md:grid-cols-2 gap-12 border-t border-white/10 pt-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 border-t border-white/10 pt-10">
                                     <section>
                                         <h4 className="text-[10px] font-black tracking-[0.4em] text-neon-blue uppercase mb-6 flex items-center gap-3">
                                             <div className="w-4 h-[2px] bg-neon-blue" />

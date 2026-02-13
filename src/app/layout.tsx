@@ -7,7 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    metadataBase: new URL("https://endearing-syrniki-7788ed.netlify.app"),
+    metadataBase: new URL("https://protectthestreamers.xyz"),
     title: "PROTECT THE STREAMS | Resistance OS",
     description: "The Global Conflict has begun. Join the Resistance, recruit your favorite streamers, and overthrow Sentinel INC on the Solana Blockchain.",
     openGraph: {

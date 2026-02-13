@@ -337,8 +337,8 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                         glitchStrength={glitchIntensity > 0 ? glitchIntensity : (isShaking ? 0.5 : 0)}
                     />
 
-                    {/* Sonic Debug Overlay */}
-                    <div className="absolute top-20 left-4 bg-black/80 p-2 border border-neon-blue/40 text-[9px] font-mono z-[250] pointer-events-none">
+                    {/* Sonic Debug Overlay - Hidden on mobile */}
+                    <div className="hidden md:block absolute top-20 left-4 bg-black/80 p-2 border border-neon-blue/40 text-[9px] font-mono z-[250] pointer-events-none">
                         <div className="text-neon-blue font-black tracking-widest">SONIC_INTENSITY: <span className="text-white">{intensity.toFixed(2)}</span></div>
                     </div>
 
@@ -355,7 +355,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                     </button>
 
                     {/* Expansive Battle Console */}
-                    <div className="ds-terminal relative flex flex-col lg:flex-row gap-4 lg:p-6 w-full max-w-[1240px] items-stretch h-full lg:h-[800px]">
+                    <div className="ds-terminal relative flex flex-col lg:flex-row gap-4 p-2 lg:p-6 w-full max-w-[1240px] items-stretch h-full lg:h-[800px] overflow-y-auto lg:overflow-visible">
 
                         {/* Top Screen / Battle Arena */}
                         <BattleArena
@@ -387,7 +387,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                         />
 
                         {/* Right Section / Command Deck */}
-                        <div className="relative flex-1 bg-[#050505] border-2 border-white/10 flex flex-col p-6 rounded-lg overflow-y-auto lg:overflow-visible">
+                        <div className="relative flex-1 bg-[#050505] border-2 border-white/10 flex flex-col p-4 lg:p-6 rounded-lg lg:overflow-visible">
                             {/* Neural Narrator Overlay */}
                             <div className="mb-4 p-3 bg-white/5 border-l-2 border-neon-blue rounded flex flex-col gap-1">
                                 <span className="text-[10px] text-neon-blue font-bold tracking-widest uppercase">// Neural_Narrator</span>

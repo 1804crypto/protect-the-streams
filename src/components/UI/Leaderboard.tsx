@@ -63,7 +63,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
             <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                className="w-full max-w-3xl bg-[#050505] border-2 border-white/10 rounded-sm overflow-hidden shadow-[0_0_80px_rgba(0,180,255,0.15)] relative"
+                className="w-full max-w-[90vw] md:max-w-3xl bg-[#050505] border-2 border-white/10 rounded-sm overflow-hidden shadow-[0_0_80px_rgba(0,180,255,0.15)] relative"
             >
                 {/* Visual Scanning Line */}
                 <div className="absolute inset-0 pointer-events-none z-50 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:100%_3px] animate-scan opacity-20" />
@@ -71,11 +71,11 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                 <div className="p-8 border-b-2 border-white/5 flex justify-between items-center bg-gradient-to-r from-neon-blue/10 to-transparent relative group">
                     <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-neon-blue via-white to-transparent opacity-50" />
                     <div>
-                        <h2 className="text-3xl font-black italic text-white uppercase tracking-tighter flex items-center gap-3">
+                        <h2 className="text-xl md:text-3xl font-black italic text-white uppercase tracking-tighter flex items-center gap-3">
                             <span className="text-neon-blue animate-pulse">◈</span>
                             HIGH_COMMAND_Apex
                         </h2>
-                        <div className="text-[8px] font-mono text-white/40 tracking-[0.4em] mt-1 italic uppercase">Sector_00 // Global_Operative_Rankings</div>
+                        <div className="text-[6px] md:text-[8px] font-mono text-white/40 tracking-[0.4em] mt-1 italic uppercase">Sector_00 // Global_Operative_Rankings</div>
                     </div>
                     <button
                         onClick={onClose}
@@ -98,11 +98,11 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] border-b border-white/5">
-                                        <th className="pb-4 px-4 font-black">Rank</th>
-                                        <th className="pb-4 px-4 font-black">Operative_ID</th>
-                                        <th className="pb-4 px-4 font-black text-center">Affiliation</th>
-                                        <th className="pb-4 px-4 text-right font-black">Rating</th>
+                                    <tr className="text-[7px] md:text-[9px] font-black text-white/30 uppercase tracking-[0.3em] border-b border-white/5">
+                                        <th className="pb-2 md:pb-4 px-2 md:px-4 font-black">Rank</th>
+                                        <th className="pb-2 md:pb-4 px-2 md:px-4 font-black">Operative_ID</th>
+                                        <th className="pb-2 md:pb-4 px-2 md:px-4 font-black text-center">Affiliation</th>
+                                        <th className="pb-2 md:pb-4 px-2 md:px-4 text-right font-black">Rating</th>
                                     </tr>
                                 </thead>
                                 {entries.length > 0 ? (
@@ -114,11 +114,11 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: entry.rank * 0.05 }}
                                                 className={`group border-b border-white/[0.03] transition-colors relative ${entry.faction === 'RED' ? 'hover:bg-red-500/5' :
-                                                        entry.faction === 'PURPLE' ? 'hover:bg-purple-500/5' :
-                                                            'hover:bg-white/[0.02]'
+                                                    entry.faction === 'PURPLE' ? 'hover:bg-purple-500/5' :
+                                                        'hover:bg-white/[0.02]'
                                                     }`}
                                             >
-                                                <td className="py-5 px-4 font-black relative overflow-hidden">
+                                                <td className="py-3 md:py-5 px-2 md:px-4 font-black relative overflow-hidden">
                                                     <span className={`relative z-10 ${entry.rank === 1 ? 'text-neon-yellow text-xl' :
                                                         entry.rank === 2 ? 'text-white text-lg' :
                                                             entry.rank === 3 ? 'text-neon-blue text-lg' :
@@ -133,9 +133,9 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                             }`} />
                                                     )}
                                                 </td>
-                                                <td className="py-5 px-4">
+                                                <td className="py-3 md:py-5 px-2 md:px-4">
                                                     <div className="flex flex-col">
-                                                        <span className="font-black text-white group-hover:text-neon-blue transition-colors uppercase tracking-tight">
+                                                        <span className="font-black text-[10px] md:text-base text-white group-hover:text-neon-blue transition-colors uppercase tracking-tight">
                                                             {entry.username || 'UNIDENTIFIED_OPERATIVE'}
                                                         </span>
                                                         <div className="flex items-center gap-2">
@@ -144,15 +144,15 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-5 px-4 text-center">
+                                                <td className="py-3 md:py-5 px-2 md:px-4 text-center">
                                                     <div className={`px-2 py-0.5 inline-block text-[8px] font-black border rounded-sm ${entry.faction === 'RED' ? 'bg-red-500/10 border-red-500 text-red-500' :
-                                                            entry.faction === 'PURPLE' ? 'bg-purple-900/20 border-purple-500 text-purple-400' :
-                                                                'bg-white/5 border-white/10 text-white/30'
+                                                        entry.faction === 'PURPLE' ? 'bg-purple-900/20 border-purple-500 text-purple-400' :
+                                                            'bg-white/5 border-white/10 text-white/30'
                                                         }`}>
                                                         {entry.faction === 'NONE' ? 'NO_AFFILIATION' : `FACTION_${entry.faction}`}
                                                     </div>
                                                 </td>
-                                                <td className="py-5 px-4 text-right">
+                                                <td className="py-3 md:py-5 px-2 md:px-4 text-right">
                                                     <span className="text-neon-blue font-black text-sm">
                                                         {entry.glr_points.toLocaleString()}
                                                     </span>

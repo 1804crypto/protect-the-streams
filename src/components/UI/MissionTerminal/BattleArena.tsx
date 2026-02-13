@@ -88,7 +88,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                         transition={{ duration: 1, repeat: Infinity }}
                         className="absolute inset-0 z-[50] bg-resistance-accent/40 pointer-events-none flex items-center justify-center"
                     >
-                        <div className="text-[120px] font-black italic text-white/5 tracking-tighter uppercase select-none">
+                        <div className="text-[40px] md:text-[80px] lg:text-[120px] font-black italic text-white/5 tracking-tighter uppercase select-none">
                             CRITICAL
                         </div>
                     </motion.div>
@@ -103,7 +103,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
             </div>
 
             {/* HUD: Enemy Plate */}
-            <div className="absolute top-6 left-6 right-6 z-40 flex justify-between items-start">
+            <div className="absolute top-3 left-3 right-3 md:top-6 md:left-6 md:right-6 z-40 flex justify-between items-start gap-2">
                 <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{
@@ -111,7 +111,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                         opacity: 1
                     }}
                     transition={{ duration: 0.3 }}
-                    className="hud-node min-w-[240px]"
+                    className="hud-node min-w-0 w-full max-w-[240px]"
                 >
                     <div className="flex justify-between items-center mb-2">
                         <span className={`text-[11px] font-black tracking-[0.2em] ${isBoss ? 'text-resistance-accent animate-glitch' : 'text-white/80'}`}>
@@ -160,7 +160,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                         filter: isEnemyTakingDamage ? "brightness(3) sepia(1) hue-rotate(-50deg)" : "none"
                     }}
                     transition={{ duration: !isTurn ? 0.4 : 3, repeat: isTurn ? Infinity : 0 }}
-                    className="relative z-20 w-[240px] h-[240px] lg:w-[380px] lg:h-[380px] group"
+                    className="relative z-20 w-[160px] h-[160px] md:w-[240px] md:h-[240px] lg:w-[380px] lg:h-[380px] group"
                 >
                     {/* Enemy Card Background */}
                     <div className={`absolute inset-0 rounded-[20px] lg:rounded-[40px] border-4 lg:border-[12px] overflow-hidden transition-all duration-700
@@ -216,7 +216,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                             filter: isTakingDamage ? ["brightness(4) contrast(2) grayscale(1)", "brightness(1) contrast(1) grayscale(0)"] : "none"
                         }}
                         transition={{ duration: 4, repeat: Infinity }}
-                        className="relative w-[220px] h-[220px] lg:w-[450px] lg:h-[450px]"
+                        className="relative w-[120px] h-[120px] md:w-[220px] md:h-[220px] lg:w-[450px] lg:h-[450px]"
                     >
                         <img
                             src={streamer.image}
@@ -301,8 +301,8 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                                 exit={{ scale: 1.2, opacity: 0 }}
                                 className="absolute inset-0 flex items-center justify-center z-[60] pointer-events-none"
                             >
-                                <div className="bg-resistance-accent/90 px-12 py-4 skew-x-[-12deg] border-y-4 border-white shadow-[0_0_50px_#ff003c]">
-                                    <div className="text-white font-black text-2xl tracking-[0.5em] italic">PHASE_{currentBossPhase}_EVOLUTION</div>
+                                <div className="bg-resistance-accent/90 px-4 md:px-12 py-3 md:py-4 skew-x-[-12deg] border-y-4 border-white shadow-[0_0_50px_#ff003c]">
+                                    <div className="text-white font-black text-lg md:text-2xl tracking-[0.3em] md:tracking-[0.5em] italic">PHASE_{currentBossPhase}_EVOLUTION</div>
                                     <div className="text-[10px] text-white/70 font-mono tracking-widest text-center mt-1">THREAT_LEVEL_CRITICAL</div>
                                 </div>
                             </motion.div>
@@ -312,7 +312,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
             </div>
 
             {/* HUD: Player Plate */}
-            <div className="absolute bottom-6 right-6 z-40">
+            <div className="absolute bottom-3 right-3 md:bottom-6 md:right-6 z-40">
                 <motion.div
                     initial={{ x: 20, opacity: 0 }}
                     animate={{
@@ -320,7 +320,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                         opacity: 1
                     }}
                     transition={{ duration: 0.3 }}
-                    className={`hud-node w-[300px] border-2 transition-colors ${player.hp / player.maxHp < 0.2 ? 'border-resistance-accent shadow-[0_0_20px_#ff003c]' : 'border-neon-blue/30'}`}
+                    className={`hud-node w-full max-w-[300px] border-2 transition-colors ${player.hp / player.maxHp < 0.2 ? 'border-resistance-accent shadow-[0_0_20px_#ff003c]' : 'border-neon-blue/30'}`}
                 >
                     <div className="flex justify-between items-end mb-2">
                         <div>

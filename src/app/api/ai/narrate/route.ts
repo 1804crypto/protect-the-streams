@@ -3,9 +3,19 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
 
+const VALID_NARRATE_TYPES = new Set(['MISSION_START', 'BATTLE_ACTION', 'MISSION_END']);
+
 export async function POST(req: NextRequest) {
     try {
+        if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+            return NextResponse.json({ text: "Comms are down — AI narration is not configured." });
+        }
+
         const { type, context } = await req.json();
+
+        if (!type || !VALID_NARRATE_TYPES.has(type)) {
+            return NextResponse.json({ text: "Unknown narration type. Standing by." });
+        }
 
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash",

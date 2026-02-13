@@ -12,9 +12,9 @@ const debug = (...args: unknown[]) => { if (isDev) console.log(...args); };
 // Note: Umi helpers for SOL transfer might need 'mpl-toolbox'
 // We will simply use the Umi transaction builder functionality.
 
-const RPC_ENDPOINT = CONFIG.NETWORK === 'mainnet-beta'
+const RPC_ENDPOINT = process.env.SOLANA_RPC_URL || (CONFIG.NETWORK === 'mainnet-beta'
     ? 'https://api.mainnet-beta.solana.com'
-    : 'https://api.devnet.solana.com';
+    : 'https://api.devnet.solana.com');
 
 const umi = createUmi(RPC_ENDPOINT);
 
@@ -193,11 +193,13 @@ export async function POST(req: NextRequest) {
         const base64 = Buffer.from(serialized).toString('base64');
         debug('📦 [API DEBUG] Transaction serialized, length:', base64.length);
 
-        // Update mint_attempts with asset_id and mark COMPLETED
+        // Update mint_attempts with asset_id — mark as BUILT, not COMPLETED.
+        // The user hasn't signed yet; marking COMPLETED here would block legitimate retries
+        // if the user cancels or the on-chain transaction fails.
         if (idempotencyKey) {
             await supabase
                 .from('mint_attempts')
-                .update({ asset_id: asset.publicKey.toString(), status: 'COMPLETED' } as Record<string, unknown>)
+                .update({ asset_id: asset.publicKey.toString(), status: 'BUILT' } as Record<string, unknown>)
                 .eq('idempotency_key', idempotencyKey);
         }
 

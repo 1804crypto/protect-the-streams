@@ -19,9 +19,10 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ authenticated: false });
         }
 
+        // H5 FIX: Explicit column selection — don't expose internal fields
         const { data: user, error } = await supabase
             .from('users')
-            .select('*')
+            .select('id, wallet_address, xp, level, wins, losses, inventory, secured_ids, streamer_natures, completed_missions, faction, pts_balance, is_faction_minted')
             .eq('id', session.userId)
             .single();
 

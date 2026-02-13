@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Logger } from '@/lib/logger';
+import { verifySession } from '@/lib/auth';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -9,11 +10,20 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 export async function POST(req: NextRequest) {
     try {
-        const { matchId, claimantId } = await req.json();
-
-        if (!matchId || !claimantId) {
-            return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+        // H6 FIX: Verify session — forfeit is a mutating action
+        const token = req.cookies.get('pts_session')?.value;
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const session = await verifySession(token);
+        if (!session || !session.userId) {
+            return NextResponse.json({ error: 'Invalid Session' }, { status: 401 });
+        }
+
+        const { matchId } = await req.json();
+        // Derive claimantId from verified session, not from client body
+        const claimantId = session.userId as string;
 
         // UUID validation
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
