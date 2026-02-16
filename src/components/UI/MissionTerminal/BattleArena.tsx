@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Streamer, natures, NatureType } from '@/data/streamers';
 import { EntityState } from '@/hooks/useResistanceMission';
 import { ParticleEffect, FloatingVFX, DamageNumber } from './VFX';
+import type { EquipmentSlots } from '@/hooks/useCollectionStore';
 
 interface BattleArenaProps {
     isShaking: boolean;
@@ -32,7 +33,30 @@ interface BattleArenaProps {
     onItemEffectComplete: (_id: number) => void;
     onDamagePopupComplete: (_id: number) => void;
     statsKey: number;
+    equipmentSlots?: EquipmentSlots;
 }
+
+const EQUIP_LABELS: Record<string, string> = {
+    TITAN_CHASSIS: '🛡️ +50HP',
+    QUANTUM_CORE: '💎 +10%DMG',
+    NEURAL_AMPLIFIER: '🧠 +15%CHG',
+    SHADOW_CLOAK: '🕶️ 15%DODGE',
+};
+
+const EquipmentIndicators = ({ equipmentSlots }: { equipmentSlots?: EquipmentSlots }) => {
+    if (!equipmentSlots) return null;
+    const equipped = Object.values(equipmentSlots).filter(Boolean) as string[];
+    if (equipped.length === 0) return null;
+    return (
+        <div className="flex flex-wrap gap-1 mt-1">
+            {equipped.map(id => (
+                <div key={id} className="px-1.5 py-0.5 bg-cyan-500/10 border border-cyan-500/20 text-[7px] text-cyan-400 font-mono rounded-sm">
+                    {EQUIP_LABELS[id] || id}
+                </div>
+            ))}
+        </div>
+    );
+};
 
 export const BattleArena: React.FC<BattleArenaProps> = ({
     isShaking,
@@ -59,7 +83,8 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
     itemEffects,
     onItemEffectComplete,
     onDamagePopupComplete,
-    statsKey
+    statsKey,
+    equipmentSlots
 }) => {
     return (
         <motion.div
@@ -144,7 +169,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                 </div>
             </div>
 
-            {/* Battle Arena Viewport */}
+            {/* Sector 7 Arena Viewport */}
             <div className="flex-1 relative flex items-center justify-center pt-24 pb-32 overflow-hidden">
                 {/* Enemy Sprite */}
                 <motion.div
@@ -362,6 +387,8 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                             </div>
                         )}
                     </div>
+                    {/* Equipment Indicators */}
+                    <EquipmentIndicators equipmentSlots={equipmentSlots} />
                 </motion.div>
             </div>
         </motion.div>

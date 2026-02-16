@@ -73,13 +73,34 @@ export const useResistanceMission = (streamer: Streamer) => {
 
     const { items } = useGameDataStore();
 
+    // Equipment passive bonuses — read once at battle start
+    const equipmentSlots = useCollectionStore(state => state.equipmentSlots);
+    const equipmentBonuses = useMemo(() => {
+        const bonuses = { maxHpBonus: 0, damageMultiplier: 1, chargeRateBonus: 0, dodgeChance: 0 };
+        const slots = Object.values(equipmentSlots);
+        for (const itemId of slots) {
+            if (!itemId) continue;
+            const equip = items[itemId];
+            if (!equip || equip.category !== 'equipment') continue;
+            switch (itemId) {
+                case 'TITAN_CHASSIS': bonuses.maxHpBonus += 50; break;
+                case 'QUANTUM_CORE': bonuses.damageMultiplier *= 1.1; break;
+                case 'NEURAL_AMPLIFIER': bonuses.chargeRateBonus += 0.15; break;
+                case 'SHADOW_CLOAK': bonuses.dodgeChance += 0.15; break;
+            }
+        }
+        return bonuses;
+    }, [equipmentSlots, items]);
+
+    // Freeze equipment bonuses at battle start to prevent mid-battle changes
+    const equipBonusRef = useRef(equipmentBonuses);
+
     // 1. Calculate Dynamic Player Stats
     const missionRecord = completedMissions.find(m => m.id === streamer.id);
     const streamerLevel = missionRecord?.level || 1;
 
-    // Scale Player HP: Base 100 + (Level Bonus) + (Global Resistance Bonus)
-    // This ensures players can survive high-threat sectors as they progress.
-    const calculatedMaxHp = 100 + ((streamerLevel - 1) * 25) + (threatLevel * 5);
+    // Scale Player HP: Base 100 + (Level Bonus) + (Global Resistance Bonus) + Equipment Bonus
+    const calculatedMaxHp = 100 + ((streamerLevel - 1) * 25) + (threatLevel * 5) + equipBonusRef.current.maxHpBonus;
 
     const [player, setPlayer] = useState<EntityState>({
         id: streamer.id,
@@ -211,10 +232,24 @@ export const useResistanceMission = (streamer: Streamer) => {
             enemyDamage = Math.floor(enemyDamage / defenseBoost.multiplier);
         }
 
+        // Equipment: Shadow Cloak dodge chance
+        if (equipBonusRef.current.dodgeChance > 0 && Math.random() < equipBonusRef.current.dodgeChance) {
+            addLog(`SHADOW_EVASION: ${enemy.name}'s attack missed!`);
+            enemyDamage = 0;
+        }
+
         const newHp = Math.max(0, player.hp - enemyDamage);
 
         // BUG 14 FIX: Guard against double markMissionComplete on failure
         if (newHp === 0 && !hasMarkedComplete) {
+            // Last Stand: check if player has a revive item before ending
+            const hasRevive = getItemCount(useCollectionStore.getState(), 'PHOENIX_MODULE_V2') > 0;
+            if (hasRevive) {
+                addLog("CRITICAL_DAMAGE: Phoenix Module detected! Use it now or fall!");
+                setPlayer(prev => ({ ...prev, hp: 0 }));
+                setIsTurn(true); // Give player one more turn to use revive
+                return;
+            }
             setIsComplete(true);
             setResult('FAILURE');
             setHasMarkedComplete(true);
@@ -226,7 +261,7 @@ export const useResistanceMission = (streamer: Streamer) => {
             setTimeout(() => setIsTakingDamage(false), 500);
         }
         if (enemyDamage > 10) triggerShake();
-        if (enemyDamage > 10) setCharge(prevCharge => Math.min(100, prevCharge + 5));
+        if (enemyDamage > 10) setCharge(prevCharge => Math.min(100, prevCharge + Math.floor(5 * (1 + equipBonusRef.current.chargeRateBonus))));
         if (enemyDamage > 25) triggerGlitch(0.3);
 
         setLastDamageAmount(enemyDamage);
@@ -286,6 +321,12 @@ export const useResistanceMission = (streamer: Streamer) => {
     const executeMove = useCallback((move: Move) => {
         if (!isTurn || isComplete || isRateLimited()) return;
 
+        // Last Stand: if HP is 0, block moves — must use revive item
+        if (playerRef.current.hp <= 0) {
+            addLog("CRITICAL: Use a revival item or the signal will be lost!");
+            return;
+        }
+
         // Check PP
         if (movePP[move.name] <= 0) {
             addLog(`NO_PP_REMAINING: ${move.name} is depleted!`);
@@ -323,7 +364,7 @@ export const useResistanceMission = (streamer: Streamer) => {
             const baseDamage = Math.floor(move.power * (relevantStatValue / 100) * (0.8 + Math.random() * 0.4));
 
             // Apply modifiers
-            damage = Math.floor(baseDamage * effectiveness * (attackBoost.turnsLeft > 0 ? attackBoost.multiplier : 1) * critMult);
+            damage = Math.floor(baseDamage * effectiveness * (attackBoost.turnsLeft > 0 ? attackBoost.multiplier : 1) * critMult * equipBonusRef.current.damageMultiplier);
 
             if (isCrit) {
                 addLog("CRITICAL_OVERLOAD: Damage output maximized!");
@@ -391,7 +432,7 @@ export const useResistanceMission = (streamer: Streamer) => {
             setEnemy(prev => ({ ...prev, hp: nextHp }));
 
             // BUG 13 FIX: Use ref for enemy name to avoid stale closure during stage transitions
-            setCharge(prev => Math.min(100, prev + Math.floor(damage / 5)));
+            setCharge(prev => Math.min(100, prev + Math.floor((damage / 5) * (1 + equipBonusRef.current.chargeRateBonus))));
             addLog(`Inflicted ${damage} disruption to ${enemyRef.current.name}.`);
 
         } else {
@@ -454,6 +495,12 @@ export const useResistanceMission = (streamer: Streamer) => {
         const item = items[itemId];
         if (!item) return false;
 
+        // Last Stand guard: if HP is 0, only revive items are allowed
+        if (playerRef.current.hp <= 0 && item.effect !== 'revive') {
+            addLog("CRITICAL: Only revival items can save you now!");
+            return false;
+        }
+
         if (getItemCount(useCollectionStore.getState(), itemId) <= 0) {
             addLog(`NO_ITEM: ${item.name} not in inventory!`);
             return false;
@@ -490,6 +537,25 @@ export const useResistanceMission = (streamer: Streamer) => {
             case 'boostDefense':
                 setDefenseBoost({ multiplier: item.value, turnsLeft: 3 });
                 addLog(`Defense boosted for 3 turns!`);
+                break;
+            case 'revive':
+                setPlayer(prev => {
+                    const healTo = Math.floor(prev.maxHp * item.value);
+                    const newHp = Math.max(prev.hp, healTo);
+                    addLog(`PHOENIX PROTOCOL: Signal restored to ${healTo} HP!`);
+                    return { ...prev, hp: Math.min(prev.maxHp, newHp) };
+                });
+                // If we were in "last stand" (hp=0 but battle not ended), clear the state
+                if (playerRef.current.hp <= 0) {
+                    addLog("CRITICAL_RECOVERY: Back from the void!");
+                }
+                break;
+            case 'ultimateCharge':
+                setCharge(prev => {
+                    const newCharge = Math.min(100, prev + item.value);
+                    addLog(`QUANTUM BURST: Ultimate charge +${item.value}%! (Now: ${newCharge}%)`);
+                    return newCharge;
+                });
                 break;
         }
 
@@ -550,7 +616,9 @@ export const useResistanceMission = (streamer: Streamer) => {
         showPhaseBanner,
         lastDamageAmount,
         lastDamageDealer,
-        addLog
+        addLog,
+        equippedItems: equipBonusRef.current,
+        equipmentSlots
     };
 };
 

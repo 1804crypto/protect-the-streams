@@ -2,6 +2,10 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabaseClient';
 import { Streamer, Move, streamers as localStreamers } from '@/data/streamers';
 import { BattleItem, items as localItems } from '@/data/items';
+import { blackMarketItems } from '@/data/storeItems';
+
+// Merge base items with store items so all items are available for battle/inventory
+const allLocalItems: Record<string, BattleItem> = { ...localItems, ...blackMarketItems };
 
 interface GameDataState {
     streamers: Streamer[];
@@ -16,7 +20,7 @@ interface GameDataState {
 
 export const useGameDataStore = create<GameDataState>((set) => ({
     streamers: localStreamers,
-    items: localItems,
+    items: allLocalItems,
     isLoading: false,
     error: null,
     isInitialized: false,
@@ -56,17 +60,21 @@ export const useGameDataStore = create<GameDataState>((set) => ({
                 const streamerMoves = movesData.filter(m => m.streamer_id === s.id && !m.is_ultimate);
                 const ultimateMove = movesData.find(m => m.streamer_id === s.id && m.is_ultimate);
 
+                // Find local fallback data
+                const localData = localStreamers.find(ls => ls.id === s.id);
+
                 uniqueMap.set(s.id, {
                     // OVERRIDE: Prioritize local image assets (to fix DB mismatch)
-                    image: localStreamers.find(ls => ls.id === s.id)?.image || s.image,
+                    image: localData?.image || s.image,
                     id: s.id,
                     name: s.name,
-                    archetype: s.archetype,
+                    // OVERRIDE: Prioritize local metadata for static fields
+                    archetype: localData?.archetype || s.archetype,
                     stats: s.stats,
-                    trait: s.trait,
+                    trait: localData?.trait || s.trait,
                     visualPrompt: s.visual_prompt,
                     // image property moved to top to force override
-                    lore: s.lore,
+                    lore: localData?.lore || s.lore,
                     moves: streamerMoves.map(m => ({
                         name: m.name,
                         type: m.type as any,
@@ -87,13 +95,14 @@ export const useGameDataStore = create<GameDataState>((set) => ({
                         pp: 1,
                         description: "Fallback ultimate."
                     } as Move,
-                    narrative: s.narrative || {
+                    // OVERRIDE: Prioritize local narrative if remote is missing or UNKNOWN
+                    narrative: (s.narrative && s.narrative.role !== 'UNKNOWN') ? s.narrative : (localData?.narrative || {
                         role: 'UNKNOWN',
                         codename: 'UNKNOWN',
                         originStory: 'Bio-Digital data corrupted during transfer.',
                         mission: 'Awaiting directive.',
                         connection: 'Signal lost.'
-                    }
+                    })
                 });
                 seenNames.add(s.name.trim().toLowerCase());
             });
@@ -111,14 +120,15 @@ export const useGameDataStore = create<GameDataState>((set) => ({
                         effect: i.effect as any,
                         value: Number(i.value),
                         rarity: i.rarity as any,
-                        icon: i.icon
+                        icon: i.icon,
+                        category: i.category as any || 'consumable'
                     };
                 });
             }
 
             set({
                 streamers: processedStreamers.length > 0 ? processedStreamers : localStreamers.filter((s, i, a) => a.findIndex(t => t.id === s.id) === i),
-                items: Object.keys(processedItems).length > 0 ? processedItems : localItems,
+                items: Object.keys(processedItems).length > 0 ? { ...allLocalItems, ...processedItems } : allLocalItems,
                 isLoading: false,
                 isInitialized: true
             });
@@ -128,7 +138,7 @@ export const useGameDataStore = create<GameDataState>((set) => ({
             console.error("Failed to fetch game data:", err);
             set({
                 streamers: localStreamers.filter((s, i, a) => a.findIndex(t => t.id === s.id) === i),
-                items: localItems,
+                items: allLocalItems,
                 error: err instanceof Error ? err.message : 'Unknown error',
                 isLoading: false,
                 isInitialized: true

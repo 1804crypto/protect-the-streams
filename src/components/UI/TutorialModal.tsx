@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface TutorialModalProps {
     isOpen: boolean;
@@ -66,6 +67,7 @@ const highlightShadow: Record<string, string> = {
 export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [dontShowAgain, setDontShowAgain] = useState(false);
+    const focusTrapRef = useFocusTrap(isOpen); // Hook for accessibility
 
     const handleNext = () => {
         if (currentStep < tutorialSteps.length - 1) {
@@ -99,7 +101,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
     useEffect(() => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, currentStep]);
 
     const step = tutorialSteps[currentStep];
@@ -112,6 +114,9 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 z-[300] flex items-center justify-center p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="tutorial-title"
                 >
                     {/* Backdrop */}
                     <div
@@ -121,11 +126,13 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
 
                     {/* Modal Container */}
                     <motion.div
+                        ref={focusTrapRef as React.RefObject<HTMLDivElement>}
                         initial={{ scale: 0.9, y: 20 }}
                         animate={{ scale: 1, y: 0 }}
                         exit={{ scale: 0.9, y: 20 }}
                         transition={{ type: 'spring', damping: 25 }}
                         className="relative w-full max-w-lg bg-resistance-dark border border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden"
+                        tabIndex={-1}
                     >
                         {/* Glowing top border */}
                         <div className={`absolute top-0 inset-x-0 h-1 ${highlightBg[step.highlight]} ${highlightShadow[step.highlight]}`} />
@@ -134,7 +141,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                         <div className="p-6 pb-0">
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-3xl">{step.icon}</span>
+                                    <span className="text-3xl" aria-hidden="true">{step.icon}</span>
                                     <div>
                                         <p className="text-[8px] font-mono text-white/30 tracking-[0.3em] uppercase">
                                             TUTORIAL_SEQUENCE
@@ -148,6 +155,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                                     onClick={handleClose}
                                     className="w-8 h-8 flex items-center justify-center border border-white/10 hover:border-neon-pink text-white/40 hover:text-neon-pink transition-all text-sm"
                                     title="Close tutorial"
+                                    aria-label="Close tutorial"
                                 >
                                     ✕
                                 </button>
@@ -164,7 +172,10 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <h2 className={`text-2xl md:text-3xl font-black tracking-tight mb-4 ${highlightText[step.highlight]}`}>
+                                    <h2
+                                        id="tutorial-title"
+                                        className={`text-2xl md:text-3xl font-black tracking-tight mb-4 ${highlightText[step.highlight]}`}
+                                    >
                                         {step.title.replace(/_/g, ' ')}
                                     </h2>
                                     <p className="text-white/70 text-sm md:text-base leading-relaxed font-cyber">
@@ -181,6 +192,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                                     key={i}
                                     onClick={() => setCurrentStep(i)}
                                     title={`Go to step ${i + 1}`}
+                                    aria-label={`Go to step ${i + 1}`}
+                                    aria-current={i === currentStep ? 'step' : undefined}
                                     className={`w-2 h-2 rounded-full transition-all ${i === currentStep
                                         ? 'bg-neon-blue scale-125 shadow-[0_0_10px_#00f3ff]'
                                         : i < currentStep
@@ -199,6 +212,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                                     onClick={handlePrev}
                                     disabled={currentStep === 0}
                                     className="flex-1 py-3 border border-white/10 text-white/40 font-black text-xs uppercase tracking-widest hover:border-white/30 hover:text-white/60 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+                                    aria-label="Previous step"
                                 >
                                     ← PREV
                                 </button>
@@ -208,6 +222,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                                         ? 'bg-neon-green text-black hover:shadow-[0_0_20px_rgba(0,255,159,0.5)]'
                                         : 'bg-neon-blue/10 border border-neon-blue text-neon-blue hover:bg-neon-blue/20'
                                         }`}
+                                    aria-label={currentStep === tutorialSteps.length - 1 ? 'Begin Mission' : 'Next step'}
                                 >
                                     {currentStep === tutorialSteps.length - 1 ? 'BEGIN_MISSION →' : 'NEXT →'}
                                 </button>

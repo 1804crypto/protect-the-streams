@@ -357,7 +357,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                     {/* Expansive Battle Console */}
                     <div className="ds-terminal relative flex flex-col lg:flex-row gap-4 p-2 lg:p-6 w-full max-w-[1240px] items-stretch h-full lg:h-[800px] overflow-y-auto lg:overflow-visible">
 
-                        {/* Top Screen / Battle Arena */}
+                        {/* Top Screen / Sector 7 Arena */}
                         <BattleArena
                             isShaking={isShaking}
                             isAttacking={isAttacking}

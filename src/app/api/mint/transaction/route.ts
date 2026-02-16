@@ -5,18 +5,13 @@ import { create, fetchCollection } from '@metaplex-foundation/mpl-core';
 import { CONFIG } from '@/data/config';
 import { base58 } from '@metaplex-foundation/umi/serializers';
 import { createClient } from '@supabase/supabase-js';
+import { getMintPrice } from '@/lib/priceOracle';
+import { getRpcUrl } from '@/lib/rpc';
 
 const isDev = process.env.NODE_ENV !== 'production';
 const debug = (...args: unknown[]) => { if (isDev) console.log(...args); };
 
-// Note: Umi helpers for SOL transfer might need 'mpl-toolbox'
-// We will simply use the Umi transaction builder functionality.
-
-const RPC_ENDPOINT = process.env.SOLANA_RPC_URL || (CONFIG.NETWORK === 'mainnet-beta'
-    ? 'https://api.mainnet-beta.solana.com'
-    : 'https://api.devnet.solana.com');
-
-const umi = createUmi(RPC_ENDPOINT);
+const umi = createUmi(getRpcUrl());
 
 // BUG 25 FIX: Guard module-level init to prevent crash when env var is missing
 const BACKEND_PRIVATE_KEY = JSON.parse(process.env.BACKEND_WALLET_PRIVATE_KEY || '[]');
@@ -145,19 +140,17 @@ export async function POST(req: NextRequest) {
                         { pubkey: publicKey(CONFIG.TREASURY_WALLET), isSigner: false, isWritable: true },
                     ],
                     programId: publicKey('11111111111111111111111111111111'), // System Program
-                    data: (function () {
+                    data: await (async function () {
                         const data = new Uint8Array(12);
                         data.set([2, 0, 0, 0]); // Index 2 = Transfer
 
-                        // Calculate price based on currency (Mock rates: 1 PTS = 0.0001 SOL, 1 USDC = 0.005 SOL approx)
-                        let price = CONFIG.MINT_PRICE;
-                        if (currency === 'PTS') price = 0.0001; // Mock internal rate
-                        if (currency === 'USDC') price = 0.005; // Mock internal rate
+                        // Live price oracle with fallback to hardcoded rates
+                        const { priceSol, source } = await getMintPrice(currency, CONFIG.MINT_PRICE);
 
-                        const lamports = BigInt(Math.floor(price * 1_000_000_000));
+                        const lamports = BigInt(Math.floor(priceSol * 1_000_000_000));
                         const view = new DataView(data.buffer);
                         view.setBigUint64(4, lamports, true); // Little Endian
-                        debug(`💰 [API DEBUG] Processing Payment: ${currency} (${price} SOL = ${lamports} lamports)`);
+                        debug(`💰 [API DEBUG] Processing Payment: ${currency} (${priceSol} SOL = ${lamports} lamports) [source: ${source}]`);
                         return data;
                     })()
                 },

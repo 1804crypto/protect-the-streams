@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface LeaderboardEntry {
     id: string;
@@ -19,6 +20,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
     const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isMock, setIsMock] = useState(false);
+    const focusTrapRef = useFocusTrap(isOpen);
 
     useEffect(() => {
         if (isOpen) {
@@ -59,11 +61,18 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4">
+        <div
+            className="fixed inset-0 z-[400] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="leaderboard-title"
+        >
             <motion.div
+                ref={focusTrapRef as React.RefObject<HTMLDivElement>}
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 className="w-full max-w-[90vw] md:max-w-3xl bg-[#050505] border-2 border-white/10 rounded-sm overflow-hidden shadow-[0_0_80px_rgba(0,180,255,0.15)] relative"
+                tabIndex={-1}
             >
                 {/* Visual Scanning Line */}
                 <div className="absolute inset-0 pointer-events-none z-50 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:100%_3px] animate-scan opacity-20" />
@@ -71,8 +80,8 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                 <div className="p-8 border-b-2 border-white/5 flex justify-between items-center bg-gradient-to-r from-neon-blue/10 to-transparent relative group">
                     <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-neon-blue via-white to-transparent opacity-50" />
                     <div>
-                        <h2 className="text-xl md:text-3xl font-black italic text-white uppercase tracking-tighter flex items-center gap-3">
-                            <span className="text-neon-blue animate-pulse">◈</span>
+                        <h2 id="leaderboard-title" className="text-xl md:text-3xl font-black italic text-white uppercase tracking-tighter flex items-center gap-3">
+                            <span className="text-neon-blue animate-pulse" aria-hidden="true">◈</span>
                             HIGH_COMMAND_Apex
                         </h2>
                         <div className="text-[6px] md:text-[8px] font-mono text-white/40 tracking-[0.4em] mt-1 italic uppercase">Sector_00 // Global_Operative_Rankings</div>
@@ -80,6 +89,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                     <button
                         onClick={onClose}
                         className="w-10 h-10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 rotate-45 transition-all text-2xl"
+                        aria-label="Close leaderboard"
                     >
                         +
                     </button>

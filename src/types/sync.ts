@@ -49,3 +49,21 @@ export interface MissionCompleteResponse {
     itemsAwarded: string[];
     newInventory: Record<string, number>;
 }
+
+/** Request body for /api/shop/purchase */
+export interface ShopPurchaseRequest {
+    itemId: string;
+    quantity: number;
+    currency: 'PTS' | 'SOL';
+    purchaseId: string;
+    txSignature?: string;
+}
+
+/** Response from /api/shop/purchase */
+export interface ShopPurchaseResponse {
+    success: boolean;
+    error?: string;
+    newInventory: Record<string, number>;
+    newPtsBalance: number;
+    purchaseId: string;
+}

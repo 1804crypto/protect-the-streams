@@ -2,6 +2,7 @@ import { BattleItem } from './items';
 
 export interface StoreItem extends BattleItem {
     pricePts: number;
+    priceSol: number;
     stock?: number; // Optional: limited stock per mission/session
 }
 
@@ -15,7 +16,9 @@ export const blackMarketItems: Record<string, StoreItem> = {
         value: 50,
         rarity: 'common',
         icon: '🩹',
-        pricePts: 100
+        category: 'consumable',
+        pricePts: 100,
+        priceSol: 0.001,
     },
     GIGACHAD_GLITCH: {
         id: 'GIGACHAD_GLITCH',
@@ -25,20 +28,37 @@ export const blackMarketItems: Record<string, StoreItem> = {
         value: 2.0,
         rarity: 'rare',
         icon: '🗿',
-        pricePts: 500
+        category: 'consumable',
+        pricePts: 500,
+        priceSol: 0.005,
     },
     Z_QUANTUM_BURST: {
         id: 'Z_QUANTUM_BURST',
         name: 'Z-Quantum Burst',
         description: 'Instantly fills 50% of the Ultimate Bar.',
-        effect: 'boostAttack', // We'll handle ultimate filling in the logic
+        effect: 'ultimateCharge',
         value: 50,
         rarity: 'legendary',
         icon: '🌀',
-        pricePts: 1500
+        category: 'consumable',
+        pricePts: 1500,
+        priceSol: 0.015,
+    },
+    VIRAL_INJECTOR: {
+        id: 'VIRAL_INJECTOR',
+        name: 'Viral Injector',
+        description: 'Poisons the enemy: 5% max HP damage per turn for 3 turns.',
+        effect: 'boostAttack',
+        value: 0.05,
+        rarity: 'rare',
+        icon: '💀',
+        category: 'consumable',
+        lore: 'A weaponized data packet. Corrupts the target\'s core processes.',
+        pricePts: 800,
+        priceSol: 0.008,
     },
 
-    // --- Tactical Augments (These could be permanent or long-duration) ---
+    // --- Tactical Augments (Permanent / Long-Duration Boosts) ---
     OVERCLOCK_CORE: {
         id: 'OVERCLOCK_CORE',
         name: 'Overclock Core',
@@ -47,7 +67,9 @@ export const blackMarketItems: Record<string, StoreItem> = {
         value: 1.15,
         rarity: 'rare',
         icon: '🏎️',
-        pricePts: 800
+        category: 'augment',
+        pricePts: 800,
+        priceSol: 0.008,
     },
     KINETIC_BOOSTER: {
         id: 'KINETIC_BOOSTER',
@@ -57,7 +79,9 @@ export const blackMarketItems: Record<string, StoreItem> = {
         value: 1.2,
         rarity: 'rare',
         icon: '☄️',
-        pricePts: 1000
+        category: 'augment',
+        pricePts: 1000,
+        priceSol: 0.01,
     },
 
     // --- Emergency / Utility ---
@@ -69,16 +93,82 @@ export const blackMarketItems: Record<string, StoreItem> = {
         value: 1.0,
         rarity: 'legendary',
         icon: '🦅',
-        pricePts: 2500
+        category: 'consumable',
+        pricePts: 2500,
+        priceSol: 0.025,
     },
     RESISTANCE_CRATE: {
         id: 'RESISTANCE_CRATE',
         name: 'Resistance Crate',
         description: 'A random collection of 3-5 basic items.',
-        effect: 'heal', // Placeholder
+        effect: 'heal', // Placeholder — crate opening handled in purchase logic
         value: 0,
         rarity: 'common',
         icon: '📦',
-        pricePts: 300
-    }
+        category: 'consumable',
+        pricePts: 300,
+        priceSol: 0.003,
+    },
+
+    // --- Equipment (DB-first, NFT-ready) ---
+    SHADOW_CLOAK: {
+        id: 'SHADOW_CLOAK',
+        name: 'Shadow Cloak',
+        description: 'Passive: 15% chance to dodge enemy attacks.',
+        effect: 'boostDefense',
+        value: 1.15,
+        rarity: 'rare',
+        icon: '🕶️',
+        category: 'equipment',
+        slot: 'armor',
+        statBonus: { chaos: 10 },
+        lore: 'Salvaged from a fallen Cipher Unit. The fabric bends light around the wearer.',
+        pricePts: 1200,
+        priceSol: 0.012,
+    },
+    NEURAL_AMPLIFIER: {
+        id: 'NEURAL_AMPLIFIER',
+        name: 'Neural Amplifier',
+        description: 'Passive: +15% ultimate charge rate.',
+        effect: 'ultimateCharge',
+        value: 0.15,
+        rarity: 'rare',
+        icon: '🧠',
+        category: 'equipment',
+        slot: 'accessory',
+        statBonus: { influence: 8 },
+        lore: 'Prototype cortex link. Amplifies neural bandwidth for faster signal lock.',
+        pricePts: 1500,
+        priceSol: 0.015,
+    },
+    TITAN_CHASSIS: {
+        id: 'TITAN_CHASSIS',
+        name: 'Titan Chassis',
+        description: 'Passive: +50 max HP in battle.',
+        effect: 'heal',
+        value: 50,
+        rarity: 'legendary',
+        icon: '🛡️',
+        category: 'equipment',
+        slot: 'armor',
+        statBonus: { rebellion: 12 },
+        lore: 'Reinforced plating from the Authority\'s decommissioned war frames.',
+        pricePts: 2000,
+        priceSol: 0.02,
+    },
+    QUANTUM_CORE: {
+        id: 'QUANTUM_CORE',
+        name: 'Quantum Core',
+        description: 'Passive: +10% damage to all moves.',
+        effect: 'boostAttack',
+        value: 1.1,
+        rarity: 'legendary',
+        icon: '💎',
+        category: 'equipment',
+        slot: 'weapon',
+        statBonus: { chaos: 8, influence: 8 },
+        lore: 'Unstable energy matrix. Channels raw quantum flux into focused destruction.',
+        pricePts: 2500,
+        priceSol: 0.025,
+    },
 };

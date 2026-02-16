@@ -14,6 +14,12 @@ export interface MissionRecord {
     level: number;
 }
 
+export interface EquipmentSlots {
+    weapon: string | null;
+    armor: string | null;
+    accessory: string | null;
+}
+
 interface CollectionState {
     securedIds: string[];
     completedMissions: MissionRecord[];
@@ -30,11 +36,14 @@ interface CollectionState {
     losses: number;
     ptsBalance: number;
     unlockedNarratives: string[];
+    equipmentSlots: EquipmentSlots;
 
     // Actions
     secureAsset: (_id: string) => void;
     addItem: (_itemId: string, _count?: number) => void;
     useItem: (_itemId: string) => boolean;
+    equipItem: (_itemId: string, _slot: keyof EquipmentSlots) => void;
+    unequipItem: (_slot: keyof EquipmentSlots) => void;
     updateDifficulty: (_mult: number) => void;
     updateResistanceScore: (_points: number) => void;
     setFaction: (_faction: 'RED' | 'PURPLE') => void;
@@ -205,6 +214,7 @@ export const useCollectionStore = create<CollectionState>()(
             losses: 0,
             ptsBalance: 0,
             unlockedNarratives: [],
+            equipmentSlots: { weapon: null, armor: null, accessory: null },
             isAuthenticated: false,
 
             setAuthenticated: (_auth: boolean) => set({ isAuthenticated: _auth }),
@@ -268,6 +278,46 @@ export const useCollectionStore = create<CollectionState>()(
                 }
 
                 return true;
+            },
+
+            equipItem: (_itemId: string, _slot: keyof EquipmentSlots) => {
+                const { inventory, equipmentSlots } = get();
+                if ((inventory[_itemId] || 0) <= 0) return;
+
+                const newInventory = { ...inventory };
+                // Return currently equipped item to inventory
+                const currentEquipped = equipmentSlots[_slot];
+                if (currentEquipped) {
+                    newInventory[currentEquipped] = (newInventory[currentEquipped] || 0) + 1;
+                }
+                // Remove new item from inventory
+                newInventory[_itemId] = Math.max(0, (newInventory[_itemId] || 0) - 1);
+
+                const newSlots = { ...equipmentSlots, [_slot]: _itemId };
+                set({ inventory: newInventory, equipmentSlots: newSlots });
+
+                const { isAuthenticated } = get();
+                if (isAuthenticated) {
+                    syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                }
+            },
+
+            unequipItem: (_slot: keyof EquipmentSlots) => {
+                const { inventory, equipmentSlots } = get();
+                const equippedItem = equipmentSlots[_slot];
+                if (!equippedItem) return;
+
+                const newInventory = {
+                    ...inventory,
+                    [equippedItem]: (inventory[equippedItem] || 0) + 1
+                };
+                const newSlots = { ...equipmentSlots, [_slot]: null };
+                set({ inventory: newInventory, equipmentSlots: newSlots });
+
+                const { isAuthenticated } = get();
+                if (isAuthenticated) {
+                    syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                }
             },
 
             updateDifficulty: (_mult: number) => set({ difficultyMultiplier: _mult }),
@@ -376,6 +426,7 @@ export const useCollectionStore = create<CollectionState>()(
                 if (userData.faction !== undefined) updates.userFaction = userData.faction;
                 if (userData.pts_balance !== undefined) updates.ptsBalance = userData.pts_balance;
                 if (userData.is_faction_minted !== undefined) updates.isFactionMinted = userData.is_faction_minted;
+                if (userData.equipment_slots !== undefined) updates.equipmentSlots = userData.equipment_slots;
 
                 updates.isAuthenticated = true;
 

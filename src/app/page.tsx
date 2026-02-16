@@ -32,9 +32,10 @@ import { Leaderboard } from '@/components/UI/Leaderboard';
 import { useOperatorStore } from '@/hooks/useOperatorStore';
 import { AuthStatus } from '@/components/UI/AuthStatus';
 import { NarrativeArchive } from '@/components/UI/NarrativeArchive';
+import { RosterSection } from '@/components/sections/RosterSection';
 
 export default function Home() {
-    const { mint, loading, status, error, signature } = useMintStreamer();
+    const { mint, loading, mintingStreamerId, status, error, signature } = useMintStreamer();
     const { isMuted, toggleMute, playHover, playClick, playSuccess, forceUnmute } = useAudioSystem();
     const [isHubOpen, setIsHubOpen] = useState(false);
     const [activeMissionStreamer, setActiveMissionStreamer] = useState<Streamer | null>(null);
@@ -135,7 +136,7 @@ export default function Home() {
                             onClick={() => { playClick(); setIsHubOpen(true); }}
                             className="px-4 py-2 border border-neon-blue/40 text-[10px] font-bold tracking-widest hover:bg-neon-blue/10 transition-all hidden md:block"
                         >
-                            [INTEL_RECOVERY]
+                            [SECTOR_7_OPERATIONS]
                         </button>
                         <button
                             onClick={() => { playClick(); setIsArchiveOpen(true); }}
@@ -184,7 +185,7 @@ export default function Home() {
                     <button
                         onClick={() => { playClick(); setIsHubOpen(true); }}
                         className="w-14 h-14 rounded-full bg-resistance-accent shadow-[0_0_20px_rgba(255,0,60,0.5)] flex items-center justify-center font-black text-xl"
-                        title="Intel Recovery"
+                        title="Sector 7 Operations"
                     >
                         📁
                     </button>
@@ -318,66 +319,17 @@ export default function Home() {
                 </section>
 
                 {/* Roster Section with Scroll Trigger */}
-                <section id="roster" className="relative z-10 px-6 md:px-12 pb-40">
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 1 }}
-                        className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 border-b border-white/10 pb-6 gap-4"
-                    >
-                        <div>
-                            <h2 className="text-4xl font-black neon-text-blue tracking-tighter">Active Resistance Roster</h2>
-                            <p className="text-white/40 font-mono text-[10px] mt-2 uppercase tracking-[0.3em]">
-                                // {streamers.length}_SIGNATURES_DETECTED_IN_SECTOR_07
-                            </p>
-                        </div>
-                        <div className="flex gap-10">
-                            <div className="text-right">
-                                <p className="text-[8px] text-white/30 font-mono uppercase">Encryption Status</p>
-                                <p className="text-xs font-bold text-neon-green">UNBREAKABLE</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[8px] text-white/30 font-mono uppercase">Threat Mitigation</p>
-                                <p className="text-xs font-bold text-resistance-accent">ACTIVE</p>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-10 justify-items-center">
-                        {streamers.map((streamer, idx) => (
-                            <motion.div
-                                key={streamer.id}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.1 }}
-                                viewport={{ once: true }}
-                                className="relative group"
-                            >
-                                <StreamerCard
-                                    streamer={streamer}
-                                    onHover={playHover}
-                                />
-                                <div className="absolute inset-x-0 bottom-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 mobile-action-visible transition-opacity z-20 flex justify-center gap-2">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); playClick(); mint(streamer.id); }}
-                                        disabled={loading}
-                                        className={`px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm ${loading ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-neon-blue text-black hover:bg-white'}`}
-                                    >
-                                        MINT
-                                    </button>
-                                    {hasAccess && (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); playClick(); setActivePvPStreamer(streamer); }}
-                                            className="px-4 py-2 min-h-[44px] bg-neon-pink text-white text-xs font-black uppercase rounded-sm"
-                                        >
-                                            PVP
-                                        </button>
-                                    )}
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </section>
+                {/* Roster Section with Scroll Trigger */}
+                <RosterSection
+                    streamers={streamers}
+                    hasAccess={hasAccess}
+                    loading={loading}
+                    mintingStreamerId={mintingStreamerId}
+                    mint={mint}
+                    playHover={playHover}
+                    playClick={playClick}
+                    onPvP={(streamer) => setActivePvPStreamer(streamer)}
+                />
 
                 {/* Footer / Status Bar */}
                 <footer className="fixed bottom-0 inset-x-0 z-40 bg-background/80 backdrop-blur-md border-t border-white/10 p-3 md:p-4 flex justify-between items-center px-4 md:px-12 text-[9px] md:text-[10px] font-mono text-white/40 uppercase tracking-widest safe-padding-bottom">

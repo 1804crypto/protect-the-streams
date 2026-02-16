@@ -50,6 +50,9 @@ export default function RootLayout({
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Oswald:wght@700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
             </head>
             <body className="antialiased selection:bg-neon-blue selection:text-background" suppressHydrationWarning>
+                <a href="#roster" className="sr-only focus:not-sr-only focus:absolute focus:z-[9999] focus:p-4 focus:bg-neon-blue focus:text-black focus:font-bold">
+                    Skip to content
+                </a>
                 <SolanaProvider>
                     <SystemHeartbeat />
                     <ResistanceOverlay />

@@ -13,6 +13,7 @@ export const useMintStreamer = () => {
     const { connected, publicKey, wallet } = useWallet();
     const secureAsset = useCollectionStore(state => state.secureAsset);
     const [loading, setLoading] = useState(false);
+    const [mintingStreamerId, setMintingStreamerId] = useState<string | null>(null);
     const [status, setStatus] = useState<string | null>(null);
     const [signature, setSignature] = useState<string | null>(null);
     const [error, setError] = useState<{ code: string; message: string } | null>(null);
@@ -39,6 +40,7 @@ export const useMintStreamer = () => {
 
         console.log('✅ [MINT DEBUG] Wallet connected, starting transaction build');
         setLoading(true);
+        setMintingStreamerId(streamerId);
         setStatus(`Establishing Secure Uplink via Solana (${CONFIG.NETWORK})...`);
         setError(null);
         setSignature(null);
@@ -159,11 +161,25 @@ export const useMintStreamer = () => {
                 console.log('✅ [MINT DEBUG] Transaction found on-chain despite timeout');
             }
 
-            // 6. Success
+            // 6. Notify Server (mark COMPLETED in DB to prevent duplicates)
+            console.log('📡 [MINT DEBUG] Confirming mint on server...');
+            try {
+                await fetch('/api/mint/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idempotencyKey })
+                });
+                console.log('✅ [MINT DEBUG] Server confirmed mint as COMPLETED');
+            } catch (confirmApiErr) {
+                console.warn('⚠️ [MINT DEBUG] Failed to confirm mint on server (non-blocking):', confirmApiErr);
+            }
+
+            // 7. Success
             console.log('🎉 [MINT DEBUG] Mint successful! Asset secured.');
             setStatus("Asset Secured. NFT Verified on Blockchain. Corporate Control Severed.");
             secureAsset(streamerId);
             idempotencyKeyRef.current = null; // Reset for next mint
+            setMintingStreamerId(null);
             setLoading(false);
 
         } catch (err: unknown) {
@@ -197,11 +213,12 @@ export const useMintStreamer = () => {
                 });
             }
             setStatus(null);
+            setMintingStreamerId(null);
             setLoading(false);
         }
     };
 
-    return { mint, loading, status, error, signature };
+    return { mint, loading, mintingStreamerId, status, error, signature };
 };
 
 // Helper for display

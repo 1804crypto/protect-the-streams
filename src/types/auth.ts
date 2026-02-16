@@ -31,4 +31,5 @@ export interface UserRow {
     faction: 'RED' | 'PURPLE' | 'NONE';
     is_faction_minted: boolean;
     updated_at: string;
+    equipment_slots: { weapon: string | null; armor: string | null; accessory: string | null };
 }

@@ -8,6 +8,7 @@ import { useAudioSystem } from '@/hooks/useAudioSystem';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { CONFIG } from '@/data/config';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface FactionSelectionProps {
     isOpen: boolean;
@@ -52,6 +53,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
         userFaction !== 'NONE' ? userFaction : null
     );
     const [memberId, setMemberId] = useState<number | null>(null);
+    const focusTrapRef = useFocusTrap(isOpen);
 
     // Wallet Hooks
     const { connection } = useConnection();
@@ -116,13 +118,17 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="faction-selection-title"
             >
-                <div className="max-w-4xl w-full relative">
+                <div ref={focusTrapRef as React.RefObject<HTMLDivElement>} className="max-w-4xl w-full relative" tabIndex={-1}>
                     {/* Close Button */}
                     <button
                         onClick={onClose}
                         className="absolute -top-12 right-0 text-white/40 hover:text-white transition-all p-2 group"
                         title="Close Faction Selection"
+                        aria-label="Close Faction Selection"
                     >
                         <X size={24} className="group-hover:rotate-90 transition-transform" />
                     </button>
@@ -135,7 +141,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                             exit={{ opacity: 0, scale: 0.95 }}
                         >
                             <div className="text-center mb-12">
-                                <h2 className="text-5xl font-black italic tracking-tighter text-white mb-4 uppercase">CHOOSE_YOUR_ALLEGIANCE</h2>
+                                <h2 id="faction-selection-title" className="text-5xl font-black italic tracking-tighter text-white mb-4 uppercase">CHOOSE_YOUR_ALLEGIANCE</h2>
                                 <p className="text-white/40 font-mono text-xs tracking-[0.3em] uppercase underline underline-offset-8 decoration-neon-blue/30">
                                     The_Resistance_is_fractured._Which_signal_will_you_amplify?
                                 </p>
@@ -154,9 +160,10 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                                             onMouseEnter={playHover}
                                             className={`p-8 rounded-2xl border-2 transition-all text-left relative overflow-hidden group h-full ${userFaction === fKey ? `${faction.border} ${faction.bg}` : 'border-white/10 bg-white/5 hover:border-white/30'
                                                 }`}
+                                            aria-label={`Select ${faction.name}`}
                                         >
                                             <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity ${faction.color}`}>
-                                                <Icon size={120} />
+                                                <Icon size={120} aria-hidden="true" />
                                             </div>
                                             <h3 className={`text-3xl font-black mb-2 italic ${faction.color}`}>{faction.name}</h3>
                                             <p className="text-white text-xs leading-relaxed opacity-60 mb-6">
@@ -196,7 +203,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                             <div className="flex-1 space-y-6">
                                 <div>
                                     <h4 className="text-neon-blue font-mono text-xs mb-2 tracking-widest">// IDENTITY_PROTOCOL_LOADED</h4>
-                                    <h2 className={`text-6xl font-black italic tracking-tighter ${currentFaction.color}`}>{currentFaction.name}</h2>
+                                    <h2 id="faction-selection-title" className={`text-6xl font-black italic tracking-tighter ${currentFaction.color}`}>{currentFaction.name}</h2>
                                     <p className="text-white font-mono text-[10px] tracking-[0.4em] mt-2 opacity-50 underline decoration-neon-blue/20">{currentFaction.motto}</p>
                                 </div>
                                 <p className="text-white/70 leading-relaxed text-sm font-cyber border-l-2 border-neon-blue/30 pl-6 italic">
@@ -217,7 +224,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                                         onClick={handleMint}
                                         className="flex-1 py-4 bg-neon-blue text-black font-black uppercase italic tracking-[0.2em] hover:bg-white transition-all flex items-center justify-center gap-3 group shadow-[0_0_20px_rgba(0,243,255,0.3)]"
                                     >
-                                        <CreditCard size={18} />
+                                        <CreditCard size={18} aria-hidden="true" />
                                         MINT_IDENTITY_CARD
                                     </button>
                                     <button
@@ -229,16 +236,16 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                                 </div>
                             </div>
                             <div className="w-80 h-[480px] bg-gradient-to-br from-white/10 to-transparent border border-white/20 rounded-3xl p-6 relative overflow-hidden group shrink-0">
-                                <div className={`absolute inset-0 opacity-10 animate-pulse ${currentFaction.bg}`}></div>
+                                <div className={`absolute inset-0 opacity-10 animate-pulse ${currentFaction.bg}`} aria-hidden="true"></div>
                                 <div className="h-full border border-white/5 flex flex-col justify-between items-center py-10 relative z-10">
-                                    <currentFaction.icon size={120} className={`${currentFaction.color} drop-shadow-[0_0_15px_currentColor]`} />
+                                    <currentFaction.icon size={120} className={`${currentFaction.color} drop-shadow-[0_0_15px_currentColor]`} aria-hidden="true" />
                                     <div className="text-center">
                                         <p className="text-[10px] font-mono opacity-30 mb-1">MEMBER_ID</p>
                                         <p className="text-xs font-black tracking-widest italic">#RES-09{memberId ?? '---'}</p>
                                     </div>
                                     <div className="w-full h-px bg-white/10"></div>
                                     <div className="flex flex-col items-center gap-2">
-                                        <Shield size={32} className="opacity-20" />
+                                        <Shield size={32} className="opacity-20" aria-hidden="true" />
                                         <p className={`text-[10px] font-black tracking-[0.3em] ${currentFaction.color}`}>UNMINTED_ASSET</p>
                                     </div>
                                 </div>
@@ -252,8 +259,10 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             className="flex flex-col items-center py-20"
+                            role="status"
+                            aria-live="polite"
                         >
-                            <Loader2 size={64} className="text-neon-blue animate-spin mb-8" />
+                            <Loader2 size={64} className="text-neon-blue animate-spin mb-8" aria-hidden="true" />
                             <h2 className="text-3xl font-black italic text-white uppercase tracking-tighter mb-4">BROADCASTING_PROOF_OF_STAKE...</h2>
                             <div className="w-64 h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
                                 <motion.div
@@ -276,17 +285,17 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                         >
                             <div className="mb-8 flex justify-center">
                                 <div className="p-6 rounded-full bg-neon-green/10 border-4 border-neon-green relative">
-                                    <CheckCircle2 size={80} className="text-neon-green" />
+                                    <CheckCircle2 size={80} className="text-neon-green" aria-hidden="true" />
                                     <div className="absolute inset-0 bg-neon-green/20 rounded-full animate-ping"></div>
                                 </div>
                             </div>
-                            <h2 className="text-5xl font-black italic text-white uppercase tracking-tighter mb-4">INITIATION_COMPLETE</h2>
-                            <p className="text-neon-green font-mono text-xs tracking-[0.4em] uppercase mb-12">IDENTITY_MINTED_IN_SECTOR_7</p>
+                            <h2 id="faction-selection-title" className="text-5xl font-black italic text-white uppercase tracking-tighter mb-4">INITIATION_COMPLETE</h2>
+                            <p className="text-neon-green font-mono text-xs tracking-[0.4em] uppercase mb-12">IDENTITY_ESTABLISHED_IN_SECTOR_7</p>
 
                             <div className="flex flex-col md:flex-row gap-6 justify-center">
                                 <div className={`glass-card p-6 border-white/10 min-w-[300px]`}>
                                     <div className="flex items-center gap-4 mb-4">
-                                        <currentFaction.icon size={40} className={currentFaction.color} />
+                                        <currentFaction.icon size={40} className={currentFaction.color} aria-hidden="true" />
                                         <div className="text-left">
                                             <p className="text-white/40 text-[8px] font-mono">ASSET_OWNERSHIP</p>
                                             <p className="text-sm font-black italic text-white">{currentFaction.id}_IDENTITY_CARD_#0912</p>

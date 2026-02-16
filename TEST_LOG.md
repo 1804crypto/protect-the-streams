@@ -244,62 +244,30 @@
 
 ---
 
-## 4. REMAINING LOW-PRIORITY ITEMS
+### Round 3 Fixes (Minting Flow End-to-End Audit)
 
-| Priority | Issue | File | Notes |
-|----------|-------|------|-------|
-| FIXED | DB hardcoded HP=100 in initialize_pvp_match | Supabase RPC | Fixed in `supabase/migrations/20260211_fix_pvp_hp_init.sql`. Uses `p_attacker_stats->>'hp'`. Run migration manually. |
-| LOW | Dynamic Tailwind class purging | Multiple components | `bg-${color}` may be purged. Use safelist or full class names. |
-| LOW | JWT fallback secret in dev mode | src/lib/auth.ts | Logged error if missing, uses fallback. Set JWT_SECRET in production. |
-| FIXED | Mint button spam-click | src/app/page.tsx | Added `disabled={loading}` to MINT button in stream card. |
+#### 2.23 CRITICAL: Mints Never Marked COMPLETED in DB — Duplicate Mint Loophole
+- **Files:** `src/hooks/useMintStreamer.ts`, `src/app/api/mint/confirm/route.ts` (NEW)
+- **Issue:** After on-chain confirmation, client called `secureAsset()` (local Zustand only) but never notified the server. A user refreshing the page and clicking MINT again generated a new idempotency key → duplicate NFT + double payment. The `mint_attempts` record stayed `BUILT` forever.
+- **Fix (Server):** Created `/api/mint/confirm` endpoint that transitions `mint_attempts` from `BUILT` → `COMPLETED`.
+- **Fix (Client):** After on-chain confirmation, `useMintStreamer` now POSTs to `/api/mint/confirm` before updating local state. Non-blocking (won't crash the flow if the call fails).
 
----
+#### 2.24 HIGH: mint_attempts CHECK Constraint Mismatch — DB Error on Every Mint
+- **Files:** `supabase/migrations/20260211_mint_attempts.sql`, `supabase/migrations/20260214_fix_mint_status_constraint.sql` (NEW)
+- **Issue:** Migration schema only allowed `PENDING|COMPLETED|FAILED` but the API route writes `BUILT`. This caused a CHECK constraint violation on every mint attempt.
+- **Fix:** Updated migration source and created a new live migration SQL to add `BUILT` to the constraint.
 
-## 5. DEPLOYMENT VERIFICATION (Final)
+#### 2.25 HIGH: All MINT Buttons Lock Simultaneously
+- **Files:** `src/hooks/useMintStreamer.ts`, `src/app/page.tsx`
+- **Issue:** Single `loading` boolean disabled every streamer card's MINT button instead of just the active one. Users couldn't tell which card was being minted.
+- **Fix:** Added `mintingStreamerId` state. MINT button is now only disabled for the card currently being minted.
 
-| Check | Result |
-|-------|--------|
-| Build | PASS — Compiled in 3.8s, 0 errors, 9 routes |
-| Deploy | PASS — Live at https://protectthestreamers.xyz |
-| Homepage loads | PASS (200) |
-| Auth session | PASS (200) |
-| AI Narration | PASS — Real Gemini 2.5 Flash responses |
-| Metadata API | PASS — All 20 streamers correct |
-| Image assets | PASS — All 20 accessible |
-| Player sync auth | PASS — 401 for unauthenticated |
-| Mint transaction | PASS — Returns assetId + transaction (**_bn FIXED**) |
-| PvP forfeit API | PASS — 400 for missing params (correct validation) |
+#### 2.26 MEDIUM: No SOLANA_RPC_URL in .env.local
+- **Issue:** `.env.local` had no `SOLANA_RPC_URL`. Falls back to public Solana RPC which rate-limits aggressively. Noted for mainnet launch.
 
 ---
 
-## 6. FIX SUMMARY
-
-| # | Severity | Issue | Status |
-|---|----------|-------|--------|
-| 1 | CRITICAL | Gemini model retired (1.5-flash → 2.5-flash) | FIXED |
-| 2 | CRITICAL | Gemini API key missing on Netlify | FIXED |
-| 3 | CRITICAL | PvP sessionId missing from presence track | FIXED |
-| 4 | CRITICAL | Mint _bn error (setFeePayer raw publicKey) | FIXED |
-| 5 | HIGH | PvP matchmaking race condition | FIXED |
-| 6 | HIGH | Toast calls invisible (wrong import) | FIXED |
-| 7 | HIGH | Spectator corrupting match DB | FIXED |
-| 8 | HIGH | Forfeit timer not cancelled on reconnect | FIXED |
-| 9 | HIGH | Wager asymmetry exploit | FIXED |
-| 10 | HIGH | Turn deadlock from lost broadcast | FIXED |
-| 11 | HIGH | Disconnect forfeit client-only (no server RPC) | FIXED |
-| 12 | HIGH | Client-authoritative inventory | FIXED |
-| 13 | HIGH | Client-authoritative missions | FIXED |
-| 14 | HIGH | NFT gate / faction bypass via localStorage | FIXED |
-| 15 | MEDIUM | In-memory rate limiter on serverless | FIXED |
-| 16 | MEDIUM | CSS typo z[45] | FIXED |
-| 17 | MEDIUM | TutorialModal useEffect every render | FIXED |
-| 18 | MEDIUM | Collection address env guard | FIXED |
-| 19 | MEDIUM | Page.tsx setTimeout leak | FIXED |
-| 20 | MEDIUM | Faction value validation | FIXED |
-| 21 | LOW | AnimatePresence exit animations | FIXED |
-| 22 | LOW | Missing "use client" directives | FIXED |
-
-**Total: 22 issues fixed. 0 CRITICAL/HIGH remaining. 4 LOW-priority items noted for future.**
+**Total: 26 issues fixed. 0 CRITICAL/HIGH remaining. 4 LOW-priority items noted for future.**
 
 ---
 
