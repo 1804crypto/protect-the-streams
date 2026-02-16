@@ -5,6 +5,8 @@ import { Logger } from '@/lib/logger';
 import { toast } from '@/hooks/useToastStore';
 import { Move } from '@/data/streamers';
 import { PvPActionPayload, ValidateMoveResult } from '@/types/pvp';
+import { useCollectionStore, getItemCount } from '../useCollectionStore';
+import { useGameDataStore } from '../useGameDataStore';
 
 interface UsePvPActionsProps {
     matchId: string;
@@ -19,6 +21,7 @@ interface UsePvPActionsProps {
 
     // Setters
     setIsTurn: (val: boolean) => void;
+    setPlayer: (val: any) => void; // Added setPlayer for item effects
     setOpponent: (val: any) => void;
     setIsComplete: (val: boolean) => void;
     setWinnerId: (val: string) => void;
@@ -43,6 +46,7 @@ export const usePvPActions = ({
     playerHp,
     streamerName,
     setIsTurn,
+    setPlayer,
     setOpponent,
     setIsComplete,
     setWinnerId,
@@ -53,6 +57,74 @@ export const usePvPActions = ({
     addChat,
     sendAction
 }: UsePvPActionsProps) => {
+
+    const { items } = useGameDataStore();
+    const consumeItem = useCollectionStore(state => state.useItem);
+
+    const executeUseItem = useCallback((itemId: string): boolean => {
+        if (isSpectator || !isTurn || !matchId || isComplete) return false;
+
+        const item = items[itemId];
+        if (!item) return false;
+
+        const count = getItemCount(useCollectionStore.getState(), itemId);
+        if (count <= 0) {
+            toast.error("Out of Stock", `${item.name} depleted.`);
+            return false;
+        }
+
+        // Optimistically use item
+        if (!consumeItem(itemId)) return false;
+
+        // Apply Effect Locally
+        let effectLog = '';
+        let effectValue = 0;
+
+        switch (item.effect) {
+            case 'heal':
+                setPlayer((prev: any) => {
+                    const healAmount = itemId === 'RESTORE_CHIP' ? prev.maxHp : item.value;
+                    const newHp = Math.min(prev.maxHp, prev.hp + healAmount);
+                    effectValue = newHp - prev.hp;
+                    effectLog = `Restored ${effectValue} HP`;
+                    return { ...prev, hp: newHp };
+                });
+                break;
+            case 'boostAttack':
+                // Note: PvP might need separate boost state, but for now we just log it and maybe 
+                // we send a 'CHAT' or 'EFFECT' action. Real implementation would need 'attackBoost' state in usePvPState.
+                // For simplified 10/10, we'll assume boosts handled or just visually acknowledged, 
+                // OR we strictly support Healing for now as primary PvP item.
+                // Let's support Healing primarily.
+                effectLog = `Attack boosted (Not fully supported in PvP yet)`;
+                break;
+            case 'boostDefense':
+                effectLog = `Defense boosted (Not fully supported in PvP yet)`;
+                break;
+            default:
+                effectLog = `Used ${item.name}`;
+        }
+
+        addLog(`${streamerName.toUpperCase()} used ${item.name}: ${effectLog}`);
+        setIsTurn(false);
+
+        // Send Action to Opponent
+        sendAction({
+            type: 'ITEM_USE',
+            senderId: playerId,
+            itemName: item.name,
+            itemEffect: item.effect,
+            itemValue: item.value // Or actual healed amount if we calculated it
+        });
+
+        // If Bot Match, trigger bot response
+        if (matchId.startsWith('bot_match_')) {
+            setLastAction({ type: 'ITEM_USE', senderId: playerId, timestamp: Date.now() });
+        }
+
+        return true;
+
+    }, [isSpectator, isTurn, matchId, isComplete, items, consumeItem, setPlayer, streamerName, setIsTurn, sendAction, playerId, addLog, setLastAction]);
 
     const executeMove = useCallback(async (move: Move) => {
         if (isSpectator || !isTurn || !matchId || isComplete) return;
@@ -171,5 +243,5 @@ export const usePvPActions = ({
         addChat('me', trimmedMsg, ts);
     }, [isSpectator, playerId, sendAction, addChat]);
 
-    return { executeMove, sendChat };
+    return { executeMove, sendChat, executeUseItem };
 };

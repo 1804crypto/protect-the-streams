@@ -7,6 +7,8 @@ import { usePvPMatchmaking } from '@/hooks/usePvPMatchmaking';
 import { usePvPBattle } from '@/hooks/usePvPBattle';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 import { useNeuralNarrative } from '@/hooks/useNeuralNarrative';
+import { useCollectionStore } from '@/hooks/useCollectionStore';
+import { InventoryOverlay } from '@/components/UI/MissionTerminal/InventoryOverlay';
 
 interface PvPTerminalProps {
     streamer: Streamer;
@@ -20,6 +22,10 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
     const [isSearching, setIsSearching] = useState(false);
     const { getBattleCommentary } = useNeuralNarrative();
     const [neuralNarrative, setNeuralNarrative] = useState<string>("Scanning for viable combatants...");
+
+    // Inventory State
+    const [showInventory, setShowInventory] = useState(false);
+    const inventory = useCollectionStore(state => state.inventory);
 
     // 1. Matchmaking (Only enabled when user clicks 'Engage')
     const { status: matchStatus, roomId: matchedRoomId, opponentId, opponentWager, playerId, retry: retryMatchmaking } = usePvPMatchmaking(streamer.id, isOpen && isSearching, wagerDraft);
@@ -35,6 +41,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
         battleStatus: _battleStatus,
         winnerId,
         executeMove,
+        executeUseItem,
         sendChat,
         lastAction,
         isSpectator,
@@ -54,6 +61,14 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
         if (chatInput.trim()) {
             sendChat(chatInput);
             setChatInput('');
+        }
+    };
+
+    const handleUseItem = (itemId: string, _itemConfig: { effect: string; value: number }) => {
+        playClick();
+        const success = executeUseItem(itemId);
+        if (success) {
+            setShowInventory(false);
         }
     };
 
@@ -351,6 +366,18 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                                     />
                                 </div>
                             </div>
+
+                            {/* Inventory Overlay */}
+                            <AnimatePresence>
+                                {showInventory && (
+                                    <InventoryOverlay
+                                        inventory={inventory}
+                                        isTurn={isTurn}
+                                        isComplete={isComplete}
+                                        onUseItem={handleUseItem}
+                                    />
+                                )}
+                            </AnimatePresence>
                         </motion.div>
 
                         {/* Controls & Chat */}
@@ -428,6 +455,18 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                                     </button>
                                 ))}
                             </div>
+
+                            {/* Inventory Button */}
+                            <button
+                                onClick={() => {
+                                    playClick();
+                                    setShowInventory(!showInventory);
+                                }}
+                                disabled={isSpectator || !isTurn || isComplete || !opponent}
+                                className={`mt-3 w-full p-3 border text-[11px] font-black uppercase tracking-widest transition-all rounded-md ${showInventory ? 'bg-neon-yellow text-black border-neon-yellow' : 'border-white/10 text-white/40 hover:text-neon-yellow hover:border-neon-yellow'}`}
+                            >
+                                {showInventory ? 'CLOSE_INVENTORY' : 'ACCESS_INVENTORY'}
+                            </button>
 
                             {isComplete && (
                                 <div className="mt-6 p-6 border-2 border-neon-yellow bg-neon-yellow/10 text-center animate-pulse rounded-md">

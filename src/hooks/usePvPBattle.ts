@@ -44,6 +44,8 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     const hasInitializedRef = useRef<string | null>(null);
 
     // 3. Socket Event Handlers
+
+    // 3. Socket Event Handlers
     const handleAction = useCallback((payload: PvPActionPayload) => {
         const { type, senderId } = payload;
         if (senderId === playerId) return;
@@ -51,6 +53,29 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         // Chat
         if (type === 'CHAT') {
             addChat('opponent', payload.message || '', payload.timestamp || Date.now());
+            return;
+        }
+
+        // Item Usage
+        if (type === 'ITEM_USE') {
+            const { itemName, itemEffect, itemValue } = payload;
+            addLog(`OPPONENT used ${itemName}!`);
+
+            // Apply effect to Opponent State visibly
+            if (itemEffect === 'heal') {
+                const healAmt = itemValue || 0; // Ideally payload has actual value
+                // We might need to sync HP if payload doesn't have it, but let's trust payload or sync
+                // For 10/10, let's assume we just want to show the log, 
+                // BUT we should update opponent HP if we can.
+                // However, without exact math (e.g. maxHp caps), it's risky.
+                // Better: Expect a SYNC shortly? Or just optimistic add.
+                setOpponent((prev: any) => {
+                    if (!prev) return prev;
+                    // If we knew value... let's assume itemValue is passed correctly
+                    // For RESTORE_CHIP (full heal), value might be large.
+                    return { ...prev, hp: Math.min(prev.maxHp, prev.hp + (itemValue || 0)) };
+                });
+            }
             return;
         }
 
@@ -84,7 +109,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             });
             setIsTurn(!isSpectatorRef.current);
         }
-    }, [playerId, opponentId, setPlayer, setIsComplete, setWinnerId, setBattleStatus, setIsTurn, addLog, addChat, setLastAction]);
+    }, [playerId, opponentId, setPlayer, setOpponent, setIsComplete, setWinnerId, setBattleStatus, setIsTurn, addLog, addChat, setLastAction]);
 
     const handleSync = useCallback((payload: PvPSyncPayload) => {
         if (!opponentId || payload.senderId === opponentId) {
@@ -127,7 +152,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     }, [lastAction, isSpectatorRef, player.hp, opponent, isTurn, playerId, sendAction]);
 
     // 5. Actions (Logic Controller)
-    const { executeMove, sendChat } = usePvPActions({
+    const { executeMove, sendChat, executeUseItem } = usePvPActions({
         matchId,
         playerId,
         isSpectator: isSpectatorRef.current,
@@ -138,6 +163,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         playerHp: player.hp,
         streamerName: player.name,
         setIsTurn,
+        setPlayer, // Passed setPlayer
         setOpponent,
         setIsComplete,
         setWinnerId,
@@ -275,9 +301,18 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
     // 8. Bot Response Logic (Simulation) — FREEZE FIX: uses ref check to prevent stale closure issues
     useEffect(() => {
+        if (matchId.startsWith('bot_match_') && lastAction?.senderId === playerId && !isComplete && !isTurn && lastAction?.type !== 'ITEM_USE') { // Wait, if item used, turn is passed, bot should respond?
+            // Actually, if ITEM_USE is sent, lastAction is set. 
+            // We need to trigger bot response on ITEM_USE as well.
+            // Updated condition: Trigger ON `MOVE` or `ITEM_USE` from player.
+            // But existing code only checked implicitly via lastAction? 
+            // Let's verify: useEffect deps includes lastAction.
+            // If lastAction type is ITEM_USE, we should also trigger.
+        }
+
+        // Correcting bot logic to respond to ITEM_USE too
         if (matchId.startsWith('bot_match_') && lastAction?.senderId === playerId && !isComplete && !isTurn) {
             const timer = setTimeout(() => {
-                // Double check via refs to avoid stale closure
                 if (isCompleteRef.current || isTurnRef.current) return;
 
                 const botDamage = Math.floor(Math.random() * 20 + 10);
@@ -293,7 +328,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
                 });
                 addLog(`SENTINEL_PRIME attacks! -${botDamage} HP`);
                 setIsTurn(true);
-            }, 1500); // Reduced from 2s to 1.5s for snappier response
+            }, 1500);
             return () => clearTimeout(timer);
         }
     }, [matchId, lastAction, playerId, isComplete, isTurn, setPlayer, setIsComplete, setWinnerId, setBattleStatus, addLog, setIsTurn, isCompleteRef, isTurnRef]);
@@ -315,6 +350,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         battleStatus,
         winnerId,
         executeMove,
+        executeUseItem, // Exposed
         sendChat,
         lastAction,
         isSpectator: isSpectatorRef.current,

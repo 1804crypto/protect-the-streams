@@ -13,7 +13,7 @@ export interface PvPPlayerState {
 
 /** Payload broadcast over Supabase realtime ACTION event */
 export interface PvPActionPayload {
-    type: 'MOVE' | 'CHAT' | 'RECOVERY_REQUEST' | 'RECOVERY_RESPONSE';
+    type: 'MOVE' | 'CHAT' | 'RECOVERY_REQUEST' | 'RECOVERY_RESPONSE' | 'ITEM_USE';
     senderId: string;
     // MOVE fields
     moveName?: string;
@@ -28,6 +28,10 @@ export interface PvPActionPayload {
     myHp?: number;
     oppHp?: number;
     isTurn?: boolean;
+    // ITEM_USE fields
+    itemName?: string;
+    itemEffect?: string; // 'heal' | 'boost' etc
+    itemValue?: number;
 }
 
 /** Payload broadcast over Supabase realtime SYNC event */

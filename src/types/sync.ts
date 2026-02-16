@@ -54,7 +54,7 @@ export interface MissionCompleteResponse {
 export interface ShopPurchaseRequest {
     itemId: string;
     quantity: number;
-    currency: 'PTS' | 'SOL';
+    currency: 'PTS' | 'SOL' | 'USDC';
     purchaseId: string;
     txSignature?: string;
 }
