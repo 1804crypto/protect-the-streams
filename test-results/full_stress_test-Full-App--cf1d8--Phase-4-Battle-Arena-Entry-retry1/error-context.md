@@ -1,0 +1,797 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#roster"
+  - generic:
+    - generic:
+      - generic:
+        - generic: Connection_Secure
+      - generic:
+        - generic: Node_Sync_Stable
+      - generic:
+        - generic: Broadcast_Encrypted
+  - main [ref=e4]:
+    - navigation [ref=e10]:
+      - generic [ref=e13]: PTS_RESISTANCE
+      - generic [ref=e14]:
+        - button "[HOW_TO_PLAY]" [ref=e15]
+        - button "[RANKINGS]" [ref=e16]
+        - button "[SECTOR_7_OPERATIONS]" [ref=e17]
+        - button "[ARCHIVES]" [ref=e18]
+        - button "[JOIN_FACTION]" [ref=e19]
+        - button "🔇" [ref=e20]
+        - button "Select Wallet" [ref=e22] [cursor=pointer]
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - heading "PROTECT THE STREAMERS" [level=1] [ref=e25]:
+          - text: PROTECT THE
+          - text: STREAMERS
+        - paragraph [ref=e26]:
+          - text: THE CORPORATE AUTHORITY HAS INITIATED THE BLACKOUT.
+          - text: MINT YOUR DEFENSE CARDS. SHIELD THE INFLUENCE.
+      - generic [ref=e28]:
+        - button "INITIALIZE MINT" [ref=e29]
+        - link "RESISTANCE ROSTER ↓" [ref=e30] [cursor=pointer]:
+          - /url: "#roster"
+          - text: RESISTANCE ROSTER
+          - generic [ref=e31]: ↓
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - heading "// GLOBAL_RESISTANCE_PROGRESS" [level=3] [ref=e36]
+          - heading "Strategic Sector Map" [level=2] [ref=e37]
+        - generic [ref=e38]:
+          - paragraph [ref=e39]: Signal Coverage
+          - paragraph [ref=e40]: STABLE
+      - generic [ref=e41]:
+        - generic:
+          - generic: "0x3cb"
+          - generic: "0x68"
+          - generic: 1x29d
+          - generic: "0x1a2"
+          - generic: 1x25e
+        - generic:
+          - generic: Global_Resistance_Uplink
+        - img
+        - generic [ref=e48] [cursor=pointer]:
+          - generic [ref=e49]: KAI CENAT
+          - generic [ref=e50]: THREAT_DETECTED
+        - generic [ref=e55] [cursor=pointer]:
+          - generic [ref=e56]: ADIN ROSS
+          - generic [ref=e57]: THREAT_DETECTED
+        - generic [ref=e62] [cursor=pointer]:
+          - generic [ref=e63]: ISHOWSPEED
+          - generic [ref=e64]: THREAT_DETECTED
+        - generic [ref=e69] [cursor=pointer]:
+          - generic [ref=e70]: XQC
+          - generic [ref=e71]: THREAT_DETECTED
+        - generic [ref=e76] [cursor=pointer]:
+          - generic [ref=e77]: DUKE DENNIS
+          - generic [ref=e78]: THREAT_DETECTED
+        - generic [ref=e83] [cursor=pointer]:
+          - generic [ref=e84]: FANUM
+          - generic [ref=e85]: THREAT_DETECTED
+        - generic [ref=e90] [cursor=pointer]:
+          - generic [ref=e91]: AGENT 00
+          - generic [ref=e92]: THREAT_DETECTED
+        - generic [ref=e97] [cursor=pointer]:
+          - generic [ref=e98]: DRUSKI
+          - generic [ref=e99]: THREAT_DETECTED
+        - generic [ref=e104] [cursor=pointer]:
+          - generic [ref=e105]: HASANABI
+          - generic [ref=e106]: THREAT_DETECTED
+        - generic [ref=e111] [cursor=pointer]:
+          - generic [ref=e112]: ZOEY
+          - generic [ref=e113]: THREAT_DETECTED
+        - generic [ref=e118] [cursor=pointer]:
+          - generic [ref=e119]: SNEAKO
+          - generic [ref=e120]: THREAT_DETECTED
+        - generic [ref=e125] [cursor=pointer]:
+          - generic [ref=e126]: PLAQUEBOYMAX
+          - generic [ref=e127]: THREAT_DETECTED
+        - generic [ref=e132] [cursor=pointer]:
+          - generic [ref=e133]: RAKAI
+          - generic [ref=e134]: THREAT_DETECTED
+        - generic [ref=e139] [cursor=pointer]:
+          - generic [ref=e140]: REGGIE
+          - generic [ref=e141]: THREAT_DETECTED
+        - generic [ref=e146] [cursor=pointer]:
+          - generic [ref=e147]: BENDADONNN
+          - generic [ref=e148]: THREAT_DETECTED
+        - generic [ref=e153] [cursor=pointer]:
+          - generic [ref=e154]: DDG
+          - generic [ref=e155]: THREAT_DETECTED
+        - generic [ref=e160] [cursor=pointer]:
+          - generic [ref=e161]: EXTRA EMILY
+          - generic [ref=e162]: THREAT_DETECTED
+        - generic [ref=e167] [cursor=pointer]:
+          - generic [ref=e168]: RAYASIANBOY
+          - generic [ref=e169]: THREAT_DETECTED
+        - generic [ref=e174] [cursor=pointer]:
+          - generic [ref=e175]: TYLIL
+          - generic [ref=e176]: THREAT_DETECTED
+        - generic [ref=e181] [cursor=pointer]:
+          - generic [ref=e182]: JAZZYGUNZ
+          - generic [ref=e183]: THREAT_DETECTED
+        - generic [ref=e187]:
+          - text: "[ SECTOR_00: CORPORATE_HQ ]"
+          - generic [ref=e188]: SIGNAL_ENCRYPTED_LOCKED
+        - generic:
+          - generic: "GEO_SYNC: ACTIVE"
+          - generic: "SIGNAL_DENSITY: 99%"
+          - generic: "ENCRYPTION: LEVEL_99"
+        - button "Black Market Uplink" [ref=e190]:
+          - img [ref=e191]
+          - text: Black Market Uplink
+        - generic:
+          - generic [ref=e195]:
+            - generic [ref=e196]: Tactical_Grid_Legend
+            - generic [ref=e197]:
+              - generic [ref=e200]: RED DOMINATED
+              - generic [ref=e201]: "0"
+            - generic [ref=e202]:
+              - generic [ref=e205]: PURPLE DOMINATED
+              - generic [ref=e206]: "0"
+            - generic [ref=e207]:
+              - generic [ref=e210]: STRIKE TEAM SECURED
+              - generic [ref=e211]: "0"
+          - generic [ref=e212]:
+            - generic [ref=e213]:
+              - generic [ref=e214]: Global_Liberation_Rating
+              - generic [ref=e215]: 0%
+            - generic [ref=e217]: 0 of 20 Nodes Secured
+    - region "Resistance roster" [ref=e218]:
+      - generic [ref=e219]:
+        - generic [ref=e220]:
+          - heading "Active Resistance Roster" [level=2] [ref=e221]
+          - paragraph [ref=e222]: // 20_SIGNATURES_DETECTED_IN_SECTOR_07
+        - generic [ref=e223]:
+          - generic [ref=e224]:
+            - paragraph [ref=e225]: Encryption Status
+            - paragraph [ref=e226]: UNBREAKABLE
+          - generic [ref=e227]:
+            - paragraph [ref=e228]: Threat Mitigation
+            - paragraph [ref=e229]: ACTIVE
+      - generic [ref=e230]:
+        - generic [ref=e231]:
+          - generic [ref=e234] [cursor=pointer]:
+            - generic [ref=e235]:
+              - img "Druski" [ref=e236]
+              - generic [ref=e237]:
+                - generic [ref=e238]: "RESISTANCE ID: DRUS"
+                - generic [ref=e239]: RESISTANCE
+            - generic [ref=e240]:
+              - generic [ref=e241]:
+                - heading "Druski" [level=3] [ref=e242]
+                - paragraph [ref=e243]: THE_RECRUITER
+              - generic [ref=e244]:
+                - generic [ref=e246]:
+                  - generic [ref=e247]: chaos
+                  - generic [ref=e248]: 60%
+                - generic [ref=e252]:
+                  - generic [ref=e253]: charisma
+                  - generic [ref=e254]: 98%
+                - generic [ref=e258]:
+                  - generic [ref=e259]: influence
+                  - generic [ref=e260]: 95%
+                - generic [ref=e264]:
+                  - generic [ref=e265]: rebellion
+                  - generic [ref=e266]: 85%
+              - generic [ref=e270]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e276]:
+            - button "Mint Druski NFT card" [ref=e277]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Druski" [ref=e278]: SECTOR_7_ARENA
+        - generic [ref=e279]:
+          - generic [ref=e282] [cursor=pointer]:
+            - generic [ref=e283]:
+              - img "Adin Ross" [ref=e284]
+              - generic [ref=e285]:
+                - generic [ref=e286]: "RESISTANCE ID: ADIN"
+                - generic [ref=e287]: DOUBLE AGENT
+            - generic [ref=e288]:
+              - generic [ref=e289]:
+                - heading "Adin Ross" [level=3] [ref=e290]
+                - paragraph [ref=e291]: DOUBLE_AGENT
+              - generic [ref=e292]:
+                - generic [ref=e294]:
+                  - generic [ref=e295]: chaos
+                  - generic [ref=e296]: 70%
+                - generic [ref=e300]:
+                  - generic [ref=e301]: charisma
+                  - generic [ref=e302]: 88%
+                - generic [ref=e306]:
+                  - generic [ref=e307]: influence
+                  - generic [ref=e308]: 92%
+                - generic [ref=e312]:
+                  - generic [ref=e313]: rebellion
+                  - generic [ref=e314]: 40%
+              - generic [ref=e318]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e324]:
+            - button "Mint Adin Ross NFT card" [ref=e325]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Adin Ross" [ref=e326]: SECTOR_7_ARENA
+        - generic [ref=e327]:
+          - generic [ref=e330] [cursor=pointer]:
+            - generic [ref=e331]:
+              - img "HasanAbi" [ref=e332]
+              - generic [ref=e333]:
+                - generic [ref=e334]: "RESISTANCE ID: HASA"
+                - generic [ref=e335]: RESISTANCE
+            - generic [ref=e336]:
+              - generic [ref=e337]:
+                - heading "HasanAbi" [level=3] [ref=e338]
+                - paragraph [ref=e339]: THE_STRATEGIST
+              - generic [ref=e340]:
+                - generic [ref=e342]:
+                  - generic [ref=e343]: chaos
+                  - generic [ref=e344]: 60%
+                - generic [ref=e348]:
+                  - generic [ref=e349]: charisma
+                  - generic [ref=e350]: 85%
+                - generic [ref=e354]:
+                  - generic [ref=e355]: influence
+                  - generic [ref=e356]: 88%
+                - generic [ref=e360]:
+                  - generic [ref=e361]: rebellion
+                  - generic [ref=e362]: 95%
+              - generic [ref=e366]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e372]:
+            - button "Mint HasanAbi NFT card" [ref=e373]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with HasanAbi" [ref=e374]: SECTOR_7_ARENA
+        - generic [ref=e375]:
+          - generic [ref=e378] [cursor=pointer]:
+            - generic [ref=e379]:
+              - img "IShowSpeed" [ref=e380]
+              - generic [ref=e381]:
+                - generic [ref=e382]: "RESISTANCE ID: ISHO"
+                - generic [ref=e383]: RESISTANCE
+            - generic [ref=e384]:
+              - generic [ref=e385]:
+                - heading "IShowSpeed" [level=3] [ref=e386]
+                - paragraph [ref=e387]: CHAOS_BRINGER
+              - generic [ref=e388]:
+                - generic [ref=e390]:
+                  - generic [ref=e391]: chaos
+                  - generic [ref=e392]: 99%
+                - generic [ref=e396]:
+                  - generic [ref=e397]: charisma
+                  - generic [ref=e398]: 85%
+                - generic [ref=e402]:
+                  - generic [ref=e403]: influence
+                  - generic [ref=e404]: 90%
+                - generic [ref=e408]:
+                  - generic [ref=e409]: rebellion
+                  - generic [ref=e410]: 95%
+              - generic [ref=e414]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e420]:
+            - button "Mint IShowSpeed NFT card" [ref=e421]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with IShowSpeed" [ref=e422]: SECTOR_7_ARENA
+        - generic [ref=e423]:
+          - generic [ref=e426] [cursor=pointer]:
+            - generic [ref=e427]:
+              - img "xQc" [ref=e428]
+              - generic [ref=e429]:
+                - generic [ref=e430]: "RESISTANCE ID: XQC"
+                - generic [ref=e431]: RESISTANCE
+            - generic [ref=e432]:
+              - generic [ref=e433]:
+                - heading "xQc" [level=3] [ref=e434]
+                - paragraph [ref=e435]: THE_REACT_CORE
+              - generic [ref=e436]:
+                - generic [ref=e438]:
+                  - generic [ref=e439]: chaos
+                  - generic [ref=e440]: 92%
+                - generic [ref=e444]:
+                  - generic [ref=e445]: charisma
+                  - generic [ref=e446]: 75%
+                - generic [ref=e450]:
+                  - generic [ref=e451]: influence
+                  - generic [ref=e452]: 85%
+                - generic [ref=e456]:
+                  - generic [ref=e457]: rebellion
+                  - generic [ref=e458]: 85%
+              - generic [ref=e462]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e468]:
+            - button "Mint xQc NFT card" [ref=e469]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with xQc" [ref=e470]: SECTOR_7_ARENA
+        - generic [ref=e471]:
+          - generic [ref=e474] [cursor=pointer]:
+            - generic [ref=e475]:
+              - img "JazzyGunz" [ref=e476]
+              - generic [ref=e477]:
+                - generic [ref=e478]: "RESISTANCE ID: JAZZ"
+                - generic [ref=e479]: RESISTANCE
+            - generic [ref=e480]:
+              - generic [ref=e481]:
+                - heading "JazzyGunz" [level=3] [ref=e482]
+                - paragraph [ref=e483]: THE_ENFORCER
+              - generic [ref=e484]:
+                - generic [ref=e486]:
+                  - generic [ref=e487]: chaos
+                  - generic [ref=e488]: 75%
+                - generic [ref=e492]:
+                  - generic [ref=e493]: charisma
+                  - generic [ref=e494]: 88%
+                - generic [ref=e498]:
+                  - generic [ref=e499]: influence
+                  - generic [ref=e500]: 82%
+                - generic [ref=e504]:
+                  - generic [ref=e505]: rebellion
+                  - generic [ref=e506]: 85%
+              - generic [ref=e510]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e516]:
+            - button "Mint JazzyGunz NFT card" [ref=e517]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with JazzyGunz" [ref=e518]: SECTOR_7_ARENA
+        - generic [ref=e519]:
+          - generic [ref=e522] [cursor=pointer]:
+            - generic [ref=e523]:
+              - img "Rakai" [ref=e524]
+              - generic [ref=e525]:
+                - generic [ref=e526]: "RESISTANCE ID: RAKA"
+                - generic [ref=e527]: RESISTANCE
+            - generic [ref=e528]:
+              - generic [ref=e529]:
+                - heading "Rakai" [level=3] [ref=e530]
+                - paragraph [ref=e531]: THE_VANGUARD
+              - generic [ref=e532]:
+                - generic [ref=e534]:
+                  - generic [ref=e535]: chaos
+                  - generic [ref=e536]: 75%
+                - generic [ref=e540]:
+                  - generic [ref=e541]: charisma
+                  - generic [ref=e542]: 85%
+                - generic [ref=e546]:
+                  - generic [ref=e547]: influence
+                  - generic [ref=e548]: 88%
+                - generic [ref=e552]:
+                  - generic [ref=e553]: rebellion
+                  - generic [ref=e554]: 80%
+              - generic [ref=e558]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e564]:
+            - button "Mint Rakai NFT card" [ref=e565]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Rakai" [ref=e566]: SECTOR_7_ARENA
+        - generic [ref=e567]:
+          - generic [ref=e570] [cursor=pointer]:
+            - generic [ref=e571]:
+              - img "Agent 00" [ref=e572]
+              - generic [ref=e573]:
+                - generic [ref=e574]: "RESISTANCE ID: AGEN"
+                - generic [ref=e575]: RESISTANCE
+            - generic [ref=e576]:
+              - generic [ref=e577]:
+                - heading "Agent 00" [level=3] [ref=e578]
+                - paragraph [ref=e579]: THE_SPY
+              - generic [ref=e580]:
+                - generic [ref=e582]:
+                  - generic [ref=e583]: chaos
+                  - generic [ref=e584]: 50%
+                - generic [ref=e588]:
+                  - generic [ref=e589]: charisma
+                  - generic [ref=e590]: 75%
+                - generic [ref=e594]:
+                  - generic [ref=e595]: influence
+                  - generic [ref=e596]: 70%
+                - generic [ref=e600]:
+                  - generic [ref=e601]: rebellion
+                  - generic [ref=e602]: 60%
+              - generic [ref=e606]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e612]:
+            - button "Mint Agent 00 NFT card" [ref=e613]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Agent 00" [ref=e614]: SECTOR_7_ARENA
+        - generic [ref=e615]:
+          - generic [ref=e618] [cursor=pointer]:
+            - generic [ref=e619]:
+              - img "Zoey" [ref=e620]
+              - generic [ref=e621]:
+                - generic [ref=e622]: "RESISTANCE ID: ZOEY"
+                - generic [ref=e623]: RESISTANCE
+            - generic [ref=e624]:
+              - generic [ref=e625]:
+                - heading "Zoey" [level=3] [ref=e626]
+                - paragraph [ref=e627]: THE_DIPLOMAT
+              - generic [ref=e628]:
+                - generic [ref=e630]:
+                  - generic [ref=e631]: chaos
+                  - generic [ref=e632]: 30%
+                - generic [ref=e636]:
+                  - generic [ref=e637]: charisma
+                  - generic [ref=e638]: 95%
+                - generic [ref=e642]:
+                  - generic [ref=e643]: influence
+                  - generic [ref=e644]: 90%
+                - generic [ref=e648]:
+                  - generic [ref=e649]: rebellion
+                  - generic [ref=e650]: 60%
+              - generic [ref=e654]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e660]:
+            - button "Mint Zoey NFT card" [ref=e661]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Zoey" [ref=e662]: SECTOR_7_ARENA
+        - generic [ref=e663]:
+          - generic [ref=e666] [cursor=pointer]:
+            - generic [ref=e667]:
+              - img "DDG" [ref=e668]
+              - generic [ref=e669]:
+                - generic [ref=e670]: "RESISTANCE ID: DDG"
+                - generic [ref=e671]: RESISTANCE
+            - generic [ref=e672]:
+              - generic [ref=e673]:
+                - heading "DDG" [level=3] [ref=e674]
+                - paragraph [ref=e675]: THE_CHAMPION
+              - generic [ref=e676]:
+                - generic [ref=e678]:
+                  - generic [ref=e679]: chaos
+                  - generic [ref=e680]: 85%
+                - generic [ref=e684]:
+                  - generic [ref=e685]: charisma
+                  - generic [ref=e686]: 90%
+                - generic [ref=e690]:
+                  - generic [ref=e691]: influence
+                  - generic [ref=e692]: 95%
+                - generic [ref=e696]:
+                  - generic [ref=e697]: rebellion
+                  - generic [ref=e698]: 80%
+              - generic [ref=e702]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e708]:
+            - button "Mint DDG NFT card" [ref=e709]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with DDG" [ref=e710]: SECTOR_7_ARENA
+        - generic [ref=e711]:
+          - generic [ref=e714] [cursor=pointer]:
+            - generic [ref=e715]:
+              - img "Tylil" [ref=e716]
+              - generic [ref=e717]:
+                - generic [ref=e718]: "RESISTANCE ID: TYLI"
+                - generic [ref=e719]: RESISTANCE
+            - generic [ref=e720]:
+              - generic [ref=e721]:
+                - heading "Tylil" [level=3] [ref=e722]
+                - paragraph [ref=e723]: THE_BERSERKER
+              - generic [ref=e724]:
+                - generic [ref=e726]:
+                  - generic [ref=e727]: chaos
+                  - generic [ref=e728]: 95%
+                - generic [ref=e732]:
+                  - generic [ref=e733]: charisma
+                  - generic [ref=e734]: 70%
+                - generic [ref=e738]:
+                  - generic [ref=e739]: influence
+                  - generic [ref=e740]: 88%
+                - generic [ref=e744]:
+                  - generic [ref=e745]: rebellion
+                  - generic [ref=e746]: 95%
+              - generic [ref=e750]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e756]:
+            - button "Mint Tylil NFT card" [ref=e757]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Tylil" [ref=e758]: SECTOR_7_ARENA
+        - generic [ref=e759]:
+          - generic [ref=e762] [cursor=pointer]:
+            - generic [ref=e763]:
+              - img "Sneako" [ref=e764]
+              - generic [ref=e765]:
+                - generic [ref=e766]: "RESISTANCE ID: SNEA"
+                - generic [ref=e767]: RESISTANCE
+            - generic [ref=e768]:
+              - generic [ref=e769]:
+                - heading "Sneako" [level=3] [ref=e770]
+                - paragraph [ref=e771]: THE_SAGE
+              - generic [ref=e772]:
+                - generic [ref=e774]:
+                  - generic [ref=e775]: chaos
+                  - generic [ref=e776]: 50%
+                - generic [ref=e780]:
+                  - generic [ref=e781]: charisma
+                  - generic [ref=e782]: 90%
+                - generic [ref=e786]:
+                  - generic [ref=e787]: influence
+                  - generic [ref=e788]: 85%
+                - generic [ref=e792]:
+                  - generic [ref=e793]: rebellion
+                  - generic [ref=e794]: 80%
+              - generic [ref=e798]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e804]:
+            - button "Mint Sneako NFT card" [ref=e805]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Sneako" [ref=e806]: SECTOR_7_ARENA
+        - generic [ref=e807]:
+          - generic [ref=e810] [cursor=pointer]:
+            - generic [ref=e811]:
+              - img "Duke Dennis" [ref=e812]
+              - generic [ref=e813]:
+                - generic [ref=e814]: "RESISTANCE ID: DUKE"
+                - generic [ref=e815]: RESISTANCE
+            - generic [ref=e816]:
+              - generic [ref=e817]:
+                - heading "Duke Dennis" [level=3] [ref=e818]
+                - paragraph [ref=e819]: THE_VETERAN
+              - generic [ref=e820]:
+                - generic [ref=e822]:
+                  - generic [ref=e823]: chaos
+                  - generic [ref=e824]: 40%
+                - generic [ref=e828]:
+                  - generic [ref=e829]: charisma
+                  - generic [ref=e830]: 95%
+                - generic [ref=e834]:
+                  - generic [ref=e835]: influence
+                  - generic [ref=e836]: 80%
+                - generic [ref=e840]:
+                  - generic [ref=e841]: rebellion
+                  - generic [ref=e842]: 70%
+              - generic [ref=e846]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e852]:
+            - button "Mint Duke Dennis NFT card" [ref=e853]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Duke Dennis" [ref=e854]: SECTOR_7_ARENA
+        - generic [ref=e855]:
+          - generic [ref=e858] [cursor=pointer]:
+            - generic [ref=e859]:
+              - img "Fanum" [ref=e860]
+              - generic [ref=e861]:
+                - generic [ref=e862]: "RESISTANCE ID: FANU"
+                - generic [ref=e863]: RESISTANCE
+            - generic [ref=e864]:
+              - generic [ref=e865]:
+                - heading "Fanum" [level=3] [ref=e866]
+                - paragraph [ref=e867]: THE_SUPPLIER
+              - generic [ref=e868]:
+                - generic [ref=e870]:
+                  - generic [ref=e871]: chaos
+                  - generic [ref=e872]: 60%
+                - generic [ref=e876]:
+                  - generic [ref=e877]: charisma
+                  - generic [ref=e878]: 85%
+                - generic [ref=e882]:
+                  - generic [ref=e883]: influence
+                  - generic [ref=e884]: 75%
+                - generic [ref=e888]:
+                  - generic [ref=e889]: rebellion
+                  - generic [ref=e890]: 50%
+              - generic [ref=e894]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e900]:
+            - button "Mint Fanum NFT card" [ref=e901]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Fanum" [ref=e902]: SECTOR_7_ARENA
+        - generic [ref=e903]:
+          - generic [ref=e906] [cursor=pointer]:
+            - generic [ref=e907]:
+              - img "Plaqueboymax" [ref=e908]
+              - generic [ref=e909]:
+                - generic [ref=e910]: "RESISTANCE ID: PLAQ"
+                - generic [ref=e911]: RESISTANCE
+            - generic [ref=e912]:
+              - generic [ref=e913]:
+                - heading "Plaqueboymax" [level=3] [ref=e914]
+                - paragraph [ref=e915]: THE_PLANNER
+              - generic [ref=e916]:
+                - generic [ref=e918]:
+                  - generic [ref=e919]: chaos
+                  - generic [ref=e920]: 55%
+                - generic [ref=e924]:
+                  - generic [ref=e925]: charisma
+                  - generic [ref=e926]: 92%
+                - generic [ref=e930]:
+                  - generic [ref=e931]: influence
+                  - generic [ref=e932]: 85%
+                - generic [ref=e936]:
+                  - generic [ref=e937]: rebellion
+                  - generic [ref=e938]: 65%
+              - generic [ref=e942]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e948]:
+            - button "Mint Plaqueboymax NFT card" [ref=e949]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Plaqueboymax" [ref=e950]: SECTOR_7_ARENA
+        - generic [ref=e951]:
+          - generic [ref=e954] [cursor=pointer]:
+            - generic [ref=e955]:
+              - img "Extra Emily" [ref=e956]
+              - generic [ref=e957]:
+                - generic [ref=e958]: "RESISTANCE ID: EXTR"
+                - generic [ref=e959]: RESISTANCE
+            - generic [ref=e960]:
+              - generic [ref=e961]:
+                - heading "Extra Emily" [level=3] [ref=e962]
+                - paragraph [ref=e963]: THE_DEMOLITIONIST
+              - generic [ref=e964]:
+                - generic [ref=e966]:
+                  - generic [ref=e967]: chaos
+                  - generic [ref=e968]: 88%
+                - generic [ref=e972]:
+                  - generic [ref=e973]: charisma
+                  - generic [ref=e974]: 80%
+                - generic [ref=e978]:
+                  - generic [ref=e979]: influence
+                  - generic [ref=e980]: 82%
+                - generic [ref=e984]:
+                  - generic [ref=e985]: rebellion
+                  - generic [ref=e986]: 85%
+              - generic [ref=e990]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e996]:
+            - button "Mint Extra Emily NFT card" [ref=e997]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Extra Emily" [ref=e998]: SECTOR_7_ARENA
+        - generic [ref=e999]:
+          - generic [ref=e1002] [cursor=pointer]:
+            - generic [ref=e1003]:
+              - img "RayAsianBoy" [ref=e1004]
+              - generic [ref=e1005]:
+                - generic [ref=e1006]: "RESISTANCE ID: RAYA"
+                - generic [ref=e1007]: RESISTANCE
+            - generic [ref=e1008]:
+              - generic [ref=e1009]:
+                - heading "RayAsianBoy" [level=3] [ref=e1010]
+                - paragraph [ref=e1011]: THE_TACTICIAN
+              - generic [ref=e1012]:
+                - generic [ref=e1014]:
+                  - generic [ref=e1015]: chaos
+                  - generic [ref=e1016]: 40%
+                - generic [ref=e1020]:
+                  - generic [ref=e1021]: charisma
+                  - generic [ref=e1022]: 75%
+                - generic [ref=e1026]:
+                  - generic [ref=e1027]: influence
+                  - generic [ref=e1028]: 85%
+                - generic [ref=e1032]:
+                  - generic [ref=e1033]: rebellion
+                  - generic [ref=e1034]: 70%
+              - generic [ref=e1038]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e1044]:
+            - button "Mint RayAsianBoy NFT card" [ref=e1045]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with RayAsianBoy" [ref=e1046]: SECTOR_7_ARENA
+        - generic [ref=e1047]:
+          - generic [ref=e1050] [cursor=pointer]:
+            - generic [ref=e1051]:
+              - img "Kai Cenat" [ref=e1052]
+              - generic [ref=e1053]:
+                - generic [ref=e1054]: "RESISTANCE ID: KAIC"
+                - generic [ref=e1055]: LEADER
+            - generic [ref=e1056]:
+              - generic [ref=e1057]:
+                - heading "Kai Cenat" [level=3] [ref=e1058]
+                - paragraph [ref=e1059]: THE_LEADER
+              - generic [ref=e1060]:
+                - generic [ref=e1062]:
+                  - generic [ref=e1063]: chaos
+                  - generic [ref=e1064]: 85%
+                - generic [ref=e1068]:
+                  - generic [ref=e1069]: charisma
+                  - generic [ref=e1070]: 99%
+                - generic [ref=e1074]:
+                  - generic [ref=e1075]: influence
+                  - generic [ref=e1076]: 98%
+                - generic [ref=e1080]:
+                  - generic [ref=e1081]: rebellion
+                  - generic [ref=e1082]: 90%
+              - generic [ref=e1086]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e1092]:
+            - button "Mint Kai Cenat NFT card" [ref=e1093]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Kai Cenat" [ref=e1094]: SECTOR_7_ARENA
+        - generic [ref=e1095]:
+          - generic [ref=e1098] [cursor=pointer]:
+            - generic [ref=e1099]:
+              - img "Reggie" [ref=e1100]
+              - generic [ref=e1101]:
+                - generic [ref=e1102]: "RESISTANCE ID: REGG"
+                - generic [ref=e1103]: RESISTANCE
+            - generic [ref=e1104]:
+              - generic [ref=e1105]:
+                - heading "Reggie" [level=3] [ref=e1106]
+                - paragraph [ref=e1107]: THE_STEALTH
+              - generic [ref=e1108]:
+                - generic [ref=e1110]:
+                  - generic [ref=e1111]: chaos
+                  - generic [ref=e1112]: 40%
+                - generic [ref=e1116]:
+                  - generic [ref=e1117]: charisma
+                  - generic [ref=e1118]: 90%
+                - generic [ref=e1122]:
+                  - generic [ref=e1123]: influence
+                  - generic [ref=e1124]: 80%
+                - generic [ref=e1128]:
+                  - generic [ref=e1129]: rebellion
+                  - generic [ref=e1130]: 60%
+              - generic [ref=e1134]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e1140]:
+            - button "Mint Reggie NFT card" [ref=e1141]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Reggie" [ref=e1142]: SECTOR_7_ARENA
+        - generic [ref=e1143]:
+          - generic [ref=e1146] [cursor=pointer]:
+            - generic [ref=e1147]:
+              - img "Bendadonnn" [ref=e1148]
+              - generic [ref=e1149]:
+                - generic [ref=e1150]: "RESISTANCE ID: BEND"
+                - generic [ref=e1151]: RESISTANCE
+            - generic [ref=e1152]:
+              - generic [ref=e1153]:
+                - heading "Bendadonnn" [level=3] [ref=e1154]
+                - paragraph [ref=e1155]: THE_ODDBALL
+              - generic [ref=e1156]:
+                - generic [ref=e1158]:
+                  - generic [ref=e1159]: chaos
+                  - generic [ref=e1160]: 80%
+                - generic [ref=e1164]:
+                  - generic [ref=e1165]: charisma
+                  - generic [ref=e1166]: 80%
+                - generic [ref=e1170]:
+                  - generic [ref=e1171]: influence
+                  - generic [ref=e1172]: 75%
+                - generic [ref=e1176]:
+                  - generic [ref=e1177]: rebellion
+                  - generic [ref=e1178]: 50%
+              - generic [ref=e1182]: "ENCRYPTION: VERIFIED"
+          - generic [ref=e1188]:
+            - button "Mint Bendadonnn NFT card" [ref=e1189]: MINT (0.01 SOL ≈ $0.84)
+            - button "Start Sector 7 Arena battle with Bendadonnn" [ref=e1190]: SECTOR_7_ARENA
+    - generic [ref=e1191]:
+      - generic [ref=e1192]: © 2025 THE_RESISTANCE
+      - generic [ref=e1193]:
+        - generic [ref=e1194]: DEVNET
+        - generic [ref=e1196]: "THREAT_LEVEL: OMEGA"
+    - dialog "WELCOME TO THE RESISTANCE" [ref=e1197]:
+      - generic [ref=e1199]:
+        - generic [ref=e1202]:
+          - generic [ref=e1203]:
+            - generic [ref=e1204]: ⚡
+            - generic [ref=e1205]:
+              - paragraph [ref=e1206]: TUTORIAL_SEQUENCE
+              - paragraph [ref=e1207]: "[ 1 / 5 ]"
+          - button "Close tutorial" [active] [ref=e1208]: ✕
+        - generic [ref=e1210]:
+          - heading "WELCOME TO THE RESISTANCE" [level=2] [ref=e1211]
+          - paragraph [ref=e1212]: "The Corporate Authority has initiated THE BLACKOUT. Your mission: protect the most influential voices of the digital age."
+        - generic [ref=e1213]:
+          - button "Go to step 1" [ref=e1214]
+          - button "Go to step 2" [ref=e1215]
+          - button "Go to step 3" [ref=e1216]
+          - button "Go to step 4" [ref=e1217]
+          - button "Go to step 5" [ref=e1218]
+        - generic [ref=e1219]:
+          - generic [ref=e1220]:
+            - button "Previous step" [disabled] [ref=e1221]: ← PREV
+            - button "Next step" [ref=e1222]: NEXT →
+          - generic [ref=e1223] [cursor=pointer]:
+            - checkbox "Don't show this again" [ref=e1224]
+            - generic [ref=e1225]: Don't show this again
+    - generic:
+      - generic:
+        - generic: SOPHIA
+        - generic: STREAMER_ADVOCATE // GRASSROOTS_OPS
+      - generic [ref=e1226]:
+        - img "Sophia" [ref=e1229]
+        - generic [ref=e1232]:
+          - paragraph [ref=e1235]: Yo, signal's clean. Use the overlay. I'm Sophia — basically your eye in the sky. I've been running comms since the first blackout.
+          - generic [ref=e1236]:
+            - generic [ref=e1239]: Live
+            - button "Got it" [ref=e1240] [cursor=pointer]
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - img
+            - generic: REBEL_SIGNAL_UPLINK
+          - button "Close Media Uplink":
+            - img
+        - iframe [ref=e1241]:
+          - generic [ref=f2e3]:
+            - img [ref=f2e4]
+            - img
+            - generic [ref=f2e5]:
+              - generic [ref=f2e6]: Ooops! It looks like something's gone wrong...
+              - generic [ref=f2e8] [cursor=pointer]: Retry
+        - generic:
+          - generic:
+            - generic: Audio_Isolation_Protocol
+            - generic: STANDBY
+          - button "[ SYNC_BROADCAST_SIGNAL ]"
+          - paragraph: // Isolating external frequencies will dampen the internal Resistance drone while maintaining tactical field SFX.
+      - button "Toggle Media Uplink" [ref=e1242]:
+        - img [ref=e1243]
+  - generic: v_2026_02_13_0800_FINAL_V4.2_BATTLE_STABLE
+  - generic [ref=e1251] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e1252]:
+      - img [ref=e1253]
+    - generic [ref=e1256]:
+      - button "Open issues overlay" [ref=e1257]:
+        - generic [ref=e1258]:
+          - generic [ref=e1259]: "3"
+          - generic [ref=e1260]: "4"
+        - generic [ref=e1261]:
+          - text: Issue
+          - generic [ref=e1262]: s
+      - button "Collapse issues badge" [ref=e1263]:
+        - img [ref=e1264]
+  - alert [ref=e1266]
+```

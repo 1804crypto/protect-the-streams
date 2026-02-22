@@ -47,9 +47,9 @@ export default function Home() {
     const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
-    // Gated Rebellion Logic - ON-CHAIN NFT VERIFICATION (Signal Lock)
+    // GATED REBELLION LOGIC - ON-CHAIN NFT VERIFICATION (Signal Lock)
     const { userFaction } = useCollectionStore();
-    const { hasNFT, loading: nftLoading, error: nftError } = useCheckUplinkStatus();
+    const { hasNFT, ownedStreamerIds, loading: nftLoading, error: nftError } = useCheckUplinkStatus();
     const hasAccess = hasNFT || userFaction !== 'NONE';
 
     const { initAida } = useVoiceOperator();
@@ -323,6 +323,7 @@ export default function Home() {
                 <RosterSection
                     streamers={streamers}
                     hasAccess={hasAccess}
+                    ownedStreamerIds={ownedStreamerIds}
                     loading={loading}
                     mintingStreamerId={mintingStreamerId}
                     mint={mint}

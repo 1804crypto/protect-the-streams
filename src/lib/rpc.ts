@@ -44,9 +44,10 @@ export function getRpcUrl(): string {
     }
 
     // 2. Helius API key → construct endpoint
-    if (process.env.HELIUS_API_KEY) {
+    const apiKey = process.env.HELIUS_API_KEY || process.env.NEXT_PUBLIC_HELIUS_API_KEY;
+    if (apiKey) {
         const base = HELIUS_ENDPOINTS[NETWORK] || HELIUS_ENDPOINTS['devnet'];
-        _cachedUrl = `${base}/?api-key=${process.env.HELIUS_API_KEY}`;
+        _cachedUrl = `${base}/?api-key=${apiKey}`;
         console.log(`[RPC] Using Helius ${NETWORK} RPC`);
         return _cachedUrl;
     }

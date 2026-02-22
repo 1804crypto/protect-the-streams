@@ -96,6 +96,7 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean, wager: n
                         // PERSIST: Host creates the match record via secure RPC
                         supabase.rpc('initialize_pvp_match', {
                             p_match_id: newRoomId,
+                            p_attacker_id: playerId,
                             p_defender_id: opponent.playerId,
                             p_wager_amount: finalWager,
                             p_attacker_stats: { ...myStatsRef.current, name: playerName, hp: myMaxHp },
@@ -162,7 +163,7 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean, wager: n
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             isMatchingRef.current = false;
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [enabled, streamerId, sessionId, playerId, wager, playerName, retryCounter]);
 
     // BUG 12 FIX: retry now forces the effect to re-run via retryCounter

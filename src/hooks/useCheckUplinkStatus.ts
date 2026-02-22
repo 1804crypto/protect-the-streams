@@ -10,6 +10,7 @@ interface UplinkStatus {
     hasNFT: boolean;
     loading: boolean;
     assets: string[];
+    ownedStreamerIds: string[];
     error: string | null;
 }
 
@@ -26,6 +27,7 @@ export const useCheckUplinkStatus = (): UplinkStatus => {
         hasNFT: false,
         loading: true,
         assets: [],
+        ownedStreamerIds: [], // NEW: Track specific owned IDs
         error: null
     });
 
@@ -33,7 +35,7 @@ export const useCheckUplinkStatus = (): UplinkStatus => {
 
     const scanWallet = useCallback(async () => {
         if (!connected || !walletPubkey) {
-            setStatus({ hasNFT: false, loading: false, assets: [], error: null });
+            setStatus({ hasNFT: false, loading: false, assets: [], ownedStreamerIds: [], error: null });
             return;
         }
 
@@ -42,6 +44,7 @@ export const useCheckUplinkStatus = (): UplinkStatus => {
                 hasNFT: false,
                 loading: false,
                 assets: [],
+                ownedStreamerIds: [],
                 error: "GVA_INTERFERENCE: Collection address not configured"
             });
             return;
@@ -57,11 +60,24 @@ export const useCheckUplinkStatus = (): UplinkStatus => {
             // Fetch all assets owned by wallet
             const assets = await fetchAssetsByOwner(umi, ownerPubKey);
 
-            // Filter for assets belonging to our collection
+            // Filter for assets belonging to our collection AND extract streamer ID
+            const ownedIds: string[] = [];
             const ptsAssets = assets.filter(asset => {
                 // Check if asset belongs to our collection
+                let isCollectionMatch = false;
                 if (asset.updateAuthority.type === 'Collection' && asset.updateAuthority.address) {
-                    return asset.updateAuthority.address.toString() === collectionPubKey.toString();
+                    isCollectionMatch = asset.updateAuthority.address.toString() === collectionPubKey.toString();
+                }
+
+                if (isCollectionMatch) {
+                    // Parse Name: "PTS Agent: {streamerId}"
+                    // We need to be careful about the name format.
+                    // Metaplex Core AssetV1 has a 'name' field.
+                    if (asset.name.startsWith("PTS Agent: ")) {
+                        const id = asset.name.replace("PTS Agent: ", "").trim();
+                        ownedIds.push(id);
+                    }
+                    return true;
                 }
                 return false;
             });
@@ -72,6 +88,7 @@ export const useCheckUplinkStatus = (): UplinkStatus => {
                 hasNFT: ptsAssets.length > 0,
                 loading: false,
                 assets: assetIds,
+                ownedStreamerIds: ownedIds,
                 error: null
             });
 
@@ -88,6 +105,7 @@ export const useCheckUplinkStatus = (): UplinkStatus => {
                 hasNFT: false,
                 loading: false,
                 assets: [],
+                ownedStreamerIds: [],
                 error: isRpcError
                     ? "GVA_INTERFERENCE: RPC node congested. Try switching to Helius/Quicknode RPC."
                     : `SCAN_FAILURE: ${errMsg}`

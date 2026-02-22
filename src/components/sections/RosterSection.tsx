@@ -9,6 +9,7 @@ import { usePriceData } from '@/hooks/usePriceData';
 interface RosterSectionProps {
     streamers: Streamer[];
     hasAccess: boolean;
+    ownedStreamerIds: string[];
     loading: boolean;
     mintingStreamerId: string | null;
     mint: (id: string) => void;
@@ -20,6 +21,7 @@ interface RosterSectionProps {
 export const RosterSection: React.FC<RosterSectionProps> = ({
     streamers,
     hasAccess,
+    ownedStreamerIds,
     loading,
     mintingStreamerId,
     mint,
@@ -81,10 +83,14 @@ export const RosterSection: React.FC<RosterSectionProps> = ({
                             {hasAccess && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); playClick(); onPvP(streamer); }}
-                                    className="px-4 py-2 min-h-[44px] bg-neon-pink text-white text-xs font-black uppercase rounded-sm"
+                                    disabled={!ownedStreamerIds.includes(streamer.id) && !ownedStreamerIds.includes('GENESIS_OVERRIDE')} // Allow override if we ever add a master key
+                                    className={`px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm ${ownedStreamerIds.includes(streamer.id)
+                                            ? 'bg-neon-pink text-white hover:bg-white hover:text-neon-pink'
+                                            : 'bg-gray-800 text-gray-500 cursor-not-allowed border border-white/10'
+                                        }`}
                                     aria-label={`Start Sector 7 Arena battle with ${streamer.name}`}
                                 >
-                                    SECTOR_7_ARENA
+                                    {ownedStreamerIds.includes(streamer.id) ? 'SECTOR_7_ARENA' : 'LOCKED: MINT TO PLAY'}
                                 </button>
                             )}
                         </div>
