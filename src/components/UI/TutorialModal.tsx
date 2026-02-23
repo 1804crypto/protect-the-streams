@@ -66,7 +66,6 @@ const highlightShadow: Record<string, string> = {
 
 export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
     const [currentStep, setCurrentStep] = useState(0);
-    const [dontShowAgain, setDontShowAgain] = useState(false);
     const focusTrapRef = useFocusTrap(isOpen); // Hook for accessibility
 
     const handleNext = () => {
@@ -83,10 +82,9 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
         }
     };
 
+    // Always persist on close — tutorial should only show once
     const handleClose = () => {
-        if (dontShowAgain) {
-            localStorage.setItem('pts_tutorial_complete', 'true');
-        }
+        localStorage.setItem('pts_tutorial_complete', 'true');
         setCurrentStep(0);
         onClose();
     };
@@ -228,18 +226,10 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                                 </button>
                             </div>
 
-                            {/* Don't Show Again */}
-                            <label className="flex items-center gap-2 cursor-pointer group justify-center">
-                                <input
-                                    type="checkbox"
-                                    checked={dontShowAgain}
-                                    onChange={(e) => setDontShowAgain(e.target.checked)}
-                                    className="w-4 h-4 accent-neon-blue"
-                                />
-                                <span className="text-[10px] text-white/30 group-hover:text-white/50 transition-colors font-mono uppercase tracking-wide">
-                                    Don&apos;t show this again
-                                </span>
-                            </label>
+                            {/* Tutorial is auto-dismissed permanently on close */}
+                            <p className="text-center text-[9px] text-white/20 font-mono uppercase tracking-widest">
+                                This briefing will not appear again after you close it.
+                            </p>
                         </div>
 
                         {/* Corner Decorations */}
