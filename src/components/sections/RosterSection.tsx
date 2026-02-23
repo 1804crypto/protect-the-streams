@@ -16,6 +16,7 @@ interface RosterSectionProps {
     playHover: () => void;
     playClick: () => void;
     onPvP: (streamer: Streamer) => void;
+    onMission: (streamer: Streamer) => void;
 }
 
 export const RosterSection: React.FC<RosterSectionProps> = ({
@@ -28,6 +29,7 @@ export const RosterSection: React.FC<RosterSectionProps> = ({
     playHover,
     playClick,
     onPvP,
+    onMission,
 }) => {
     const { prices, loading: priceLoading } = usePriceData();
 
@@ -58,44 +60,68 @@ export const RosterSection: React.FC<RosterSectionProps> = ({
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-10 justify-items-center">
-                {streamers.map((streamer, idx) => (
-                    <motion.div
-                        key={streamer.id}
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        viewport={{ once: true }}
-                        className="relative group"
-                    >
-                        <StreamerCard
-                            streamer={streamer}
-                            onHover={playHover}
-                        />
-                        <div className="absolute inset-x-0 bottom-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 mobile-action-visible transition-opacity z-20 flex justify-center gap-2">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); playClick(); mint(streamer.id); }}
-                                disabled={loading && mintingStreamerId === streamer.id}
-                                className={`px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm ${loading && mintingStreamerId === streamer.id ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-neon-blue text-black hover:bg-white'}`}
-                                aria-label={`Mint ${streamer.name} NFT card`}
-                            >
-                                {priceLoading || !prices ? 'LOADING...' : `MINT (${prices.mintPriceSol} SOL ≈ $${prices.mintPriceUsd})`}
-                            </button>
-                            {hasAccess && (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); playClick(); onPvP(streamer); }}
-                                    disabled={!ownedStreamerIds.includes(streamer.id) && !ownedStreamerIds.includes('GENESIS_OVERRIDE')} // Allow override if we ever add a master key
-                                    className={`px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm ${ownedStreamerIds.includes(streamer.id)
-                                            ? 'bg-neon-pink text-white hover:bg-white hover:text-neon-pink'
-                                            : 'bg-gray-800 text-gray-500 cursor-not-allowed border border-white/10'
-                                        }`}
-                                    aria-label={`Start Sector 7 Arena battle with ${streamer.name}`}
-                                >
-                                    {ownedStreamerIds.includes(streamer.id) ? 'SECTOR_7_ARENA' : 'LOCKED: MINT TO PLAY'}
-                                </button>
+                {streamers.map((streamer, idx) => {
+                    const isOwned = ownedStreamerIds.includes(streamer.id);
+                    const isMintingThis = loading && mintingStreamerId === streamer.id;
+                    return (
+                        <motion.div
+                            key={streamer.id}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            viewport={{ once: true }}
+                            className={`relative group transition-all duration-300 ${isOwned ? 'ring-2 ring-neon-green/60 shadow-[0_0_20px_rgba(0,255,159,0.25)] rounded-sm' : ''
+                                }`}
+                        >
+                            {/* SECURED ownership badge */}
+                            {isOwned && (
+                                <div className="absolute top-2 left-2 z-30 flex items-center gap-1 bg-neon-green/20 border border-neon-green/50 px-2 py-0.5 rounded-sm">
+                                    <span className="text-neon-green text-[9px] font-black tracking-widest uppercase">✓ SECURED</span>
+                                </div>
                             )}
-                        </div>
-                    </motion.div>
-                ))}
+                            <StreamerCard
+                                streamer={streamer}
+                                onHover={playHover}
+                            />
+                            <div className="absolute inset-x-0 bottom-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 mobile-action-visible transition-opacity z-20 flex justify-center gap-2 flex-wrap px-2">
+                                {isOwned ? (
+                                    /* Owned: show ENTER TERMINAL + SECTOR_7_ARENA */
+                                    <>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); playClick(); onMission(streamer); }}
+                                            className="px-3 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm bg-neon-green text-black hover:bg-white transition-all"
+                                            aria-label={`Enter mission terminal with ${streamer.name}`}
+                                        >
+                                            [ TERMINAL ]
+                                        </button>
+                                        {hasAccess && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); playClick(); onPvP(streamer); }}
+                                                className="px-3 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm bg-neon-pink text-white hover:bg-white hover:text-neon-pink transition-all"
+                                                aria-label={`Start Sector 7 Arena battle with ${streamer.name}`}
+                                            >
+                                                PvP
+                                            </button>
+                                        )}
+                                    </>
+                                ) : (
+                                    /* Not owned: show MINT button */
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); playClick(); mint(streamer.id); }}
+                                        disabled={isMintingThis}
+                                        className={`px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm ${isMintingThis
+                                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                                : 'bg-neon-blue text-black hover:bg-white'
+                                            }`}
+                                        aria-label={`Mint ${streamer.name} NFT card`}
+                                    >
+                                        {isMintingThis ? 'MINTING...' : (priceLoading || !prices ? 'LOADING...' : `MINT (${prices.mintPriceSol} SOL ≈ $${prices.mintPriceUsd})`)}
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
+                    );
+                })}
             </div>
         </section>
     );

@@ -101,6 +101,29 @@ export const ResultOverlay: React.FC<ResultOverlayProps> = ({
                                         !! LEVEL_UP_DETECTED !!
                                     </motion.div>
                                 )}
+
+                                {/* Gamification Badges */}
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.6 }}
+                                    className="flex justify-center gap-4 mt-6 pt-4 border-t border-white/5"
+                                >
+                                    <div className="px-3 py-2 bg-neon-green/10 border border-neon-green/30 rounded-sm flex items-center gap-2">
+                                        <span className="text-xl">🏅</span>
+                                        <div className="text-left">
+                                            <div className="text-[10px] text-neon-green font-black tracking-widest uppercase">+1 VICTORY</div>
+                                            <div className="text-[8px] text-neon-green/60 font-mono">SECTOR SECURED</div>
+                                        </div>
+                                    </div>
+                                    <div className="px-3 py-2 bg-neon-blue/10 border border-neon-blue/30 rounded-sm flex items-center gap-2">
+                                        <span className="text-xl">📈</span>
+                                        <div className="text-left">
+                                            <div className="text-[10px] text-neon-blue font-black tracking-widest uppercase">FACTION SCORE</div>
+                                            <div className="text-[8px] text-neon-blue/60 font-mono">INFLUENCE UPDATED</div>
+                                        </div>
+                                    </div>
+                                </motion.div>
                             </motion.div>
                         )}
                     </AnimatePresence>

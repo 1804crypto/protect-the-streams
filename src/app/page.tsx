@@ -222,10 +222,9 @@ export default function Home() {
                                 whileTap={{ scale: 0.95 }}
                                 onMouseEnter={playHover}
                                 onClick={() => { playClick(); document.getElementById('roster')?.scrollIntoView({ behavior: 'smooth' }); }}
-                                disabled={loading}
-                                className={`btn-resistance text-xl ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className="btn-resistance text-xl"
                             >
-                                {loading ? 'STATUS: UPLINKING...' : 'INITIALIZE MINT'}
+                                BROWSE ROSTER
                             </motion.button>
 
                             <motion.a
@@ -330,6 +329,7 @@ export default function Home() {
                     playHover={playHover}
                     playClick={playClick}
                     onPvP={(streamer) => setActivePvPStreamer(streamer)}
+                    onMission={(streamer) => setActiveMissionStreamer(streamer)}
                 />
 
                 {/* Footer / Status Bar */}
@@ -371,7 +371,10 @@ export default function Home() {
                 <Leaderboard isOpen={isLeaderboardOpen} onClose={() => setIsLeaderboardOpen(false)} />
 
                 {/* Tutorial Modal */}
-                <TutorialModal isOpen={isTutorialOpen} onClose={() => setIsTutorialOpen(false)} />
+                <TutorialModal isOpen={isTutorialOpen} onClose={() => {
+                    localStorage.setItem('pts_tutorial_complete', 'true');
+                    setIsTutorialOpen(false);
+                }} />
 
                 {/* Narrative Archive Instance */}
                 <NarrativeArchive isOpen={isArchiveOpen} onClose={() => setIsArchiveOpen(false)} />

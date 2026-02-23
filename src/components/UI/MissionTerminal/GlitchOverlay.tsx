@@ -164,12 +164,12 @@ class GlitchErrorBoundary extends React.Component<
 export const GlitchOverlay = ({ intensity, glitchStrength = 0 }: { intensity: number, glitchStrength?: number }) => {
     return (
         <GlitchErrorBoundary>
-            <div className="absolute inset-0 pointer-events-none z-[500] overflow-hidden rounded-lg">
+            <div className="absolute inset-0 pointer-events-none z-[100] overflow-hidden rounded-lg">
                 <Canvas
                     orthographic
                     camera={{ zoom: 1, position: [0, 0, 1] }}
                     gl={{ alpha: true, antialias: false }}
-                    style={{ width: '100%', height: '100%' }}
+                    style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
                     onCreated={({ gl }) => {
                         // Defensive: if context is lost, don't crash the app
                         gl.domElement.addEventListener('webglcontextlost', (e) => {

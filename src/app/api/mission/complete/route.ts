@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         // 4. Fetch current user state
         const { data: userData, error: fetchError } = await supabase
             .from('users')
-            .select('xp, level, inventory, pts_balance, completed_missions, faction, updated_at')
+            .select('xp, level, inventory, pts_balance, completed_missions, faction, updated_at, wins, losses')
             .eq('id', userId)
             .single();
 
@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
             pts_balance: number; completed_missions: Array<{
                 id: string; rank: string; clearedAt: number; xp: number; level: number;
             }> | null; faction: string | null; updated_at: string | null;
+            wins: number; losses: number;
         };
 
         // Rate limit: minimum 2s between operations
@@ -93,6 +94,8 @@ export async function POST(req: NextRequest) {
         const newXp = (user.xp || 0) + xpGained;
         const newLevel = calculateLevel(newXp);
         const newPtsBalance = (user.pts_balance || 0) + ptsGained;
+        const newWins = (user.wins || 0) + (!isFailure ? 1 : 0);
+        const newLosses = (user.losses || 0) + (isFailure ? 1 : 0);
 
         // Merge items into inventory
         const currentInventory = (user.inventory || {}) as Record<string, number>;
@@ -140,6 +143,8 @@ export async function POST(req: NextRequest) {
             pts_balance: newPtsBalance,
             inventory: sanitizeInventory(newInventory, currentInventory),
             completed_missions: existingMissions,
+            wins: newWins,
+            losses: newLosses,
             updated_at: new Date().toISOString()
         };
         const { error: updateError } = await supabase
@@ -170,6 +175,8 @@ export async function POST(req: NextRequest) {
             newLevel,
             ptsGained,
             newPtsBalance,
+            newWins,
+            newLosses,
             itemsAwarded,
             newInventory: sanitizeInventory(newInventory, currentInventory),
             completedMissions: existingMissions

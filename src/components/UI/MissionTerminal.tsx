@@ -337,10 +337,12 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                         glitchStrength={glitchIntensity > 0 ? glitchIntensity : (isShaking ? 0.5 : 0)}
                     />
 
-                    {/* Sonic Debug Overlay - Hidden on mobile */}
-                    <div className="hidden md:block absolute top-20 left-4 bg-black/80 p-2 border border-neon-blue/40 text-[9px] font-mono z-[250] pointer-events-none">
-                        <div className="text-neon-blue font-black tracking-widest">SONIC_INTENSITY: <span className="text-white">{intensity.toFixed(2)}</span></div>
-                    </div>
+                    {/* Sonic Debug Overlay - DEV ONLY */}
+                    {process.env.NODE_ENV === 'development' && (
+                        <div className="hidden md:block absolute top-20 left-4 bg-black/80 p-2 border border-neon-blue/40 text-[9px] font-mono z-[250] pointer-events-none">
+                            <div className="text-neon-blue font-black tracking-widest">SONIC_INTENSITY: <span className="text-white">{intensity.toFixed(2)}</span></div>
+                        </div>
+                    )}
 
                     {/* Dynamic Ambient Glow */}
                     <div className={`absolute inset-0 opacity-20 transition-colors duration-1000 ${isBoss ? 'bg-resistance-accent/20' : 'bg-neon-blue/10'}`} />

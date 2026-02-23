@@ -386,26 +386,28 @@ export const useCollectionStore = create<CollectionState>()(
                             duration
                         })
                     })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            set({
-                                totalResistanceScore: data.newXp,
-                                level: data.newLevel,
-                                ptsBalance: data.newPtsBalance,
-                                inventory: data.newInventory,
-                                completedMissions: data.completedMissions
-                            });
-                        } else {
-                            console.error("Server mission complete failed:", data.error);
-                            // Fallback: apply local computation
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                set({
+                                    totalResistanceScore: data.newXp,
+                                    level: data.newLevel,
+                                    ptsBalance: data.newPtsBalance,
+                                    inventory: data.newInventory,
+                                    completedMissions: data.completedMissions,
+                                    wins: data.newWins !== undefined ? data.newWins : get().wins,
+                                    losses: data.newLosses !== undefined ? data.newLosses : get().losses
+                                });
+                            } else {
+                                console.error("Server mission complete failed:", data.error);
+                                // Fallback: apply local computation
+                                applyLocalMissionRewards(_id, rank, xpGained, completedMissions, get, set);
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Mission complete request failed:", err);
                             applyLocalMissionRewards(_id, rank, xpGained, completedMissions, get, set);
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Mission complete request failed:", err);
-                        applyLocalMissionRewards(_id, rank, xpGained, completedMissions, get, set);
-                    });
+                        });
                     return;
                 }
 

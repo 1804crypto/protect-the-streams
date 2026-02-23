@@ -112,7 +112,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                         <th className="pb-2 md:pb-4 px-2 md:px-4 font-black">Rank</th>
                                         <th className="pb-2 md:pb-4 px-2 md:px-4 font-black">Operative_ID</th>
                                         <th className="pb-2 md:pb-4 px-2 md:px-4 font-black text-center">Affiliation</th>
-                                        <th className="pb-2 md:pb-4 px-2 md:px-4 text-right font-black">Rating</th>
+                                        <th className="pb-2 md:pb-4 px-2 md:px-4 text-right font-black">Score / Wins</th>
                                     </tr>
                                 </thead>
                                 {entries.length > 0 ? (
@@ -163,9 +163,14 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                     </div>
                                                 </td>
                                                 <td className="py-3 md:py-5 px-2 md:px-4 text-right">
-                                                    <span className="text-neon-blue font-black text-sm">
-                                                        {entry.glr_points.toLocaleString()}
-                                                    </span>
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-neon-blue font-black text-sm">
+                                                            {entry.glr_points.toLocaleString()} <span className="text-[8px] text-white/40">XP</span>
+                                                        </span>
+                                                        <span className="text-neon-green font-bold text-[10px]">
+                                                            {entry.wins || 0} <span className="text-[8px] text-white/40">WINS</span>
+                                                        </span>
+                                                    </div>
                                                 </td>
                                             </motion.tr>
                                         ))}
