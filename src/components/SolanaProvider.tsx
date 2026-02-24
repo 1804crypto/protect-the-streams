@@ -6,7 +6,6 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
     WalletModalProvider,
 } from '@solana/wallet-adapter-react-ui';
-import { clusterApiUrl } from '@solana/web3.js';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { CONFIG } from '@/data/config';
 import { getRpcUrl } from '@/lib/rpc';
@@ -20,6 +19,7 @@ export const SolanaProvider: FC<{ children: React.ReactNode }> = ({ children }) 
     const network = (CONFIG.NETWORK as WalletAdapterNetwork) || WalletAdapterNetwork.Devnet;
 
     // Use centralized RPC resolver to ensure consistent behavior with backend
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- network listed for clarity; getRpcUrl() reads CONFIG.NETWORK internally
     const endpoint = useMemo(() => getRpcUrl(), [network]);
 
     const wallets = useMemo(() => [

@@ -3,7 +3,6 @@ import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { createSignerFromKeypair, signerIdentity, publicKey, transactionBuilder, signTransaction, createNoopSigner } from '@metaplex-foundation/umi';
 import { create, fetchCollection } from '@metaplex-foundation/mpl-core';
 import { CONFIG } from '@/data/config';
-import { base58 } from '@metaplex-foundation/umi/serializers';
 import { createClient } from '@supabase/supabase-js';
 import { getMintPrice } from '@/lib/priceOracle';
 import { getRpcUrl } from '@/lib/rpc';

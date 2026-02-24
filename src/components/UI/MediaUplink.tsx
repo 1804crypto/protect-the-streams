@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Radio, Music, X, Activity } from 'lucide-react';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 

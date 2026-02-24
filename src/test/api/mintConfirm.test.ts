@@ -48,7 +48,7 @@ function makeRequest(body: Record<string, unknown>) {
 }
 
 describe('POST /api/mint/confirm', () => {
-    let POST: (req: any) => Promise<Response>;
+    let POST: (_req: any) => Promise<Response>;
 
     beforeAll(async () => {
         const mod = await import('@/app/api/mint/confirm/route');

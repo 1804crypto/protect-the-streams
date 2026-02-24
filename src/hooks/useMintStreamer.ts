@@ -147,7 +147,8 @@ export const useMintStreamer = () => {
                 let confirmed = false;
                 for (let check = 0; check < 3; check++) {
                     const statuses = await umi.rpc.getSignatureStatuses([validSignature]);
-                    const sigStatus = statuses[0] as any;
+                    interface SignatureStatus { err: unknown; confirmationStatus?: string; }
+                    const sigStatus = statuses[0] as SignatureStatus | null;
                     console.log(`📊 [MINT DEBUG] Transaction status (attempt ${check + 1}):`, sigStatus);
                     if (sigStatus && !sigStatus.err && sigStatus.confirmationStatus !== 'failed') {
                         confirmed = true;

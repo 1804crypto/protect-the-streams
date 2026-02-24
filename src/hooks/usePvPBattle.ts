@@ -3,8 +3,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Streamer } from '@/data/streamers';
 import { Logger } from '@/lib/logger';
-import { toast } from '@/hooks/useToastStore';
-import { PvPActionPayload, PvPSyncPayload } from '@/types/pvp';
+import { PvPActionPayload, PvPSyncPayload, PvPPlayerState } from '@/types/pvp';
 
 // Sub-hooks (The "10/10" Architecture)
 import { usePvPState } from './pvp/usePvPState';
@@ -30,8 +29,8 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         refreshStoreStats,
 
         // Refs for callbacks
-        playerRef,
-        opponentRef,
+        playerRef: _playerRef,
+        opponentRef: _opponentRef,
         isTurnRef,
         isCompleteRef,
         battleStatusRef // Exposed for watchdog
@@ -63,13 +62,13 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
             // Apply effect to Opponent State visibly
             if (itemEffect === 'heal') {
-                const healAmt = itemValue || 0; // Ideally payload has actual value
+                const _healAmt = itemValue || 0; // Ideally payload has actual value
                 // We might need to sync HP if payload doesn't have it, but let's trust payload or sync
                 // For 10/10, let's assume we just want to show the log, 
                 // BUT we should update opponent HP if we can.
                 // However, without exact math (e.g. maxHp caps), it's risky.
                 // Better: Expect a SYNC shortly? Or just optimistic add.
-                setOpponent((prev: any) => {
+                setOpponent((prev: PvPPlayerState | null) => {
                     if (!prev) return prev;
                     // If we knew value... let's assume itemValue is passed correctly
                     // For RESTORE_CHIP (full heal), value might be large.
@@ -113,7 +112,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
     const handleSync = useCallback((payload: PvPSyncPayload) => {
         if (!opponentId || payload.senderId === opponentId) {
-            setOpponent((prev: any) => ({
+            setOpponent((prev: PvPPlayerState | null) => ({
                 ...prev,
                 id: payload.senderId,
                 name: payload.name,
@@ -127,7 +126,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     }, [opponentId, setOpponent]);
 
     // 4. Socket Connection (Isolated)
-    const { sendAction, sendSync, channelRef } = usePvPSocket({
+    const { sendAction, sendSync, channelRef: _channelRef } = usePvPSocket({
         matchId,
         playerId,
         myStreamerId: myStreamer.id,
@@ -283,6 +282,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             }, 5000);
             return () => clearTimeout(timer);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- battleStatusRef is a ref, intentionally excluded
     }, [battleStatus, setBattleStatus, setIsTurn]);
 
     // 7b. FREEZE FIX: Turn Safety Watchdog — if stuck on opponent turn for 10s, force our turn

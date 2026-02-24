@@ -443,6 +443,7 @@ export const useResistanceMission = (streamer: Streamer) => {
                 addLog("Signal integrity restored (+30 HP).");
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, attackBoost, movePP, currentBossPhase, streamer.name, addLog, triggerGlitch, triggerShake]);
 
     const executeUltimate = useCallback(() => {
@@ -487,6 +488,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         setEnemy(prev => ({ ...prev, hp: newHp }));
 
         addLog(`Catastrophic damage inflicted: ${damage}.`);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel, enemy.hp, addLog, triggerGlitch]);
 
     const executeUseItem = useCallback((itemId: string) => {
@@ -562,6 +564,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         setIsTurn(false);
         setTurns(prev => prev + 1);
         return true;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTurn, isComplete, consumeItem, streamer.moves, items, addLog]);
 
     useEffect(() => {
@@ -585,6 +588,7 @@ export const useResistanceMission = (streamer: Streamer) => {
                 }
             }, 0);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [result, streamer.id, markMissionComplete, hasMarkedComplete, calculateRank, calculateXP, difficultyMultiplier, updateDifficulty, player.hp, player.maxHp, turns, isBoss]);
 
     return {

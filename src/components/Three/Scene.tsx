@@ -1,14 +1,20 @@
 "use client";
-/* eslint-disable react/no-unknown-property */
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment, Float, MeshDistortMaterial, Stars } from '@react-three/drei';
-import { Suspense, useRef, useMemo, useEffect } from 'react';
+import { Suspense, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { useVisualEffects } from '@/hooks/useVisualEffects';
 
+// Typed interface for drei's MeshDistortMaterial properties
+interface DistortMaterial extends THREE.MeshPhysicalMaterial {
+    distort: number;
+}
+type MeshDistortMaterialImpl = DistortMaterial;
+
 function ResistanceCore() {
     const meshRef = useRef<THREE.Mesh>(null!);
+    const matRef = useRef<MeshDistortMaterialImpl>(null!);
     const { integrity, glitchIntensity, isCritical } = useVisualEffects();
 
     // Smoothly interpolate colors based on health integrity
@@ -21,11 +27,11 @@ function ResistanceCore() {
 
         // React to integrity: Shift toward red when health is low
         currentColor.lerpColors(criticalColor, baseColor, integrity);
-        if (meshRef.current.material) {
-            (meshRef.current.material as any).color.copy(currentColor);
-            (meshRef.current.material as any).emissive.copy(currentColor);
-            (meshRef.current.material as any).distort = THREE.MathUtils.lerp(
-                (meshRef.current.material as any).distort,
+        if (matRef.current) {
+            matRef.current.color.copy(currentColor);
+            matRef.current.emissive.copy(currentColor);
+            matRef.current.distort = THREE.MathUtils.lerp(
+                matRef.current.distort,
                 0.4 + (1 - integrity) * 0.4 + glitchIntensity,
                 0.1
             );

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Streamer } from '@/data/streamers';
 import { usePvPMatchmaking } from '@/hooks/usePvPMatchmaking';
@@ -28,7 +29,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
     const inventory = useCollectionStore(state => state.inventory);
 
     // 1. Matchmaking (Only enabled when user clicks 'Engage')
-    const { status: matchStatus, roomId: matchedRoomId, opponentId, opponentWager, playerId, retry: retryMatchmaking } = usePvPMatchmaking(streamer.id, isOpen && isSearching, wagerDraft);
+    const { status: matchStatus, roomId: matchedRoomId, opponentId, opponentWager: _opponentWager, playerId, retry: retryMatchmaking } = usePvPMatchmaking(streamer.id, isOpen && isSearching, wagerDraft);
 
     // 2. Battle Hook
     const {
@@ -291,7 +292,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
 
                             {/* Neural Narrator - PvP Overlay */}
                             <div className="absolute top-20 left-4 right-4 z-[45] p-2 bg-black/40 backdrop-blur-sm border-l-2 border-neon-blue rounded flex flex-col gap-0.5 pointer-events-none">
-                                <span className="text-[7px] text-neon-blue font-bold tracking-[0.3em] uppercase opacity-70">// Neural_Narrator_PvP</span>
+                                <span className="text-[7px] text-neon-blue font-bold tracking-[0.3em] uppercase opacity-70">{"// Neural_Narrator_PvP"}</span>
                                 <p className="text-[10px] text-white/90 italic font-mono leading-tight">
                                     {neuralNarrative}
                                 </p>
@@ -308,8 +309,10 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                                             className="absolute top-8 right-8 w-32 h-32 md:w-48 md:h-48 lg:w-64 lg:h-64 contrast-125 z-10"
                                         >
                                             {opponent.image ? (
-                                                <img
+                                                <Image
                                                     src={opponent.image}
+                                                    width={256}
+                                                    height={256}
                                                     className="w-full h-full object-cover rounded-full border-4 border-resistance-accent shadow-[0_0_30px_#ff003c] grayscale hover:grayscale-0 transition-all"
                                                     alt="Opponent"
                                                 />
@@ -331,8 +334,10 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                                     }
                                     transition={isAttacking ? { duration: 0.3 } : { repeat: Infinity, duration: 4 }}
                                 >
-                                    <img
+                                    <Image
                                         src={streamer.image}
+                                        width={320}
+                                        height={320}
                                         className="w-full h-full object-cover rounded-3xl border-4 border-neon-blue shadow-[0_0_40px_rgba(0,243,255,0.3)]"
                                         alt="Player"
                                     />

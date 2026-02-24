@@ -12,11 +12,11 @@ interface RosterSectionProps {
     ownedStreamerIds: string[];
     loading: boolean;
     mintingStreamerId: string | null;
-    mint: (id: string) => void;
+    mint: (_id: string) => void;
     playHover: () => void;
     playClick: () => void;
-    onPvP: (streamer: Streamer) => void;
-    onMission: (streamer: Streamer) => void;
+    onPvP: (_streamer: Streamer) => void;
+    onMission: (_streamer: Streamer) => void;
 }
 
 export const RosterSection: React.FC<RosterSectionProps> = ({
@@ -44,7 +44,7 @@ export const RosterSection: React.FC<RosterSectionProps> = ({
                 <div>
                     <h2 className="text-4xl font-black neon-text-blue tracking-tighter">Active Resistance Roster</h2>
                     <p className="text-white/40 font-mono text-[10px] mt-2 uppercase tracking-[0.3em]">
-                        // {streamers.length}_SIGNATURES_DETECTED_IN_SECTOR_07
+                        {`// ${streamers.length}_SIGNATURES_DETECTED_IN_SECTOR_07`}
                     </p>
                 </div>
                 <div className="flex gap-10">
@@ -110,8 +110,8 @@ export const RosterSection: React.FC<RosterSectionProps> = ({
                                         onClick={(e) => { e.stopPropagation(); playClick(); mint(streamer.id); }}
                                         disabled={isMintingThis}
                                         className={`px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm ${isMintingThis
-                                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                                : 'bg-neon-blue text-black hover:bg-white'
+                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                            : 'bg-neon-blue text-black hover:bg-white'
                                             }`}
                                         aria-label={`Mint ${streamer.name} NFT card`}
                                     >

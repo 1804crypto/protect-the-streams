@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Streamer } from '@/data/streamers';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
@@ -78,9 +79,11 @@ export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, imageUrl, 
                 {/* Character Image Section */}
                 <div className="relative h-[280px] w-full bg-resistance-dark overflow-hidden flex items-center justify-center">
                     {(imageUrl || streamer.image) ? (
-                        <img
+                        <Image
                             src={imageUrl || streamer.image}
                             alt={streamer.name}
+                            width={320}
+                            height={280}
                             className={`w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500 scale-105 md:scale-110 group-hover:scale-100 
                                 ${secured ? 'grayscale-0' : ''} 
                                 ${isArchived ? 'animate-glitch-slow opacity-80' : ''}`}
@@ -89,7 +92,7 @@ export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, imageUrl, 
                         <div className="text-center p-8">
                             <div className="w-16 h-16 border-2 border-neon-blue/30 border-t-neon-blue rounded-full animate-spin mx-auto mb-4" />
                             <p className="font-mono text-[10px] text-neon-blue animate-pulse tracking-widest uppercase">
-                // Securing Asset Intel...
+                                {"// Securing Asset Intel..."}
                             </p>
                         </div>
                     )}

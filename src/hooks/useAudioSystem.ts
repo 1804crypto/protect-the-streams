@@ -32,7 +32,7 @@ export const useAudioSystem = () => {
     // Initializer helper
     const initCtx = useCallback(() => {
         if (!globalAudioCtx && typeof window !== 'undefined') {
-            globalAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            globalAudioCtx = new (window.AudioContext || (window as import('@/types/audio').WebkitWindow).webkitAudioContext)();
         }
         if (globalAudioCtx?.state === 'suspended') {
             globalAudioCtx.resume();

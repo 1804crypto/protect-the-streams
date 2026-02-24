@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Streamer, natures, NatureType } from '@/data/streamers';
 import { EntityState } from '@/hooks/useResistanceMission';
@@ -213,17 +214,21 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                         <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none z-10" />
                     </div>
 
-                    <img
+                    <Image
                         src={enemy.image || "/authority_sentinel_cipher_unit_1766789046162.png"}
                         alt="Enemy Boss"
+                        width={380}
+                        height={380}
                         className={`absolute inset-0 w-full h-full object-contain p-4 lg:p-8 filter drop-shadow-[0_0_30px_rgba(255,0,60,0.3)] ${isBoss ? 'brightness-125' : ''}`}
                     />
 
                     {/* Reflection beneath */}
                     <div className="absolute top-full left-0 w-full h-1/2 opacity-10 blur-md grayscale -mt-8 pointer-events-none overflow-hidden">
-                        <img
+                        <Image
                             src={enemy.image || "/authority_sentinel_cipher_unit_1766789046162.png"}
                             alt="Reflection"
+                            width={380}
+                            height={190}
                             className="w-full h-full object-contain scale-y-[-0.6]"
                         />
                     </div>
@@ -243,14 +248,18 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                         transition={{ duration: 4, repeat: Infinity }}
                         className="relative w-[120px] h-[120px] md:w-[220px] md:h-[220px] lg:w-[450px] lg:h-[450px]"
                     >
-                        <img
+                        <Image
                             src={streamer.image}
                             alt="Player Avatar"
+                            width={450}
+                            height={450}
                             className="w-full h-full object-cover rounded-[40px] border-8 border-neon-blue shadow-[0_0_60px_rgba(0,243,255,0.4)]"
                         />
                         {/* Reflection beneath */}
-                        <img
+                        <Image
                             src={streamer.image}
+                            width={450}
+                            height={225}
                             className="absolute top-full left-0 w-full h-1/2 object-cover scale-y-[-0.3] opacity-5 blur-sm grayscale -mt-4 rounded-b-[40px]"
                             alt="Player Reflection"
                         />

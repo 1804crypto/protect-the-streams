@@ -6,7 +6,7 @@ import { X, Package, Sword, Shield, Gem, ChevronRight } from 'lucide-react';
 import { useCollectionStore, type EquipmentSlots } from '@/hooks/useCollectionStore';
 import { useGameDataStore } from '@/hooks/useGameDataStore';
 import { blackMarketItems } from '@/data/storeItems';
-import type { BattleItem, ItemCategory } from '@/data/items';
+import type { BattleItem } from '@/data/items';
 
 type TabFilter = 'all' | 'consumable' | 'equipment';
 
@@ -120,11 +120,10 @@ export const InventoryPanel = ({ onClose }: { onClose: () => void }) => {
                                 return (
                                     <div
                                         key={slot}
-                                        className={`p-3 rounded border transition-all ${
-                                            equipped
+                                        className={`p-3 rounded border transition-all ${equipped
                                                 ? 'border-cyan-500/40 bg-cyan-500/5'
                                                 : 'border-gray-700/30 bg-gray-900/30'
-                                        }`}
+                                            }`}
                                     >
                                         <div className="flex items-center gap-1.5 mb-1.5">
                                             <span className="text-cyan-400/60">{slotIcons[slot]}</span>
@@ -164,11 +163,10 @@ export const InventoryPanel = ({ onClose }: { onClose: () => void }) => {
                                 key={tab}
                                 type="button"
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded whitespace-nowrap transition-all ${
-                                    activeTab === tab
+                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded whitespace-nowrap transition-all ${activeTab === tab
                                         ? 'bg-cyan-600/40 text-white border border-cyan-400/50'
                                         : 'bg-gray-900/50 text-gray-500 border border-gray-700/30 hover:text-gray-300'
-                                }`}
+                                    }`}
                             >
                                 {tabLabels[tab]}
                             </button>

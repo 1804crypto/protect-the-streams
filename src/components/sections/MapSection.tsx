@@ -7,7 +7,7 @@ import { Streamer } from '@/data/streamers';
 interface MapSectionProps {
     hasAccess: boolean;
     streamers: Streamer[];
-    onMissionSelect: (streamer: Streamer) => void;
+    onMissionSelect: (_streamer: Streamer) => void;
 }
 
 export const MapSection: React.FC<MapSectionProps> = ({ hasAccess, streamers, onMissionSelect }) => {
@@ -16,7 +16,7 @@ export const MapSection: React.FC<MapSectionProps> = ({ hasAccess, streamers, on
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-end mb-6">
                     <div>
-                        <h3 className="text-[10px] font-black tracking-[0.4em] text-neon-blue uppercase mb-2">// GLOBAL_RESISTANCE_PROGRESS</h3>
+                        <h3 className="text-[10px] font-black tracking-[0.4em] text-neon-blue uppercase mb-2">{"// GLOBAL_RESISTANCE_PROGRESS"}</h3>
                         <h2 className="text-3xl font-black uppercase tracking-tighter">Strategic Sector Map</h2>
                     </div>
                     <div className="text-right hidden md:block">

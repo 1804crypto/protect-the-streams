@@ -4,6 +4,7 @@ import { useUserAuth } from './useUserAuth';
 import { useCollectionStore, getNature, getMissionRecord } from './useCollectionStore';
 import { streamers, applyNatureToStats } from '@/data/streamers';
 import { toast } from '@/hooks/useToastStore';
+import type { MatchmakingPresence } from '@/types/pvp';
 
 export type MatchmakingState = 'IDLE' | 'SEARCHING' | 'MATCH_FOUND' | 'TIMEOUT' | 'ERROR';
 
@@ -75,7 +76,7 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean, wager: n
         channel
             .on('presence', { event: 'sync' }, () => {
                 const state = channel.presenceState();
-                const peers = Object.values(state).flat() as any[];
+                const peers = (Object.values(state).flat() as unknown[]) as MatchmakingPresence[];
 
                 // Filter out self and only find those actively searching
                 // WAGER FIX: Exact wager match for non-zero. Zero wagers only match zero.

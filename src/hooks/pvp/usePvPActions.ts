@@ -1,10 +1,11 @@
 
 import { useCallback } from 'react';
+import React from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Logger } from '@/lib/logger';
 import { toast } from '@/hooks/useToastStore';
 import { Move } from '@/data/streamers';
-import { PvPActionPayload, ValidateMoveResult } from '@/types/pvp';
+import { ValidateMoveResult, PvPPlayerState, PvPActionPayload } from '@/types/pvp';
 import { useCollectionStore, getItemCount } from '../useCollectionStore';
 import { useGameDataStore } from '../useGameDataStore';
 
@@ -20,19 +21,19 @@ interface UsePvPActionsProps {
     streamerName: string;
 
     // Setters
-    setIsTurn: (val: boolean) => void;
-    setPlayer: (val: any) => void; // Added setPlayer for item effects
-    setOpponent: (val: any) => void;
-    setIsComplete: (val: boolean) => void;
-    setWinnerId: (val: string) => void;
-    setBattleStatus: (val: 'FINISHED') => void;
-    setGlrChange: (val: number) => void;
-    setLastAction: (val: any) => void;
-    addLog: (msg: string) => void;
-    addChat: (sender: string, msg: string, ts: number) => void;
+    setIsTurn: (_val: boolean) => void;
+    setPlayer: React.Dispatch<React.SetStateAction<PvPPlayerState>>;
+    setOpponent: React.Dispatch<React.SetStateAction<PvPPlayerState | null>>;
+    setIsComplete: (_val: boolean) => void;
+    setWinnerId: (_val: string) => void;
+    setBattleStatus: (_val: 'FINISHED') => void;
+    setGlrChange: (_val: number) => void;
+    setLastAction: React.Dispatch<React.SetStateAction<PvPActionPayload | null>>;
+    addLog: (_msg: string) => void;
+    addChat: (_sender: string, _msg: string, _ts: number) => void;
 
     // Socket
-    sendAction: (payload: any) => void;
+    sendAction: (_payload: PvPActionPayload) => void;
 }
 
 export const usePvPActions = ({
@@ -41,9 +42,9 @@ export const usePvPActions = ({
     isSpectator,
     isTurn,
     isComplete,
-    opponentId,
+    opponentId: _opponentId,
     wagerAmount,
-    playerHp,
+    playerHp: _playerHp,
     streamerName,
     setIsTurn,
     setPlayer,
@@ -82,7 +83,7 @@ export const usePvPActions = ({
 
         switch (item.effect) {
             case 'heal':
-                setPlayer((prev: any) => {
+                setPlayer((prev: PvPPlayerState) => {
                     const healAmount = itemId === 'RESTORE_CHIP' ? prev.maxHp : item.value;
                     const newHp = Math.min(prev.maxHp, prev.hp + healAmount);
                     effectValue = newHp - prev.hp;
@@ -142,7 +143,7 @@ export const usePvPActions = ({
             const isCrit = Math.random() > 0.9;
             const finalDamage = isCrit ? damage * 2 : damage;
 
-            setOpponent((prev: any) => {
+            setOpponent((prev: PvPPlayerState | null) => {
                 if (!prev) return null;
                 const nextHp = Math.max(0, prev.hp - finalDamage);
                 if (nextHp === 0) {
@@ -199,7 +200,7 @@ export const usePvPActions = ({
             const result = data as ValidateMoveResult;
 
             // Optimistic update
-            setOpponent((prev: any) => prev ? ({ ...prev, hp: result.next_hp }) : prev);
+            setOpponent((prev: PvPPlayerState | null) => prev ? ({ ...prev, hp: result.next_hp }) : prev);
 
             if (result.is_complete) {
                 setIsComplete(true);

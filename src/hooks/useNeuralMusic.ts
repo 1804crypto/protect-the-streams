@@ -42,7 +42,7 @@ export const useNeuralMusic = (
 
         const initAudio = async () => {
             if (!audioCtxRef.current) {
-                audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+                audioCtxRef.current = new (window.AudioContext || (window as import('@/types/audio').WebkitWindow).webkitAudioContext)();
             }
             const ctx = audioCtxRef.current;
 
@@ -59,7 +59,7 @@ export const useNeuralMusic = (
                         if (!response.ok) throw new Error("File not found");
                         const arrayBuffer = await response.arrayBuffer();
                         buffer = await ctx.decodeAudioData(arrayBuffer);
-                    } catch (e) {
+                    } catch (_e) {
                         console.warn(`[SONIC_DEPTH] Stem not found: ${url}. Using silent placeholder.`);
                         // Create 2 second silent buffer
                         buffer = ctx.createBuffer(2, ctx.sampleRate * 2, ctx.sampleRate);
@@ -85,7 +85,8 @@ export const useNeuralMusic = (
             // But for now, we want persistence during the session, so we don't aggressively close
             // unless isActive turns false (handled below)
         };
-    }, [isActive, isLoaded]); // Only run once on activation
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- startPlayback intentionally excluded; including it would cause infinite reload
+    }, [isActive, isLoaded]);
 
     // 2. Playback Control
     const startPlayback = useCallback(() => {
@@ -124,7 +125,7 @@ export const useNeuralMusic = (
     const stopPlayback = useCallback(() => {
         Object.values(stemsRef.current).forEach(stem => {
             if (stem.source) {
-                try { stem.source.stop(); } catch { }
+                try { stem.source.stop(); } catch { /* source already stopped */ }
                 stem.source.disconnect();
                 stem.source = null;
             }

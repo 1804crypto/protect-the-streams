@@ -9,7 +9,7 @@ interface OperatorState {
     hasSeen: Set<string>;
 
     // Actions
-    triggerDialogue: (category: keyof typeof OPERATOR_DIALOGUES) => void;
+    triggerDialogue: (_category: keyof typeof OPERATOR_DIALOGUES) => void;
     nextDialogue: () => void;
     closeDialogue: () => void;
     clearQueue: () => void;
@@ -95,7 +95,7 @@ export const useOperatorStore = create<OperatorState>()(
                     }
                 },
                 setItem: (name, value) => {
-                    const storageValue = value as any;
+                    const storageValue = value as { state?: { hasSeen?: Iterable<string> } };
                     const data = {
                         ...storageValue,
                         state: {
@@ -107,7 +107,7 @@ export const useOperatorStore = create<OperatorState>()(
                 },
                 removeItem: (name) => localStorage.removeItem(name)
             })),
-            partialize: (state) => ({ hasSeen: state.hasSeen } as any)
+            partialize: (state) => ({ hasSeen: state.hasSeen })
         }
     )
 );

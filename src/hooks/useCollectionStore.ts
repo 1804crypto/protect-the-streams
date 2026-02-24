@@ -4,7 +4,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { STARTER_INVENTORY, getRewardItems } from '@/data/items';
 import { NatureType, getRandomNature } from '@/data/streamers';
-import { supabase } from '@/lib/supabaseClient';
 
 export interface MissionRecord {
     id: string;
@@ -69,7 +68,7 @@ const syncStateToCloud = async (
     missionId?: string,
     rank?: string,
     duration?: number,
-    set?: (partial: Partial<CollectionState> | ((state: CollectionState) => Partial<CollectionState>)) => void,
+    set?: (_partial: Partial<CollectionState> | ((_state: CollectionState) => Partial<CollectionState>)) => void,
     additionalParams?: {
         deltaWins?: number,
         deltaLosses?: number,
@@ -148,7 +147,7 @@ function applyLocalMissionRewards(
     xpGained: number,
     completedMissions: MissionRecord[],
     get: () => CollectionState,
-    set: (partial: Partial<CollectionState> | ((state: CollectionState) => Partial<CollectionState>)) => void
+    set: (_partial: Partial<CollectionState> | ((_state: CollectionState) => Partial<CollectionState>)) => void
 ) {
     const existingIndex = completedMissions.findIndex(m => m.id === _id);
     const newMissions = [...completedMissions];
@@ -433,7 +432,7 @@ export const useCollectionStore = create<CollectionState>()(
                 updates.isAuthenticated = true;
 
                 if (Object.keys(updates).length > 0) {
-                    set(updates as any);
+                    set(updates as Partial<CollectionState>);
                     console.log("Synced from cloud:", updates);
                 }
             },

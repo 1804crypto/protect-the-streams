@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Streamer } from '@/data/streamers';
 
 interface MissionContext {
@@ -18,12 +18,6 @@ const ARCHETYPE_THEMES: Record<string, string[]> = {
     'DOUBLE_AGENT': ['dual-layered ops', 'feeding misinformation', 'internal conflicts'],
 };
 
-const THREAT_DESCRIPTIONS = [
-    "Sentinel nodes are fluctuating wildly.",
-    "Localized signal blackout in progress.",
-    "Corporate enforcement drones detected.",
-    "Encryption keys are changing every millisecond.",
-];
 
 export const useNeuralNarrative = () => {
     const fetchNarrative = async (type: string, context: Record<string, string | number | boolean>) => {

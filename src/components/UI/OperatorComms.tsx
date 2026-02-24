@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOperatorStore } from '@/hooks/useOperatorStore';
 import { useAudioSystem } from '@/hooks/useAudioSystem';
@@ -9,7 +10,7 @@ import { useVoiceOperator } from '@/hooks/useVoiceOperator';
 export const OperatorComms: React.FC = () => {
     const { currentDialogue, isMessageOpen, nextDialogue, closeDialogue: _closeDialogue } = useOperatorStore();
     const { playClick, forceUnmute } = useAudioSystem();
-    const { speakOperator, speakUrgent, speakHype, stop: stopVoice, initTTS } = useVoiceOperator();
+    const { speakOperator, speakUrgent, speakHype, stop: stopVoice } = useVoiceOperator();
 
     // Sophia TTS - Speak dialogue when message opens
     useEffect(() => {
@@ -69,9 +70,11 @@ export const OperatorComms: React.FC = () => {
                         <div className="absolute inset-0 border-2 border-neon-purple/30 rounded-full" />
 
                         {/* Portrait Image */}
-                        <img
+                        <Image
                             src="/operator_portrait_hologram.png"
                             alt="Sophia"
+                            width={128}
+                            height={128}
                             className="w-full h-full object-cover rounded-full border-2 border-neon-purple/50"
                         />
 

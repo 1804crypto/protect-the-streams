@@ -26,7 +26,7 @@ interface MissionTerminalProps {
 }
 
 export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOpen, onClose }) => {
-    const { generateMission, getBattleCommentary, getMissionEndNarrative } = useNeuralNarrative();
+    const { generateMission, getBattleCommentary, getMissionEndNarrative: _getMissionEndNarrative } = useNeuralNarrative();
     const [missionContext, setMissionContext] = useState<any>(null);
     const [neuralNarrative, setNeuralNarrative] = useState<string>("Establishing secure neural link...");
 
@@ -392,7 +392,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                         <div className="relative flex-1 bg-[#050505] border-2 border-white/10 flex flex-col p-4 lg:p-6 rounded-lg lg:overflow-visible">
                             {/* Neural Narrator Overlay */}
                             <div className="mb-4 p-3 bg-white/5 border-l-2 border-neon-blue rounded flex flex-col gap-1">
-                                <span className="text-[10px] text-neon-blue font-bold tracking-widest uppercase">// Neural_Narrator</span>
+                                <span className="text-[10px] text-neon-blue font-bold tracking-widest uppercase">{"// Neural_Narrator"}</span>
                                 <p className="text-sm text-white/90 italic font-mono leading-relaxed">
                                     {neuralNarrative}
                                 </p>
@@ -497,7 +497,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                     if (item) {
                                         const type = item.effect === 'heal' ? 'heal' :
                                             item.effect === 'boostAttack' ? 'boost_atk' : 'boost_def';
-                                        setItemEffects(prev => [...prev, { id: Date.now(), type: type as any }]);
+                                        setItemEffects(prev => [...prev, { id: Date.now(), type: type as 'heal' | 'boost_atk' | 'boost_def' }]);
                                         playItemUse(item.effect === 'heal' ? 'heal' : 'boost');
                                     }
                                     executeUseItem(itemId);

@@ -3,8 +3,8 @@ import { create } from 'zustand';
 interface AudioState {
     isMuted: boolean;
     isDivertMode: boolean; // When true, ambient is muted to allow external music
-    setIsMuted: (muted: boolean) => void;
-    setIsDivertMode: (divert: boolean) => void;
+    setIsMuted: (_muted: boolean) => void;
+    setIsDivertMode: (_divert: boolean) => void;
     toggleMute: () => void;
     toggleDivertMode: () => void;
 }

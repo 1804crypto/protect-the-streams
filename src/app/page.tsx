@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Streamer } from '@/data/streamers';
 import { CONFIG } from '@/data/config';
-import { StreamerCard } from '@/components/Cards/StreamerCard';
 import { CollectionHub } from '@/components/UI/CollectionHub';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMintStreamer } from '@/hooks/useMintStreamer';
@@ -41,7 +40,7 @@ export default function Home() {
     const [isHubOpen, setIsHubOpen] = useState(false);
     const [activeMissionStreamer, setActiveMissionStreamer] = useState<Streamer | null>(null);
     const [activePvPStreamer, setActivePvPStreamer] = useState<Streamer | null>(null);
-    const { streamers, fetchGameData, isInitialized, isLoading: isDataLoading } = useGameDataStore();
+    const { streamers, fetchGameData, isInitialized, isLoading: _isDataLoading } = useGameDataStore();
     const [mounted, setMounted] = useState(false);
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
     const [isFactionOpen, setIsFactionOpen] = useState(false);
@@ -50,7 +49,7 @@ export default function Home() {
 
     // GATED REBELLION LOGIC - ON-CHAIN NFT VERIFICATION (Signal Lock)
     const { userFaction } = useCollectionStore();
-    const { hasNFT, ownedStreamerIds, loading: nftLoading, error: nftError } = useCheckUplinkStatus();
+    const { hasNFT, ownedStreamerIds, loading: _nftLoading, error: _nftError } = useCheckUplinkStatus();
     const hasAccess = hasNFT || userFaction !== 'NONE';
 
     const { initAida } = useVoiceOperator();
@@ -287,7 +286,7 @@ export default function Home() {
                     <div className="max-w-7xl mx-auto">
                         <div className="flex justify-between items-end mb-6">
                             <div>
-                                <h3 className="text-[10px] font-black tracking-[0.4em] text-neon-blue uppercase mb-2">// GLOBAL_RESISTANCE_PROGRESS</h3>
+                                <h3 className="text-[10px] font-black tracking-[0.4em] text-neon-blue uppercase mb-2">{"// GLOBAL_RESISTANCE_PROGRESS"}</h3>
                                 <h2 className="text-3xl font-black uppercase tracking-tighter">Strategic Sector Map</h2>
                             </div>
                             <div className="text-right hidden md:block">

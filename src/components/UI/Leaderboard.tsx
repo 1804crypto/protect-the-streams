@@ -26,7 +26,6 @@ const GHOST_ENTRIES = [
 export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isMock, setIsMock] = useState(false);
     const focusTrapRef = useFocusTrap(isOpen);
 
     useEffect(() => {
@@ -47,9 +46,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
 
             if (error || !data || data.length === 0) {
                 setEntries([]);
-                setIsMock(false);
             } else {
-                setIsMock(false);
                 setEntries(data.map((d, i) => ({
                     ...d,
                     username: d.username || `OPERATIVE_${d.id.substring(0, 4)}`,

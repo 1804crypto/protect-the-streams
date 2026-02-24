@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Book, X, Lock, Unlock, ChevronRight, User, Target, Zap } from 'lucide-react';
-import { streamers, Streamer } from '@/data/streamers';
+import { Book, X, Lock, ChevronRight, User, Target, Zap } from 'lucide-react';
+import { streamers } from '@/data/streamers';
+import type { Streamer } from '@/data/streamers';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 
@@ -54,7 +56,7 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
                                 Neural Archives
                             </h3>
                             <p className="text-[9px] text-white/40 font-mono mt-1 uppercase tracking-widest">
-                                // Phase_01: Starter_v_Signal
+                                {"// Phase_01: Starter_v_Signal"}
                             </p>
                         </div>
 
@@ -76,7 +78,7 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
                                     >
                                         <div className="relative">
                                             <div className="w-10 h-10 border border-white/10 overflow-hidden grayscale">
-                                                <img src={s.image} alt="" className="w-full h-full object-cover" />
+                                                <Image src={s.image} alt="" width={40} height={40} className="w-full h-full object-cover" />
                                             </div>
                                             {!isUnlocked && (
                                                 <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
@@ -110,7 +112,7 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
                                 {/* Hero Header */}
                                 <div className="flex flex-col md:flex-row gap-8 items-start">
                                     <div className="w-32 h-32 md:w-48 md:h-48 border-4 border-neon-blue/40 shadow-[0_0_30px_rgba(0,243,255,0.2)] relative flex-shrink-0 mx-auto md:mx-0">
-                                        <img src={selectedStreamer.image} alt={selectedStreamer.name} className="w-full h-full object-cover" />
+                                        <Image src={selectedStreamer.image} alt={selectedStreamer.name} width={192} height={192} className="w-full h-full object-cover" />
                                         <div className="absolute -bottom-4 -right-4 bg-neon-blue px-3 py-1 text-black font-black text-xs uppercase tracking-tighter italic">
                                             {selectedStreamer.narrative.codename}
                                         </div>
@@ -163,7 +165,7 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
                                             {selectedStreamer.narrative.mission}
                                         </p>
                                         <div className="mt-8 p-4 bg-resistance-accent/5 border border-resistance-accent/20 rounded-sm">
-                                            <h5 className="text-[9px] font-black text-resistance-accent mb-2 uppercase tracking-widest">// Connection_Log</h5>
+                                            <h5 className="text-[9px] font-black text-resistance-accent mb-2 uppercase tracking-widest">{"// Connection_Log"}</h5>
                                             <p className="text-[11px] text-white/60 font-mono uppercase leading-normal">
                                                 {selectedStreamer.narrative.connection}
                                             </p>

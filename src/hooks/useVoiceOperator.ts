@@ -37,7 +37,7 @@ export const useVoiceOperator = () => {
 
         // Initialize Audio Context for light warmth processing
         if (!ttsAudioCtx) {
-            ttsAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            ttsAudioCtx = new (window.AudioContext || (window as import('@/types/audio').WebkitWindow).webkitAudioContext)();
         }
 
         // Resume if suspended (browser autoplay policy)

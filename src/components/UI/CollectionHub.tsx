@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
 import { streamers, Streamer } from '@/data/streamers';
@@ -8,7 +9,7 @@ import { MissionTerminal } from './MissionTerminal';
 import { ResistanceMap } from './ResistanceMap';
 import { Leaderboard } from './Leaderboard';
 import { PvPTerminal } from './PvPTerminal';
-import { Trophy, ShoppingCart, Zap, Users } from 'lucide-react';
+import { Trophy, ShoppingCart } from 'lucide-react';
 import { BlackMarket } from './BlackMarket';
 
 interface CollectionHubProps {
@@ -215,9 +216,11 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                         return (
                                             <div key={asset.id} className="glass-card p-4 border-neon-green/20 flex flex-col md:flex-row gap-4 group">
                                                 <div className="w-16 h-16 bg-resistance-dark border border-white/10 overflow-hidden relative">
-                                                    <img
+                                                    <Image
                                                         src={asset.image}
                                                         alt={asset.name}
+                                                        width={64}
+                                                        height={64}
                                                         className="w-full h-full object-cover"
                                                     />
                                                 </div>

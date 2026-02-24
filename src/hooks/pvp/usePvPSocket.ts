@@ -2,14 +2,14 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Logger } from '@/lib/logger';
-import { PvPActionPayload, PvPSyncPayload } from '@/types/pvp';
+import { PvPActionPayload, PvPSyncPayload, MatchmakingPresence } from '@/types/pvp';
 
 interface UsePvPSocketProps {
     matchId: string;
     playerId: string;
     myStreamerId: string;
-    onAction: (payload: PvPActionPayload) => void;
-    onSync: (payload: PvPSyncPayload) => void;
+    onAction: (_payload: PvPActionPayload) => void;
+    onSync: (_payload: PvPSyncPayload) => void;
     onOpponentConnect: () => void;
     onOpponentDisconnect: () => void;
     isSpectator: boolean;
@@ -63,14 +63,14 @@ export const usePvPSocket = ({
                 }
             })
             .on('presence', { event: 'join' }, ({ newPresences }) => {
-                const joined = newPresences.find((p: any) => p.playerId !== playerId);
+                const joined = (newPresences as unknown as MatchmakingPresence[]).find((p) => p.playerId !== playerId);
                 if (joined) {
                     Logger.info('PvPSocket', 'Opponent Connected', joined.playerId);
                     onOpponentConnect();
                 }
             })
             .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-                const left = leftPresences.find((p: any) => p.playerId !== playerId);
+                const left = (leftPresences as unknown as MatchmakingPresence[]).find((p) => p.playerId !== playerId);
                 if (left) {
                     Logger.warn('PvPSocket', 'Opponent Disconnected', left.playerId);
                     onOpponentDisconnect();
@@ -90,7 +90,8 @@ export const usePvPSocket = ({
             supabase.removeChannel(channel);
             channelRef.current = null;
         };
-    }, [matchId, playerId]); // Dependency list kept minimal to prevent reconnect loops
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally minimal; adding callbacks would cause reconnect loops
+    }, [matchId, playerId]);
 
     // Broadcast Action
     const sendAction = useCallback(async (payload: PvPActionPayload) => {

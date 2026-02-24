@@ -56,7 +56,7 @@ export const MintStepIndicator: React.FC<MintStepIndicatorProps> = ({ status }) 
                 {STEPS.map((step, i) => {
                     const isDone = i < activeStep;
                     const isActive = i === activeStep;
-                    const isFuture = i > activeStep;
+                    const _isFuture = i > activeStep;
                     return (
                         <React.Fragment key={step.key}>
                             {/* Circle */}

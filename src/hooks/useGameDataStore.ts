@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabaseClient';
 import { Streamer, Move, streamers as localStreamers } from '@/data/streamers';
 import { BattleItem, items as localItems } from '@/data/items';
+import { MoveType } from '@/data/typeChart';
 import { blackMarketItems } from '@/data/storeItems';
 
 // Merge base items with store items so all items are available for battle/inventory
@@ -77,14 +78,14 @@ export const useGameDataStore = create<GameDataState>((set) => ({
                     lore: localData?.lore || s.lore,
                     moves: streamerMoves.map(m => ({
                         name: m.name,
-                        type: m.type as any,
+                        type: m.type as MoveType,
                         power: m.power,
                         pp: m.pp,
                         description: m.description
                     })),
                     ultimateMove: ultimateMove ? {
                         name: ultimateMove.name,
-                        type: ultimateMove.type as any,
+                        type: ultimateMove.type as MoveType,
                         power: ultimateMove.power,
                         pp: ultimateMove.pp,
                         description: ultimateMove.description
@@ -117,11 +118,11 @@ export const useGameDataStore = create<GameDataState>((set) => ({
                         id: i.id,
                         name: i.name,
                         description: i.description,
-                        effect: i.effect as any,
+                        effect: i.effect as BattleItem['effect'],
                         value: Number(i.value),
-                        rarity: i.rarity as any,
+                        rarity: i.rarity as BattleItem['rarity'],
                         icon: i.icon,
-                        category: i.category as any || 'consumable'
+                        category: (i.category as BattleItem['category']) || 'consumable'
                     };
                 });
             }

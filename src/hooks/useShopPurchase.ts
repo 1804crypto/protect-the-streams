@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { createTransferInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
+import { createTransferInstruction, getAssociatedTokenAddress } from '@solana/spl-token';
 import { useCollectionStore } from './useCollectionStore';
 import { toast } from './useToastStore';
 import { CONFIG } from '@/data/config';
@@ -132,13 +132,13 @@ export const useShopPurchase = () => {
             }
         } catch (err) {
             setTxStatus('ERROR');
-            const msg = err instanceof Error ? err.message : 'Transaction failed';
+            const _msg = err instanceof Error ? err.message : 'Transaction failed';
 
             // Check for user rejection
             if (err instanceof Error && err.message.includes('User rejected')) {
                 toast.warning('Transaction Cancelled', 'You rejected the transaction.');
             } else {
-                toast.error('SOL Purchase Failed', msg);
+                toast.error('SOL Purchase Failed', _msg);
             }
             return false;
         } finally {
@@ -227,7 +227,7 @@ export const useShopPurchase = () => {
 
         } catch (err) {
             setTxStatus('ERROR');
-            const msg = err instanceof Error ? err.message : 'Transaction failed';
+            const _msg = err instanceof Error ? err.message : 'Transaction failed';
             if (err instanceof Error && err.message.includes('User rejected')) {
                 toast.warning('Transaction Cancelled', 'You rejected the transaction.');
             } else {

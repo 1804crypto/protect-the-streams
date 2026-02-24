@@ -202,7 +202,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                         >
                             <div className="flex-1 space-y-6">
                                 <div>
-                                    <h4 className="text-neon-blue font-mono text-xs mb-2 tracking-widest">// IDENTITY_PROTOCOL_LOADED</h4>
+                                    <h4 className="text-neon-blue font-mono text-xs mb-2 tracking-widest">{"// IDENTITY_PROTOCOL_LOADED"}</h4>
                                     <h2 id="faction-selection-title" className={`text-6xl font-black italic tracking-tighter ${currentFaction.color}`}>{currentFaction.name}</h2>
                                     <p className="text-white font-mono text-[10px] tracking-[0.4em] mt-2 opacity-50 underline decoration-neon-blue/20">{currentFaction.motto}</p>
                                 </div>

@@ -3,9 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
-import { streamers, Streamer } from '@/data/streamers';
+import { streamers } from '@/data/streamers';
+// eslint-disable-next-line no-unused-vars
+import type { Streamer } from '@/data/streamers';
 import { MapEventOverlay, MapEventType } from './MapEventOverlay';
 import { DataStream } from './DataStream';
+
+interface SectorControlRow {
+    streamer_id: string;
+    controlling_faction: string | null;
+}
 import { useAudioSystem } from '@/hooks/useAudioSystem';
 import { BlackMarket } from './BlackMarket';
 import { ShoppingCart, List, Map as MapIcon, ChevronRight } from 'lucide-react';
@@ -101,10 +108,10 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: { id: string 
         const channel = supabase
             .channel('global_faction_war')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'sector_control' }, (payload) => {
-                const updated = payload.new as any;
+                const updated = payload.new as SectorControlRow;
                 setSectorControl(prev => ({
                     ...prev,
-                    [updated.streamer_id]: updated.controlling_faction
+                    [updated.streamer_id]: (updated.controlling_faction ?? 'NONE') as 'NONE' | 'RED' | 'PURPLE'
                 }));
             })
             .subscribe();
@@ -488,7 +495,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: { id: string 
                     >
                         <div className="mb-8 mt-12">
                             <h3 className="text-2xl font-black neon-text-blue uppercase italic tracking-tighter">Sector_List</h3>
-                            <p className="text-[9px] text-white/40 font-mono tracking-widest uppercase mt-1">// Tactical_Override_Active</p>
+                            <p className="text-[9px] text-white/40 font-mono tracking-widest uppercase mt-1">{"// Tactical_Override_Active"}</p>
                         </div>
 
                         <div className="space-y-3">

@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Metadata } from "next";
 import { SolanaProvider } from "@/components/SolanaProvider";
 import { SystemHeartbeat } from "@/components/SystemHeartbeat";
