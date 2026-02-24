@@ -16,6 +16,13 @@ interface LeaderboardEntry {
     level?: number;
 }
 
+// Ghost entries shown when no real operatives exist — motivates first-mover action
+const GHOST_ENTRIES = [
+    { id: 'ghost-1', username: '█████_OPERATIVE', wins: 0, losses: 0, glr_points: 0, rank: 1, faction: 'NONE' as const, level: 1 },
+    { id: 'ghost-2', username: '███_REDACTED', wins: 0, losses: 0, glr_points: 0, rank: 2, faction: 'NONE' as const, level: 1 },
+    { id: 'ghost-3', username: '████████_SIGNAL', wins: 0, losses: 0, glr_points: 0, rank: 3, faction: 'NONE' as const, level: 1 },
+];
+
 export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -115,9 +122,10 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                         <th className="pb-2 md:pb-4 px-2 md:px-4 text-right font-black">Score / Wins</th>
                                     </tr>
                                 </thead>
-                                {entries.length > 0 ? (
-                                    <tbody className="font-mono text-[12px]">
-                                        {entries.map((entry) => (
+                                <tbody className="font-mono text-[12px]">
+                                    {entries.length > 0 ? (
+                                        /* Real entries */
+                                        entries.map((entry) => (
                                             <motion.tr
                                                 key={entry.id}
                                                 initial={{ opacity: 0, x: -10 }}
@@ -173,21 +181,40 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                     </div>
                                                 </td>
                                             </motion.tr>
-                                        ))}
-                                    </tbody>
-                                ) : (
-                                    <tbody>
-                                        <tr>
-                                            <td colSpan={4} className="py-20 text-center">
-                                                <div className="flex flex-col items-center gap-4">
-                                                    <span className="text-white/10 text-4xl">∅</span>
-                                                    <span className="text-[10px] font-mono text-white/20 tracking-[0.4em] uppercase">NO_OPERATIVES_DETECTED_IN_SECTOR</span>
-                                                    <span className="text-[7px] font-mono text-neon-blue/30 uppercase">Neural_Uplink: ESTABLISHING_FREQUENCIES...</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                )}
+                                        ))
+                                    ) : (
+                                        /* Ghost rows — shown before any real operatives exist */
+                                        GHOST_ENTRIES.map((ghost, i) => (
+                                            <motion.tr
+                                                key={ghost.id}
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ delay: i * 0.1 }}
+                                                className="border-b border-white/[0.03]"
+                                            >
+                                                <td className="py-4 px-2 md:px-4 font-black text-white/20">
+                                                    {(i + 1).toString().padStart(2, '0')}
+                                                </td>
+                                                <td className="py-4 px-2 md:px-4">
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="font-black text-[10px] md:text-sm text-white/15 uppercase tracking-tight blur-[3px] select-none">
+                                                            {ghost.username}
+                                                        </span>
+                                                        <span className="text-[7px] text-white/10 font-mono blur-[2px]">SIG: ████████</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-2 md:px-4 text-center">
+                                                    <div className="px-2 py-0.5 inline-block text-[8px] font-black border border-white/5 text-white/10 blur-[2px]">
+                                                        ████████
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-2 md:px-4 text-right">
+                                                    <span className="text-white/10 text-[10px] blur-[2px]">——</span>
+                                                </td>
+                                            </motion.tr>
+                                        ))
+                                    )}
+                                </tbody>
                             </table>
                         </div>
                     )}
@@ -203,6 +230,27 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                             <div className="w-1 h-1 bg-neon-blue rounded-full animate-pulse" />
                             <span className="text-[7px] text-white/40 font-mono">ENCRYPTION: MAX</span>
                         </div>
+
+                        {/* First Operative Hook — only shown when no real entries exist */}
+                        {!isLoading && entries.length === 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                                className="mt-6 p-5 border border-neon-yellow/30 bg-neon-yellow/5 rounded-sm text-center space-y-3"
+                            >
+                                <div className="text-neon-yellow text-2xl animate-pulse">👑</div>
+                                <p className="text-neon-yellow font-black text-sm tracking-widest uppercase">
+                                    RANK_01 UNCLAIMED
+                                </p>
+                                <p className="text-white/40 text-[10px] font-mono leading-relaxed">
+                                    The High Command leaderboard is empty. The first operative to mint and complete a mission will claim the #1 spot and earn permanent legend status.
+                                </p>
+                                <div className="inline-block px-4 py-1.5 border border-neon-yellow/40 text-neon-yellow text-[9px] font-black tracking-widest uppercase animate-pulse">
+                                    ⚡ BE THE FIRST OPERATIVE ⚡
+                                </div>
+                            </motion.div>
+                        )}
                     </div>
                     <p className="text-[8px] text-white/20 font-mono uppercase tracking-[0.2em]">
                         Last_Sync: {new Date().toLocaleTimeString()}

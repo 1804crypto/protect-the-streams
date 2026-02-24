@@ -33,6 +33,7 @@ import { useOperatorStore } from '@/hooks/useOperatorStore';
 import { AuthStatus } from '@/components/UI/AuthStatus';
 import { NarrativeArchive } from '@/components/UI/NarrativeArchive';
 import { RosterSection } from '@/components/sections/RosterSection';
+import { MintStepIndicator } from '@/components/UI/MintStepIndicator';
 
 export default function Home() {
     const { mint, loading, mintingStreamerId, status, error, signature } = useMintStreamer();
@@ -240,8 +241,11 @@ export default function Home() {
                         </div>
 
                         {/* Minting Status Feedback */}
-                        <div className="h-24 flex items-center justify-center">
-                            {(status || signature) && (
+                        <div className="h-auto min-h-[6rem] flex flex-col items-center justify-center gap-3">
+                            {loading && (
+                                <MintStepIndicator status={status} />
+                            )}
+                            {!loading && (status || signature) && (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}

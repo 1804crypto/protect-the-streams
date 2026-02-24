@@ -151,7 +151,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                                 </div>
                                 <button
                                     onClick={handleClose}
-                                    className="w-8 h-8 flex items-center justify-center border border-white/10 hover:border-neon-pink text-white/40 hover:text-neon-pink transition-all text-sm"
+                                    className="w-11 h-11 flex items-center justify-center border border-white/10 hover:border-neon-pink text-white/40 hover:text-neon-pink transition-all text-base rounded-sm"
                                     title="Close tutorial"
                                     aria-label="Close tutorial"
                                 >
