@@ -51,6 +51,10 @@ export const useOperatorStore = create<OperatorState>()(
                         hasSeen: new Set(hasSeen)
                     });
                 } else {
+                    // Queue exhausted — mark onboarding done for this session (BUG-05)
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('pts_onboarding_done', '1');
+                    }
                     set({
                         isMessageOpen: false,
                         currentDialogue: null,

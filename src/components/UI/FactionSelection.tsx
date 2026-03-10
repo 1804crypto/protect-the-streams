@@ -90,12 +90,12 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                 })
             );
 
-            const { blockhash } = await connection.getLatestBlockhash();
+            const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
             transaction.recentBlockhash = blockhash;
             transaction.feePayer = publicKey;
 
             const signature = await sendTransaction(transaction, connection);
-            await connection.confirmTransaction(signature, 'confirmed');
+            await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
 
             mintFactionCard();
             playSuccess();

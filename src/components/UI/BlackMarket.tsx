@@ -6,6 +6,7 @@ import { X, AlertCircle, CheckCircle2, Zap, Minus, Plus, ShieldAlert } from 'luc
 import { blackMarketItems, StoreItem } from '@/data/storeItems';
 import { useShopPurchase } from '@/hooks/useShopPurchase';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
+import { useUserAuth } from '@/hooks/useUserAuth';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -56,6 +57,7 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
     const inventory = useCollectionStore(state => state.inventory);
     const ptsBalance = useCollectionStore(state => state.ptsBalance);
     const isAuthenticated = useCollectionStore(state => state.isAuthenticated);
+    const { login, isAuthenticating } = useUserAuth();
 
     const { publicKey } = useWallet();
     const { connection } = useConnection();
@@ -120,7 +122,7 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
         >
             <div className="relative w-full max-w-5xl max-h-[90vh] overflow-hidden border-2 border-purple-500/30 bg-gray-950 rounded-lg shadow-[0_0_50px_rgba(168,85,247,0.2)] flex flex-col">
 
@@ -151,21 +153,19 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                         <div className="flex rounded-md overflow-hidden border border-purple-500/30">
                             <button
                                 onClick={() => setCurrency('PTS')}
-                                className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
-                                    currency === 'PTS'
-                                        ? 'bg-purple-600 text-white'
-                                        : 'bg-gray-900 text-gray-400 hover:text-white'
-                                }`}
+                                className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${currency === 'PTS'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-gray-900 text-gray-400 hover:text-white'
+                                    }`}
                             >
                                 PTS
                             </button>
                             <button
                                 onClick={() => setCurrency('SOL')}
-                                className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
-                                    currency === 'SOL'
-                                        ? 'bg-cyan-600 text-white'
-                                        : 'bg-gray-900 text-gray-400 hover:text-white'
-                                }`}
+                                className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${currency === 'SOL'
+                                    ? 'bg-cyan-600 text-white'
+                                    : 'bg-gray-900 text-gray-400 hover:text-white'
+                                    }`}
                             >
                                 SOL
                             </button>
@@ -183,10 +183,24 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                             )}
                         </div>
 
-                        {!isAuthenticated && (
+                        {/* Auth Status Banner */}
+                        {publicKey && !isAuthenticated && (
+                            <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-[10px] font-mono w-full">
+                                <ShieldAlert size={13} className="text-yellow-400 shrink-0" />
+                                <span className="text-yellow-300 flex-1">WALLET DETECTED — VERIFY IDENTITY TO UNLOCK PURCHASES</span>
+                                <button
+                                    onClick={login}
+                                    disabled={isAuthenticating}
+                                    className="px-3 py-1 bg-yellow-500 hover:bg-yellow-400 text-black font-black text-[9px] uppercase tracking-widest rounded transition-all disabled:opacity-50 shrink-0"
+                                >
+                                    {isAuthenticating ? 'VERIFYING...' : 'VERIFY IDENTITY'}
+                                </button>
+                            </div>
+                        )}
+                        {!publicKey && !isAuthenticated && (
                             <div className="flex items-center gap-1 text-[10px] text-yellow-400 font-mono">
                                 <ShieldAlert size={12} />
-                                GUEST MODE — purchases require login
+                                GUEST MODE — connect wallet to purchase
                             </div>
                         )}
                     </div>
@@ -197,11 +211,10 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                             <button
                                 key={cat}
                                 onClick={() => setActiveCategory(cat)}
-                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded whitespace-nowrap transition-all ${
-                                    activeCategory === cat
-                                        ? 'bg-purple-600/50 text-white border border-purple-400/50'
-                                        : 'bg-gray-900/50 text-gray-500 border border-gray-700/30 hover:text-gray-300'
-                                }`}
+                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded whitespace-nowrap transition-all ${activeCategory === cat
+                                    ? 'bg-purple-600/50 text-white border border-purple-400/50'
+                                    : 'bg-gray-900/50 text-gray-500 border border-gray-700/30 hover:text-gray-300'
+                                    }`}
                             >
                                 {categoryLabels[cat]}
                             </button>
@@ -225,8 +238,8 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                                 <div className="relative z-10">
                                     {/* Top Row: Icon + Info + Owned Badge */}
                                     <div className="flex gap-3 items-start">
-                                        <div className="w-11 h-11 rounded bg-purple-500/10 flex items-center justify-center text-2xl border border-purple-500/20 shrink-0">
-                                            {item.icon}
+                                        <div className="w-11 h-11 rounded bg-purple-500/10 flex items-center justify-center text-2xl text-center leading-none border border-purple-500/20 shrink-0">
+                                            {item.icon || '⚙️'}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">

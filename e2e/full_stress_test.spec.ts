@@ -41,6 +41,7 @@ test.describe('Full App Stress Test', () => {
 
         // Inject Mock Wallet Object into Window
         await page.addInitScript(() => {
+            localStorage.setItem('pts_tutorial_complete', 'true');
             (window as any).solana = {
                 isPhantom: true,
                 connect: async () => ({ publicKey: { toBase58: () => 'G9TGuEqWwaqeaCNrQchKUtMxAp4jBNcqJr72hcs2KiaE' } }),
@@ -116,11 +117,12 @@ test.describe('Full App Stress Test', () => {
         // Need to hover first or force click
         console.log("Hovering Rakai card for PvP...");
         const rakaiCard = page.getByText('Rakai', { exact: false }).first();
-        await rakaiCard.hover();
+        await rakaiCard.hover({ force: true });
+        await page.waitForTimeout(500);
 
         console.log("Clicking Sector 7 Arena button...");
         // Use aria-label or text
-        const pvpButton = page.getByRole('button', { name: /SECTOR_7_ARENA/i }).first();
+        const pvpButton = page.getByRole('button', { name: /Sector 7 Arena/i }).first();
         if (await pvpButton.count() > 0) {
             await pvpButton.click({ force: true });
 
@@ -138,8 +140,8 @@ test.describe('Full App Stress Test', () => {
         await page.goto('/');
 
         // Open Archives -> Black Market
-        await page.getByText('SECTOR 7 OPERATIONS').click();
-        await page.getByText('TACTICAL MARKET').click();
+        await page.getByText('[SECTOR_7_OPERATIONS]', { exact: false }).click();
+        await page.getByText('TACTICAL_MARKET', { exact: false }).click();
 
         // Verify items
         await expect(page.getByText('Nano-Restore Chip')).toBeVisible();

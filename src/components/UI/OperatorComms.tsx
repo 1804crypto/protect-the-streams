@@ -43,7 +43,7 @@ export const OperatorComms: React.FC = () => {
                 initial={{ opacity: 0, x: 100 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 100 }}
-                className="fixed bottom-32 right-8 z-[1000] flex flex-col items-end gap-0 max-w-md pointer-events-none"
+                className="fixed bottom-32 right-8 z-[9999] flex flex-col items-end gap-0 max-w-md pointer-events-none"
             >
                 {/* Sophia Identity HUD */}
                 <motion.div

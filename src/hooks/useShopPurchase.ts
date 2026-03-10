@@ -95,12 +95,12 @@ export const useShopPurchase = () => {
                 })
             );
 
-            const { blockhash } = await connection.getLatestBlockhash();
+            const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
             tx.recentBlockhash = blockhash;
             tx.feePayer = publicKey;
 
             const signature = await sendTransaction(tx, connection);
-            await connection.confirmTransaction(signature, 'confirmed');
+            await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
 
             // 2. Submit to server for verification + inventory update
             const res = await fetch('/api/shop/purchase', {
@@ -185,12 +185,12 @@ export const useShopPurchase = () => {
                 )
             );
 
-            const { blockhash } = await connection.getLatestBlockhash();
+            const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
             tx.recentBlockhash = blockhash;
             tx.feePayer = publicKey;
 
             const signature = await sendTransaction(tx, connection);
-            await connection.confirmTransaction(signature, 'confirmed');
+            await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
 
             // 3. Submit to server
             const res = await fetch('/api/shop/purchase', {

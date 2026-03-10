@@ -54,14 +54,15 @@ export function AudiusPlayer() {
 
     return (
         <>
-            {/* Hidden iframe for Audius embed */}
+            {/* Hidden iframe for Audius embed — sandboxed to prevent cross-origin RPC errors (BUG-08) */}
             <iframe
                 ref={iframeRef}
                 src={shouldPlay ? embedUrl : undefined}
-                width="0"
-                height="0"
+                width="300"
+                height="120"
                 allow="autoplay; encrypted-media"
-                className="hidden absolute pointer-events-none"
+                sandbox="allow-scripts allow-same-origin allow-popups"
+                className={`fixed bottom-24 right-4 z-[500] rounded-lg shadow-[0_0_20px_rgba(0,243,255,0.3)] transition-all duration-500 ${shouldPlay ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
                 onLoad={handleLoad}
                 title="Background Music"
             />

@@ -47,6 +47,18 @@ export default function Home() {
     const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
+    // Derived: is any panel/modal currently open?
+    const anyModalOpen = isLeaderboardOpen || isArchiveOpen || isHubOpen || isTutorialOpen || isFactionOpen || !!activeMissionStreamer || !!activePvPStreamer;
+
+    // Close all panels before opening a new one — prevents modal stacking (BUG-04)
+    const closeAllPanels = () => {
+        setIsLeaderboardOpen(false);
+        setIsArchiveOpen(false);
+        setIsHubOpen(false);
+        setIsTutorialOpen(false);
+        setIsFactionOpen(false);
+    };
+
     // GATED REBELLION LOGIC - ON-CHAIN NFT VERIFICATION (Signal Lock)
     const { userFaction } = useCollectionStore();
     const { hasNFT, ownedStreamerIds, loading: _nftLoading, error: _nftError } = useCheckUplinkStatus();
@@ -77,10 +89,12 @@ export default function Home() {
             setIsTutorialOpen(true);
         }
 
-        // Trigger Operator Onboarding & Aida Greeting
+        // Trigger Operator Onboarding & Aida Greeting — only once per session (BUG-05)
         const greetingTimer = setTimeout(() => {
             initAida(); // Vocal Greeting
-            triggerDialogue('onboarding'); // Visual Dialogue
+            if (!sessionStorage.getItem('pts_onboarding_done')) {
+                triggerDialogue('onboarding'); // Visual Dialogue
+            }
         }, 2000);
 
         return () => clearTimeout(greetingTimer);
@@ -121,32 +135,32 @@ export default function Home() {
 
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => { playClick(); forceUnmute(); setIsTutorialOpen(true); }}
+                            onClick={() => { playClick(); forceUnmute(); closeAllPanels(); setIsTutorialOpen(true); }}
                             className="px-4 py-2 border border-neon-green/40 text-[10px] font-bold tracking-widest hover:bg-neon-green/10 transition-all hidden md:block text-neon-green"
                         >
                             [HOW_TO_PLAY]
                         </button>
                         <button
-                            onClick={() => { playClick(); setIsLeaderboardOpen(true); }}
+                            onClick={() => { playClick(); closeAllPanels(); setIsLeaderboardOpen(true); }}
                             className="px-4 py-2 border border-neon-yellow/40 text-[10px] font-bold tracking-widest hover:bg-neon-yellow/10 transition-all hidden md:block text-neon-yellow"
                         >
                             [RANKINGS]
                         </button>
                         <button
-                            onClick={() => { playClick(); setIsHubOpen(true); }}
+                            onClick={() => { playClick(); closeAllPanels(); setIsHubOpen(true); }}
                             className="px-4 py-2 border border-neon-blue/40 text-[10px] font-bold tracking-widest hover:bg-neon-blue/10 transition-all hidden md:block"
                         >
                             [SECTOR_7_OPERATIONS]
                         </button>
                         <button
-                            onClick={() => { playClick(); setIsArchiveOpen(true); }}
+                            onClick={() => { playClick(); closeAllPanels(); setIsArchiveOpen(true); }}
                             className="px-4 py-2 border border-neon-orange/40 text-[10px] font-bold tracking-widest hover:bg-neon-orange/10 transition-all hidden md:block text-neon-orange"
                         >
                             [ARCHIVES]
                         </button>
 
                         <button
-                            onClick={() => { playClick(); setIsFactionOpen(true); }}
+                            onClick={() => { playClick(); closeAllPanels(); setIsFactionOpen(true); }}
                             className="px-4 py-2 border border-neon-purple/40 text-[10px] font-bold tracking-widest hover:bg-neon-purple/10 transition-all hidden md:block text-neon-purple"
                         >
                             [JOIN_FACTION]
@@ -166,37 +180,39 @@ export default function Home() {
                     </div>
                 </nav>
 
-                {/* Mobile Buttons */}
-                <div className="md:hidden fixed bottom-6 right-4 z-50 flex flex-col gap-3 safe-padding-bottom">
-                    <button
-                        onClick={() => { playClick(); setIsTutorialOpen(true); }}
-                        className="w-14 h-14 rounded-full bg-neon-green shadow-[0_0_20px_rgba(0,255,159,0.5)] flex items-center justify-center font-black text-xl"
-                        title="How to Play"
-                    >
-                        ❓
-                    </button>
-                    <button
-                        onClick={() => { playClick(); setIsLeaderboardOpen(true); }}
-                        className="w-14 h-14 rounded-full bg-neon-yellow shadow-[0_0_20px_rgba(255,255,0,0.5)] flex items-center justify-center font-black text-xl"
-                        title="Rankings"
-                    >
-                        🏆
-                    </button>
-                    <button
-                        onClick={() => { playClick(); setIsHubOpen(true); }}
-                        className="w-14 h-14 rounded-full bg-resistance-accent shadow-[0_0_20px_rgba(255,0,60,0.5)] flex items-center justify-center font-black text-xl"
-                        title="Sector 7 Operations"
-                    >
-                        📁
-                    </button>
-                    <button
-                        onClick={() => { playClick(); setIsArchiveOpen(true); }}
-                        className="w-14 h-14 rounded-full bg-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.5)] flex items-center justify-center font-black text-xl"
-                        title="Neural Archives"
-                    >
-                        📜
-                    </button>
-                </div>
+                {/* Mobile FABs — hidden when any modal is open to prevent overlap (BUG-03) */}
+                {!anyModalOpen && (
+                    <div className="md:hidden fixed bottom-6 right-4 z-50 flex flex-col gap-3 safe-padding-bottom">
+                        <button
+                            onClick={() => { playClick(); closeAllPanels(); setIsTutorialOpen(true); }}
+                            className="w-14 h-14 rounded-full bg-neon-green shadow-[0_0_20px_rgba(0,255,159,0.5)] flex items-center justify-center font-black text-xl"
+                            title="How to Play"
+                        >
+                            ❓
+                        </button>
+                        <button
+                            onClick={() => { playClick(); closeAllPanels(); setIsLeaderboardOpen(true); }}
+                            className="w-14 h-14 rounded-full bg-neon-yellow shadow-[0_0_20px_rgba(255,255,0,0.5)] flex items-center justify-center font-black text-xl"
+                            title="Rankings"
+                        >
+                            🏆
+                        </button>
+                        <button
+                            onClick={() => { playClick(); closeAllPanels(); setIsHubOpen(true); }}
+                            className="w-14 h-14 rounded-full bg-resistance-accent shadow-[0_0_20px_rgba(255,0,60,0.5)] flex items-center justify-center font-black text-xl"
+                            title="Sector 7 Operations"
+                        >
+                            📁
+                        </button>
+                        <button
+                            onClick={() => { playClick(); closeAllPanels(); setIsArchiveOpen(true); }}
+                            className="w-14 h-14 rounded-full bg-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.5)] flex items-center justify-center font-black text-xl"
+                            title="Neural Archives"
+                        >
+                            📜
+                        </button>
+                    </div>
+                )}
 
                 {/* Hero Content */}
                 <section className="relative z-10 flex flex-col items-center justify-center pt-32 pb-16 text-center px-4">

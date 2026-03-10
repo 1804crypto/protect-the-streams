@@ -46,7 +46,7 @@ export const usePtsTransaction = () => {
             );
 
             // Fetch and set the latest blockhash manually to be safe
-            const { blockhash } = await connection.getLatestBlockhash();
+            const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
             transaction.recentBlockhash = blockhash;
             transaction.feePayer = publicKey;
 
@@ -64,7 +64,7 @@ export const usePtsTransaction = () => {
             // ----------------------------
 
             // Wait for confirmation
-            await connection.confirmTransaction(signature, 'confirmed');
+            await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
 
             // --- Clear from Recovery after success ---
             const updatedPending = JSON.parse(localStorage.getItem('pts_pending_txs') || '[]')

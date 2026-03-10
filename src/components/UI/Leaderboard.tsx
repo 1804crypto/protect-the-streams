@@ -10,7 +10,7 @@ interface LeaderboardEntry {
     username: string | null;
     wins: number;
     losses: number;
-    glr_points: number;
+    xp: number;
     rank: number;
     faction?: 'RED' | 'PURPLE' | 'NONE';
     level?: number;
@@ -37,26 +37,33 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
     const fetchLeaderboard = async () => {
         setIsLoading(true);
         try {
-            // Try fetching from real DB
+            // Query the correct 'users' table (confirmed from DB migrations)
             const { data, error } = await supabase
                 .from('users')
-                .select('id, username, wins, losses, glr_points, faction, level')
-                .order('glr_points', { ascending: false })
+                .select('id, username, wins, losses, xp, faction, level')
+                .order('wins', { ascending: false })
                 .limit(10);
 
-            if (error || !data || data.length === 0) {
+            if (error) {
+                console.error('Leaderboard fetch error:', error.message);
+                setEntries([]);
+            } else if (!data || data.length === 0) {
                 setEntries([]);
             } else {
                 setEntries(data.map((d, i) => ({
-                    ...d,
+                    id: d.id,
                     username: d.username || `OPERATIVE_${d.id.substring(0, 4)}`,
+                    wins: d.wins || 0,
+                    losses: d.losses || 0,
+                    xp: d.xp || 0,
                     rank: i + 1,
-                    glr_points: d.glr_points || 0,
-                    faction: d.faction || 'NONE'
+                    faction: d.faction || 'NONE',
+                    level: d.level || 1,
                 })));
             }
         } catch (e) {
-            console.error(e);
+            console.error('Leaderboard error:', e);
+            setEntries([]);
         } finally {
             setIsLoading(false);
         }
@@ -128,17 +135,10 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                 initial={{ opacity: 0, x: -10 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: entry.rank * 0.05 }}
-                                                className={`group border-b border-white/[0.03] transition-colors relative ${entry.faction === 'RED' ? 'hover:bg-red-500/5' :
-                                                    entry.faction === 'PURPLE' ? 'hover:bg-purple-500/5' :
-                                                        'hover:bg-white/[0.02]'
-                                                    }`}
+                                                className={`group border-b border-white/[0.03] transition-colors relative ${entry.faction === 'RED' ? 'hover:bg-red-500/5' : entry.faction === 'PURPLE' ? 'hover:bg-purple-500/5' : 'hover:bg-white/[0.02]'}`}
                                             >
                                                 <td className="py-3 md:py-5 px-2 md:px-4 font-black relative overflow-hidden">
-                                                    <span className={`relative z-10 ${entry.rank === 1 ? 'text-neon-yellow text-xl' :
-                                                        entry.rank === 2 ? 'text-white text-lg' :
-                                                            entry.rank === 3 ? 'text-neon-blue text-lg' :
-                                                                'text-white/40'
-                                                        }`}>
+                                                    <span className={`relative z-10 ${entry.rank === 1 ? 'text-neon-yellow text-xl' : entry.rank === 2 ? 'text-white text-lg' : entry.rank === 3 ? 'text-neon-blue text-lg' : 'text-white/40'}`}>
                                                         {entry.rank.toString().padStart(2, '0')}
                                                     </span>
                                                     {entry.rank <= 3 && (
@@ -154,23 +154,20 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                             {entry.username || 'UNIDENTIFIED_OPERATIVE'}
                                                         </span>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-[7px] text-white/20 uppercase tracking-tighter">SIG: {entry.id.substring(0, 8)}</span>
+                                                            <span className="text-[7px] text-white/20 uppercase tracking-tighter font-mono">SIG: {entry.id.substring(0, 8)}</span>
                                                             <span className="text-[7px] text-neon-green font-bold">[LVL.{entry.level || 1}]</span>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="py-3 md:py-5 px-2 md:px-4 text-center">
-                                                    <div className={`px-2 py-0.5 inline-block text-[8px] font-black border rounded-sm ${entry.faction === 'RED' ? 'bg-red-500/10 border-red-500 text-red-500' :
-                                                        entry.faction === 'PURPLE' ? 'bg-purple-900/20 border-purple-500 text-purple-400' :
-                                                            'bg-white/5 border-white/10 text-white/30'
-                                                        }`}>
+                                                    <div className={`px-2 py-0.5 inline-block text-[8px] font-black border rounded-sm ${entry.faction === 'RED' ? 'bg-red-500/10 border-red-500 text-red-500' : entry.faction === 'PURPLE' ? 'bg-purple-900/20 border-purple-500 text-purple-400' : 'bg-white/5 border-white/10 text-white/30'}`}>
                                                         {entry.faction === 'NONE' ? 'NO_AFFILIATION' : `FACTION_${entry.faction}`}
                                                     </div>
                                                 </td>
                                                 <td className="py-3 md:py-5 px-2 md:px-4 text-right">
                                                     <div className="flex flex-col items-end">
                                                         <span className="text-neon-blue font-black text-sm">
-                                                            {entry.glr_points.toLocaleString()} <span className="text-[8px] text-white/40">XP</span>
+                                                            {(entry.xp || 0).toLocaleString()} <span className="text-[8px] text-white/40">XP</span>
                                                         </span>
                                                         <span className="text-neon-green font-bold text-[10px]">
                                                             {entry.wins || 0} <span className="text-[8px] text-white/40">WINS</span>

@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
                 .from('users')
                 .insert([{
                     wallet_address: publicKey,
+                    username: `Operator_${publicKey.slice(0, 4)}`,
                     last_login: new Date().toISOString(),
                     // Default values handled by DB
                 }])
