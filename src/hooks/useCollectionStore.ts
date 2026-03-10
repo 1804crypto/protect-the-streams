@@ -31,6 +31,7 @@ interface CollectionState {
     isFactionMinted: boolean;
     activeMissionStart: number | null;
     lastMissionComplete: number | null; // Anti-Cheat: Track cooldown
+    journeyProgress: Record<string, number>; // Map streamerId -> current node index
     wins: number;
     losses: number;
     ptsBalance: number;
@@ -51,6 +52,7 @@ interface CollectionState {
     markMissionComplete: (_id: string, _rank?: 'S' | 'A' | 'B' | 'F', _xpGained?: number, _battleResult?: {
         hpRemaining: number; maxHp: number; turnsUsed: number; isBoss: boolean; duration: number;
     }) => void;
+    advanceJourney: (_streamerId: string) => void;
     syncFromCloud: (_userData: Partial<import('@/types/auth').UserRow>) => void;
     addWin: () => void;
     addLoss: () => void;
@@ -209,6 +211,7 @@ export const useCollectionStore = create<CollectionState>()(
             isFactionMinted: false,
             activeMissionStart: null,
             lastMissionComplete: null,
+            journeyProgress: {},
             wins: 0,
             losses: 0,
             ptsBalance: 0,
@@ -412,6 +415,25 @@ export const useCollectionStore = create<CollectionState>()(
 
                 // GUEST PATH: Local computation (no server call)
                 applyLocalMissionRewards(_id, rank, xpGained, completedMissions, get, set);
+            },
+
+            advanceJourney: (_streamerId: string) => {
+                const { journeyProgress, inventory, isAuthenticated } = get();
+                const currentProgress = journeyProgress[_streamerId] || 0;
+                const newProgress = { ...journeyProgress, [_streamerId]: currentProgress + 1 };
+
+                // Add flat reward for advancing journey (300 XP + 50 $PTS)
+                set({
+                    journeyProgress: newProgress,
+                    totalResistanceScore: get().totalResistanceScore + 300,
+                    ptsBalance: get().ptsBalance + 50
+                });
+
+                if (isAuthenticated) {
+                    // For now, sync just the delta stats + inventory. 
+                    // In a full implementation we'd probably add journeyProgress to the DB schema.
+                    syncStateToCloud(300, inventory, undefined, undefined, undefined, set);
+                }
             },
 
             syncFromCloud: (userData: Partial<import('@/types/auth').UserRow>) => {

@@ -33,6 +33,8 @@ import { AuthStatus } from '@/components/UI/AuthStatus';
 import { NarrativeArchive } from '@/components/UI/NarrativeArchive';
 import { RosterSection } from '@/components/sections/RosterSection';
 import { MintStepIndicator } from '@/components/UI/MintStepIndicator';
+import { StreamerBarracks } from '@/components/UI/StreamerBarracks';
+import { StreamerJourney } from '@/components/UI/StreamerJourney';
 
 export default function Home() {
     const { mint, loading, mintingStreamerId, status, error, signature } = useMintStreamer();
@@ -46,9 +48,11 @@ export default function Home() {
     const [isFactionOpen, setIsFactionOpen] = useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+    const [isBarracksOpen, setIsBarracksOpen] = useState(false);
+    const [activeJourneyStreamer, setActiveJourneyStreamer] = useState<Streamer | null>(null);
 
     // Derived: is any panel/modal currently open?
-    const anyModalOpen = isLeaderboardOpen || isArchiveOpen || isHubOpen || isTutorialOpen || isFactionOpen || !!activeMissionStreamer || !!activePvPStreamer;
+    const anyModalOpen = isLeaderboardOpen || isArchiveOpen || isHubOpen || isTutorialOpen || isFactionOpen || isBarracksOpen || !!activeMissionStreamer || !!activePvPStreamer || !!activeJourneyStreamer;
 
     // Close all panels before opening a new one — prevents modal stacking (BUG-04)
     const closeAllPanels = () => {
@@ -57,6 +61,8 @@ export default function Home() {
         setIsHubOpen(false);
         setIsTutorialOpen(false);
         setIsFactionOpen(false);
+        setIsBarracksOpen(false);
+        setActiveJourneyStreamer(null);
     };
 
     // GATED REBELLION LOGIC - ON-CHAIN NFT VERIFICATION (Signal Lock)
@@ -151,6 +157,12 @@ export default function Home() {
                             className="px-4 py-2 border border-neon-blue/40 text-[10px] font-bold tracking-widest hover:bg-neon-blue/10 transition-all hidden md:block"
                         >
                             [SECTOR_7_OPERATIONS]
+                        </button>
+                        <button
+                            onClick={() => { playClick(); closeAllPanels(); setIsBarracksOpen(true); }}
+                            className="px-4 py-2 border border-neon-green/40 text-[10px] font-bold tracking-widest hover:bg-neon-green/10 transition-all hidden md:block text-neon-green shadow-sm"
+                        >
+                            [MY_BARRACKS]
                         </button>
                         <button
                             onClick={() => { playClick(); closeAllPanels(); setIsArchiveOpen(true); }}
@@ -380,6 +392,22 @@ export default function Home() {
                         matchId="global_queue"
                         isOpen={!!activePvPStreamer}
                         onClose={() => setActivePvPStreamer(null)}
+                    />
+                )}
+
+                {/* Barracks Instance */}
+                <StreamerBarracks
+                    isOpen={isBarracksOpen}
+                    onClose={() => setIsBarracksOpen(false)}
+                    onStartJourney={(s) => setActiveJourneyStreamer(s)}
+                />
+
+                {/* Streamer Journey GameFi Layer Instance */}
+                {activeJourneyStreamer && (
+                    <StreamerJourney
+                        streamer={activeJourneyStreamer}
+                        isOpen={!!activeJourneyStreamer}
+                        onClose={() => setActiveJourneyStreamer(null)}
                     />
                 )}
 
