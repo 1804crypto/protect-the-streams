@@ -1,8 +1,8 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Environment, Float, MeshDistortMaterial, Stars } from '@react-three/drei';
-import { Suspense, useRef, useMemo } from 'react';
+import { OrbitControls, PerspectiveCamera, Float, MeshDistortMaterial, Stars } from '@react-three/drei';
+import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { useVisualEffects } from '@/hooks/useVisualEffects';
 
@@ -172,9 +172,7 @@ function SceneContent() {
             <DataStreams />
             <ResistanceCore />
 
-            <Suspense fallback={null}>
-                <Environment preset="night" />
-            </Suspense>
+            {/* Environment lighting handled by point/spot lights above — no external HDR fetch needed */}
         </>
     );
 }
