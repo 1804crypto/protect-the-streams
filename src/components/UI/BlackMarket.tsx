@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertCircle, CheckCircle2, Zap, Minus, Plus, ShieldAlert } from 'lucide-react';
 import { blackMarketItems, StoreItem } from '@/data/storeItems';
@@ -61,6 +61,13 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
 
     const { publicKey } = useWallet();
     const { connection } = useConnection();
+
+    // Escape key to close
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [onClose]);
 
     const [currency, setCurrency] = useState<'PTS' | 'SOL'>('PTS');
     const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
@@ -140,8 +147,9 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 text-purple-400 hover:text-white transition-colors shrink-0"
+                            className="p-2 text-purple-400 hover:text-white transition-colors shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-blue"
                             title="Close Market"
+                            aria-label="Close market"
                         >
                             <X size={24} />
                         </button>
@@ -294,11 +302,11 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
 
                                         {/* Buy Button */}
                                         <button
-                                            disabled={isProcessing || !affordable || (!isAuthenticated && currency === 'PTS')}
+                                            disabled={isProcessing || !affordable || (!isAuthenticated && currency === 'PTS') || (currency === 'SOL' && !publicKey)}
                                             onClick={() => setConfirmModal({ item, quantity: qty, currency })}
                                             className="px-3 py-1.5 bg-purple-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded uppercase tracking-widest transition-all disabled:opacity-40 disabled:hover:bg-purple-600"
                                         >
-                                            {currency === 'SOL' && !publicKey ? 'CONNECT' : 'ACQUIRE'}
+                                            {currency === 'SOL' && !publicKey ? 'CONNECT WALLET' : !affordable ? 'INSUFFICIENT' : 'ACQUIRE'}
                                         </button>
                                     </div>
                                 </div>

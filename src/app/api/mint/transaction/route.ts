@@ -3,9 +3,11 @@ import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { createSignerFromKeypair, signerIdentity, publicKey, transactionBuilder, signTransaction, createNoopSigner } from '@metaplex-foundation/umi';
 import { create, fetchCollection } from '@metaplex-foundation/mpl-core';
 import { CONFIG } from '@/data/config';
-import { createClient } from '@supabase/supabase-js';
 import { getMintPrice } from '@/lib/priceOracle';
 import { getRpcUrl } from '@/lib/rpc';
+import { getServiceSupabase } from '@/lib/supabaseClient';
+import { verifySession } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const isDev = process.env.NODE_ENV !== 'production';
 const debug = (...args: unknown[]) => { if (isDev) console.log(...args); };
@@ -25,19 +27,38 @@ if (BACKEND_PRIVATE_KEY.length > 0) {
 }
 
 // Supabase for mint_attempts table
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = getServiceSupabase();
+
+const MINT_RATE_LIMIT = { name: 'mint_transaction', maxRequests: 10, windowMs: 60_000 };
 
 export async function POST(req: NextRequest) {
     debug('🔧 [API DEBUG] Mint transaction request received');
     let idempotencyKey: string | undefined;
     try {
+        // Rate limit: 10 mint requests per IP per minute
+        const limited = checkRateLimit(req, MINT_RATE_LIMIT);
+        if (limited) return limited;
+
         if (!backendSigner) {
             return NextResponse.json({ error: 'Server misconfigured: backend wallet not available' }, { status: 503 });
         }
 
-        const body = await req.json();
+        // Auth: verify session — only authenticated users can mint
+        const token = req.cookies.get('pts_session')?.value;
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const session = await verifySession(token);
+        if (!session || !session.wallet) {
+            return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+        }
+
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
         const { streamerId, userPublicKey, currency = 'SOL' } = body;
         idempotencyKey = body.idempotencyKey;
         debug('📋 [API DEBUG] Request params:', { streamerId, userPublicKey, currency, idempotencyKey });
@@ -45,6 +66,11 @@ export async function POST(req: NextRequest) {
         if (!streamerId || !userPublicKey) {
             console.error('❌ [API DEBUG] Missing required parameters');
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+        }
+
+        // Verify the userPublicKey matches the authenticated session wallet
+        if (userPublicKey !== session.wallet) {
+            return NextResponse.json({ error: 'Wallet mismatch: userPublicKey does not match authenticated session' }, { status: 403 });
         }
 
         // IDEMPOTENCY CHECK: Prevent duplicate mints
@@ -122,8 +148,9 @@ export async function POST(req: NextRequest) {
         // For dynamic hosting: current origin + /api/metadata/${streamerId}
         // Since API routes don't easily know absolute URL without config, we'll use a placeholder or derived one.
         // Let's assume the user accesses via the public domain.
-        const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_HOST_URL || 'https://protectthestreamers.xyz';
-        const uri = `${origin}/api/metadata/${streamerId}`;
+        // Use canonical host only — never trust Origin header for metadata URIs
+        const canonicalHost = process.env.NEXT_PUBLIC_HOST_URL || 'https://protectthestreamers.xyz';
+        const uri = `${canonicalHost}/api/metadata/${streamerId}`;
         debug('🔗 [API DEBUG] Metadata URI:', uri);
 
         // Build Transaction

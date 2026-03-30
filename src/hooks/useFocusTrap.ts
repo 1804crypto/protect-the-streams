@@ -7,7 +7,7 @@ import { useEffect, useRef } from 'react';
  * - Tab / Shift+Tab cycle within focusable children
  * - Restores focus to the previously-focused element on unmount
  */
-export function useFocusTrap(isActive: boolean) {
+export function useFocusTrap(isActive: boolean, onEscape?: () => void) {
     const containerRef = useRef<HTMLDivElement>(null);
     const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -34,6 +34,11 @@ export function useFocusTrap(isActive: boolean) {
         const timer = setTimeout(focusFirst, 50);
 
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && onEscape) {
+                e.preventDefault();
+                onEscape();
+                return;
+            }
             if (e.key !== 'Tab') return;
 
             const focusable = getFocusableElements(container);
@@ -67,7 +72,7 @@ export function useFocusTrap(isActive: boolean) {
                 previousFocusRef.current.focus();
             }
         };
-    }, [isActive]);
+    }, [isActive, onEscape]);
 
     return containerRef;
 }

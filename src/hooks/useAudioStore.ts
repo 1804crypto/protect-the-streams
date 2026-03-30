@@ -10,7 +10,7 @@ interface AudioState {
 }
 
 export const useAudioStore = create<AudioState>((set) => ({
-    isMuted: true,
+    isMuted: false,
     isDivertMode: false,
     setIsMuted: (muted) => set({ isMuted: muted }),
     setIsDivertMode: (divert) => set({ isDivertMode: divert }),

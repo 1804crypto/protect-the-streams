@@ -5,13 +5,38 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
 
 const VALID_NARRATE_TYPES = new Set(['MISSION_START', 'BATTLE_ACTION', 'MISSION_END']);
 
+// Sanitize user-supplied strings to prevent prompt injection
+const MAX_FIELD_LENGTH = 50;
+function sanitizeField(value: unknown): string {
+    if (typeof value !== 'string') return String(value ?? '').slice(0, MAX_FIELD_LENGTH);
+    // Strip control characters, newlines, and common injection delimiters
+    // eslint-disable-next-line no-control-regex
+    return value.replace(/[\n\r\t\u0000-\u001f]/g, '').replace(/[{}[\]<>]/g, '').slice(0, MAX_FIELD_LENGTH);
+}
+
+function sanitizeNumber(value: unknown, fallback = 0): number {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(0, Math.min(n, 99999));
+}
+
 export async function POST(req: NextRequest) {
     try {
         if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
             return NextResponse.json({ text: "Comms are down — AI narration is not configured." });
         }
 
-        const { type, context } = await req.json();
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+        const { type, context } = body;
+
+        if (!context || typeof context !== 'object') {
+            return NextResponse.json({ text: "Missing context. Standing by." });
+        }
 
         if (!type || !VALID_NARRATE_TYPES.has(type)) {
             return NextResponse.json({ text: "Unknown narration type. Standing by." });
@@ -39,8 +64,8 @@ export async function POST(req: NextRequest) {
         if (type === 'MISSION_START') {
             prompt = `${sophiaPersona}
             MISSION BRIEFING:
-            Operative: ${context.streamerName} (Archetype: ${context.archetype}).
-            Global Threat Level: ${context.threatLevel}.
+            Operative: ${sanitizeField(context.streamerName)} (Archetype: ${sanitizeField(context.archetype)}).
+            Global Threat Level: ${sanitizeNumber(context.threatLevel)}.
             Goal: Liberate the sector and protect the signal.
 
             Generate a short, hype mission briefing (max 2 sentences).
@@ -48,11 +73,11 @@ export async function POST(req: NextRequest) {
         } else if (type === 'BATTLE_ACTION') {
             prompt = `${sophiaPersona}
             LIVE COMBAT FEED:
-            Match: ${context.playerName} vs ${context.enemyName}.
-            Action: ${context.actionName}.
-            Damage: ${context.damage || 0}.
+            Match: ${sanitizeField(context.playerName)} vs ${sanitizeField(context.enemyName)}.
+            Action: ${sanitizeField(context.actionName)}.
+            Damage: ${sanitizeNumber(context.damage)}.
             Status: ${context.isCrit ? "CRITICAL HIT!" : ""}${context.isSuperEffective ? "SUPER EFFECTIVE!" : ""}
-            HP Status: Player ${context.playerHp}/${context.playerMaxHp} | Enemy ${context.enemyHp}/${context.enemyMaxHp}.
+            HP Status: Player ${sanitizeNumber(context.playerHp)}/${sanitizeNumber(context.playerMaxHp)} | Enemy ${sanitizeNumber(context.enemyHp)}/${sanitizeNumber(context.enemyMaxHp)}.
 
             Generate a 1-sentence reactive commentary.
             If it's a crit/super effective, hype it up like a shoutcaster ("OMG THE DAMAGE!").
@@ -60,8 +85,8 @@ export async function POST(req: NextRequest) {
             Make it sound like you're watching the stream live and shot-calling.`;
         } else if (type === 'MISSION_END') {
             prompt = `${sophiaPersona}
-            Mission result: ${context.result} for operative ${context.streamerName}.
-            Rank: ${context.rank}.
+            Mission result: ${sanitizeField(context.result)} for operative ${sanitizeField(context.streamerName)}.
+            Rank: ${sanitizeField(context.rank)}.
             Generate a 1-sentence closing statement. Be genuine — celebrate wins, be real about losses.`;
         }
 

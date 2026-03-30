@@ -62,10 +62,8 @@ export const useUserAuth = () => {
             const message = `Sign in to Protect The Streams. Nonce: ${timestamp}`;
             const messageEncoded = new TextEncoder().encode(message);
 
-            // Request signature
+            // Request wallet signature (required for all environments)
             const signature = await signMessage(messageEncoded);
-
-            // Encode signature to Base58 to send to API
             const signatureBase58 = bs58.encode(signature);
 
             // Call Backend

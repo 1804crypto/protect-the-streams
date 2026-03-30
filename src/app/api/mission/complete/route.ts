@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { verifySession } from '@/lib/auth';
 import { calculateLevel } from '@/lib/gameMechanics';
 import { computeRank, computeXp, computePtsReward, computeRewardItems } from '@/lib/missionRewards';
 import { sanitizeInventory, VALID_ITEM_IDS, MAX_ITEM_QUANTITY } from '@/lib/sanitizeInventory';
 import { VALID_STREAMER_IDS } from '@/app/api/player/sync/route';
+import { getServiceSupabase } from '@/lib/supabaseClient';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = getServiceSupabase();
 
 // Minimum mission duration to prevent instant-complete exploits
 const MIN_MISSION_DURATION_MS = 30000;
+
+// Anti-farm: max completions per streamer per 24h window
+const MAX_COMPLETIONS_PER_STREAMER_PER_DAY = 5;
+
+// Anti-farm: minimum cooldown between mission completions (any streamer)
+const MIN_MISSION_COOLDOWN_MS = 10_000; // 10 seconds
+
+// Balance caps to prevent overflow exploits
+const MAX_XP = 999_999_999;
+const MAX_PTS_BALANCE = 999_999_999;
 
 export async function POST(req: NextRequest) {
     try {
@@ -29,10 +37,29 @@ export async function POST(req: NextRequest) {
         const userId = session.userId as string;
 
         // 2. Parse & Validate Body
-        const { missionId, hpRemaining, maxHp, turnsUsed, isBoss, duration } = await req.json();
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+        const { missionId, hpRemaining, maxHp, turnsUsed, isBoss, duration, idempotencyKey } = body;
 
         if (!missionId || typeof missionId !== 'string') {
             return NextResponse.json({ error: 'Missing missionId' }, { status: 400 });
+        }
+
+        // Idempotency: If key provided, check if already processed
+        if (idempotencyKey && typeof idempotencyKey === 'string') {
+            const { data: existing } = await supabase
+                .from('mission_completions')
+                .select('result')
+                .eq('idempotency_key', idempotencyKey)
+                .single();
+
+            if (existing?.result) {
+                return NextResponse.json({ ...existing.result, cached: true });
+            }
         }
         if (!VALID_STREAMER_IDS.has(missionId)) {
             return NextResponse.json({ error: 'Invalid mission target' }, { status: 400 });
@@ -55,6 +82,20 @@ export async function POST(req: NextRequest) {
         const isFailure = hpRemaining <= 0;
         if (duration < MIN_MISSION_DURATION_MS && !isFailure) {
             return NextResponse.json({ error: 'Mission duration too short' }, { status: 400 });
+        }
+
+        // Anti-cheat: plausibility checks on battle results
+        // Max possible HP is ~300 (base 100 + level bonus 100 + threat bonus 50 + equipment 50)
+        if (maxHp > 500) {
+            return NextResponse.json({ error: 'Implausible max HP value' }, { status: 400 });
+        }
+        // Boss fights should take at least 3 turns (bosses have 400+ HP, max player damage ~80/turn)
+        if (isBoss && !isFailure && turnsUsed < 3) {
+            return NextResponse.json({ error: 'Implausible turn count for boss battle' }, { status: 400 });
+        }
+        // Minimum duration per turn (~2s per turn is the fastest reasonable pace)
+        if (!isFailure && duration < turnsUsed * 1500) {
+            return NextResponse.json({ error: 'Battle pace too fast for reported turns' }, { status: 400 });
         }
 
         // 3. Server computes all rewards
@@ -82,18 +123,35 @@ export async function POST(req: NextRequest) {
             wins: number; losses: number;
         };
 
-        // Rate limit: minimum 2s between operations
+        // Rate limit: minimum cooldown between mission completions
         if (user.updated_at) {
             const lastUpdate = new Date(user.updated_at).getTime();
-            if (Date.now() - lastUpdate < 2000) {
-                return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+            if (Date.now() - lastUpdate < MIN_MISSION_COOLDOWN_MS) {
+                return NextResponse.json({ error: 'Mission cooldown active. Try again shortly.' }, { status: 429 });
             }
         }
 
-        // 5. Compute new state
-        const newXp = (user.xp || 0) + xpGained;
+        // Anti-farm: max completions per streamer per 24h window
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { count: dailyCount, error: countError } = await supabase
+            .from('mission_completions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('mission_id', missionId)
+            .gte('created_at', twentyFourHoursAgo);
+
+        if (!countError && dailyCount !== null && dailyCount >= MAX_COMPLETIONS_PER_STREAMER_PER_DAY) {
+            return NextResponse.json({
+                error: 'Daily mission limit reached for this streamer. Try a different operative or return tomorrow.',
+                dailyLimit: MAX_COMPLETIONS_PER_STREAMER_PER_DAY,
+                resetIn: '24h'
+            }, { status: 429 });
+        }
+
+        // 5. Compute new state (capped to prevent overflow)
+        const newXp = Math.min((user.xp || 0) + xpGained, MAX_XP);
         const newLevel = calculateLevel(newXp);
-        const newPtsBalance = (user.pts_balance || 0) + ptsGained;
+        const newPtsBalance = Math.min((user.pts_balance || 0) + ptsGained, MAX_PTS_BALANCE);
         const newWins = (user.wins || 0) + (!isFailure ? 1 : 0);
         const newLosses = (user.losses || 0) + (isFailure ? 1 : 0);
 
@@ -136,7 +194,7 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // 6. Write to DB
+        // 6. Write to DB (with optimistic locking to prevent TOCTOU race)
         const updates: Record<string, unknown> = {
             xp: newXp,
             level: newLevel,
@@ -147,17 +205,49 @@ export async function POST(req: NextRequest) {
             losses: newLosses,
             updated_at: new Date().toISOString()
         };
-        const { error: updateError } = await supabase
+
+        // Optimistic lock: only update if updated_at hasn't changed since we read it
+        let updateQuery = supabase
             .from('users')
             .update(updates)
             .eq('id', userId);
+
+        if (user.updated_at) {
+            updateQuery = updateQuery.eq('updated_at', user.updated_at);
+        }
+
+        const { data: updateResult, error: updateError } = await updateQuery.select('id').maybeSingle();
 
         if (updateError) {
             console.error('Mission complete DB update failed:', updateError);
             return NextResponse.json({ error: 'Failed to save progress' }, { status: 500 });
         }
 
-        // 7. Faction war contribution (if applicable)
+        // If no row was updated, another request modified the user between our read and write
+        if (!updateResult) {
+            return NextResponse.json({ error: 'Conflict: state changed. Please retry.' }, { status: 409 });
+        }
+
+        // 7. Store idempotency record (BLOCKING — must complete before response
+        // to prevent TOCTOU race where duplicate requests slip through)
+        if (idempotencyKey && typeof idempotencyKey === 'string') {
+            const resultPayload = {
+                success: true, rank, xpGained, newXp, newLevel,
+                ptsGained, newPtsBalance, newWins, newLosses, itemsAwarded
+            };
+            const { error: idemError } = await supabase
+                .from('mission_completions')
+                .upsert({
+                    idempotency_key: idempotencyKey,
+                    user_id: userId,
+                    mission_id: missionId,
+                    result: resultPayload,
+                    created_at: new Date().toISOString()
+                });
+            if (idemError) console.error('Mission idempotency insert failed:', idemError);
+        }
+
+        // 8. Faction war contribution (if applicable)
         if (user.faction && user.faction !== 'NONE' && rank !== 'F') {
             supabase.rpc('contribute_to_faction_war', {
                 p_streamer_id: missionId,

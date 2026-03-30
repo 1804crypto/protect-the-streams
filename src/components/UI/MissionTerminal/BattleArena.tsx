@@ -35,6 +35,7 @@ interface BattleArenaProps {
     onDamagePopupComplete: (_id: number) => void;
     statsKey: number;
     equipmentSlots?: EquipmentSlots;
+    isComplete: boolean;
 }
 
 const EQUIP_LABELS: Record<string, string> = {
@@ -85,8 +86,10 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
     onItemEffectComplete,
     onDamagePopupComplete,
     statsKey,
-    equipmentSlots
+    equipmentSlots,
+    isComplete
 }) => {
+    const isLastStand = player.hp === 0 && !isComplete;
     return (
         <motion.div
             animate={isShaking || isAttacking ? {
@@ -98,6 +101,13 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
             transition={{ duration: isAttacking ? 0.2 : 0.35 }}
             className={`relative flex-[1.5] bg-[#020202] border-2 ${isBoss ? 'border-resistance-accent/40 shadow-[0_0_50px_rgba(255,0,60,0.2)]' : 'border-white/10'} overflow-hidden flex flex-col rounded-lg`}
         >
+            {/* Screen Reader Announcements */}
+            <div className="sr-only" role="status" aria-live="assertive" aria-atomic="true">
+                {isLastStand ? 'Last Stand! Use Phoenix Module to revive!' :
+                 isTurn ? `Your turn. Turn ${turns}. Your HP: ${player.hp} of ${player.maxHp}. Enemy HP: ${enemy.hp} of ${enemy.maxHp}.` :
+                 `Enemy is attacking. Turn ${turns}.`}
+            </div>
+
             {/* Digital Noise Grain */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-[60] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
 
@@ -121,6 +131,27 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                 )}
             </AnimatePresence>
 
+            {/* Last Stand Banner */}
+            <AnimatePresence>
+                {isLastStand && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute top-1/2 left-0 right-0 -translate-y-1/2 z-[70] flex items-center justify-center pointer-events-none"
+                    >
+                        <motion.div
+                            animate={{ scale: [1, 1.05, 1], opacity: [1, 0.8, 1] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                            className="bg-neon-orange/90 px-6 md:px-12 py-3 skew-x-[-8deg] border-y-2 border-white shadow-[0_0_40px_rgba(255,165,0,0.6)]"
+                        >
+                            <div className="text-white font-black text-sm md:text-xl tracking-[0.4em] italic skew-x-[8deg]">LAST_STAND — USE PHOENIX MODULE!</div>
+                            <div className="text-[9px] text-white/70 font-mono tracking-widest text-center mt-1 skew-x-[8deg]">INTEGRITY_ZERO — DEPLOY_REVIVE_NOW</div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Arena Atmosphere */}
             <div className="absolute inset-0 z-0 opacity-40">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,243,255,0.15),transparent_70%)]" />
@@ -129,7 +160,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
             </div>
 
             {/* HUD: Enemy Plate */}
-            <div className="absolute top-3 left-3 right-3 md:top-6 md:left-6 md:right-6 z-40 flex justify-between items-start gap-2">
+            <div className="absolute top-2 left-2 right-2 md:top-6 md:left-6 md:right-6 z-40 flex justify-between items-start gap-2">
                 <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{
@@ -160,9 +191,9 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                 <div className="text-right flex flex-col items-end">
                     <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-black text-neon-blue tracking-widest bg-neon-blue/10 px-2 py-0.5 rounded-sm border border-neon-blue/30">TURN {turns}</span>
-                        <span className="text-[9px] font-mono text-neon-blue/60 tracking-tighter uppercase mb-0.5">Uplink_Signal: STABLE</span>
+                        <span className="hidden md:inline text-[9px] font-mono text-neon-blue/60 tracking-tighter uppercase mb-0.5">Uplink_Signal: STABLE</span>
                     </div>
-                    <div className="flex gap-1 justify-end">
+                    <div className="hidden md:flex gap-1 justify-end">
                         {[...Array(5)].map((_, i) => (
                             <div key={i} className={`w-1.5 h-3 ${i < 4 ? 'bg-neon-blue' : 'bg-white/10'}`} />
                         ))}
@@ -171,7 +202,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
             </div>
 
             {/* Sector 7 Arena Viewport */}
-            <div className="flex-1 relative flex items-center justify-center pt-24 pb-32 overflow-hidden">
+            <div className="flex-1 relative flex items-center justify-center pt-16 pb-20 md:pt-24 md:pb-32 overflow-hidden">
                 {/* Enemy Sprite */}
                 <motion.div
                     animate={!isTurn ? {
@@ -216,7 +247,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
 
                     <Image
                         src={enemy.image || "/authority_sentinel_cipher_unit_1766789046162.png"}
-                        alt="Enemy Boss"
+                        alt={`Enemy: ${enemy.name}`}
                         width={380}
                         height={380}
                         className={`absolute inset-0 w-full h-full object-contain p-4 lg:p-8 filter drop-shadow-[0_0_30px_rgba(255,0,60,0.3)] ${isBoss ? 'brightness-125' : ''}`}
@@ -235,7 +266,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                 </motion.div>
 
                 {/* Player Avatar */}
-                <div className="absolute -bottom-12 -left-12 lg:-bottom-20 lg:-left-20 z-30 transform rotate-[15deg] opacity-90">
+                <div className="absolute -bottom-8 -left-8 md:-bottom-12 md:-left-12 lg:-bottom-20 lg:-left-20 z-30 transform rotate-[15deg] opacity-90">
                     <motion.div
                         animate={isTurn ? {
                             rotate: [15, 13, 17, 15],
@@ -246,7 +277,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                             filter: isTakingDamage ? ["brightness(4) contrast(2) grayscale(1)", "brightness(1) contrast(1) grayscale(0)"] : "none"
                         }}
                         transition={{ duration: 4, repeat: Infinity }}
-                        className="relative w-[120px] h-[120px] md:w-[220px] md:h-[220px] lg:w-[450px] lg:h-[450px]"
+                        className="relative w-[100px] h-[100px] md:w-[220px] md:h-[220px] lg:w-[450px] lg:h-[450px]"
                     >
                         <Image
                             src={streamer.image}
@@ -346,7 +377,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
             </div>
 
             {/* HUD: Player Plate */}
-            <div className="absolute bottom-3 right-3 md:bottom-6 md:right-6 z-40">
+            <div className="absolute bottom-2 right-2 md:bottom-6 md:right-6 z-40">
                 <motion.div
                     initial={{ x: 20, opacity: 0 }}
                     animate={{
@@ -392,7 +423,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                         )}
                         {defenseBoost.turnsLeft > 0 && (
                             <div className="px-2 py-0.5 bg-neon-blue/10 border border-neon-blue/30 text-[7px] text-neon-blue font-bold rounded-sm animate-pulse">
-                                🛡️ SHIELD_NODE_ACTVE
+                                🛡️ SHIELD_NODE_ACTIVE
                             </div>
                         )}
                     </div>

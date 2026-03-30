@@ -318,11 +318,29 @@ export const useAudioSystem = () => {
             [droneNode, subBassNode, shimmerNode, lfoNode].forEach(nodeRef => {
                 if (nodeRef.current) {
                     try { nodeRef.current.stop(); } catch { /* ignore */ }
+                    try { nodeRef.current.disconnect(); } catch { /* ignore */ }
                     nodeRef.current = null;
                 }
             });
-            droneGain.current = null;
+            if (droneGain.current) {
+                try { droneGain.current.disconnect(); } catch { /* ignore */ }
+                droneGain.current = null;
+            }
         }
+        // Cleanup ambient on unmount
+        return () => {
+            [droneNode, subBassNode, shimmerNode, lfoNode].forEach(nodeRef => {
+                if (nodeRef.current) {
+                    try { nodeRef.current.stop(); } catch { /* ignore */ }
+                    try { nodeRef.current.disconnect(); } catch { /* ignore */ }
+                    nodeRef.current = null;
+                }
+            });
+            if (droneGain.current) {
+                try { droneGain.current.disconnect(); } catch { /* ignore */ }
+                droneGain.current = null;
+            }
+        };
     }, [isMuted, isDivertMode, initCtx]);
 
     // === NEURAL MUSIC ENGINE MODULATION ===

@@ -113,7 +113,7 @@ export const ToastSystem = () => {
     const toasts = useToastStore((state) => state.toasts);
 
     return (
-        <div className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-[100] flex flex-col gap-3 pointer-events-none">
+        <div className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-[100] flex flex-col gap-3 pointer-events-none" role="region" aria-label="Notifications" aria-live="polite">
             <AnimatePresence mode="popLayout">
                 {toasts.map((toast) => (
                     <div key={toast.id} className="pointer-events-auto">

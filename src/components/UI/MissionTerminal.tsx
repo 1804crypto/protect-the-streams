@@ -18,6 +18,8 @@ import { useNeuralMusic } from '@/hooks/useNeuralMusic';
 import { useNeuralNarrative } from '@/hooks/useNeuralNarrative';
 import { GlitchOverlay } from './MissionTerminal/GlitchOverlay';
 import { FactionChatWidget } from './MissionTerminal/FactionChatWidget';
+import { TypeChartModal } from './TypeChartModal';
+import { useModalStore } from '@/hooks/useModalStore';
 
 interface MissionTerminalProps {
     streamer: Streamer;
@@ -96,6 +98,20 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
     const [impactFlash, setImpactFlash] = useState<string | null>(null);
     const [screenFlash, setScreenFlash] = useState<string | null>(null);
     const [statsKey, setStatsKey] = useState(0); // Used to force re-render flashes
+    const [showTypeChart, setShowTypeChart] = useState(false);
+
+    // Escape key to close (when type chart isn't open)
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (showTypeChart) setShowTypeChart(false);
+                else onClose();
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [isOpen, onClose, showTypeChart]);
 
     // Define spawnParticles with useCallback so it can be used in useEffect
     const spawnParticles = useCallback((count: number, x: number, y: number, color: string) => {
@@ -266,7 +282,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
 
     // XP thresholds
     const getXPThreshold = (lvl: number) => {
-        if (lvl >= 5) return 1000;
+        if (lvl >= 5) return 2000;
         if (lvl >= 4) return 1000;
         if (lvl >= 3) return 500;
         if (lvl >= 2) return 250;
@@ -347,17 +363,27 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                     {/* Dynamic Ambient Glow */}
                     <div className={`absolute inset-0 opacity-20 transition-colors duration-1000 ${isBoss ? 'bg-resistance-accent/20' : 'bg-neon-blue/10'}`} />
 
-                    {/* Mobile Close Button */}
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 z-[210] w-12 h-12 bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all rounded-full"
-                        title="De-sync Uplink"
-                    >
-                        ✕
-                    </button>
+                    {/* Top Action Buttons */}
+                    <div className="absolute top-4 right-4 z-[210] flex gap-2">
+                        <button
+                            onClick={() => setShowTypeChart(true)}
+                            className="w-12 h-12 bg-white/5 border border-neon-blue/30 flex items-center justify-center text-neon-blue/60 hover:text-neon-blue hover:bg-neon-blue/10 transition-all rounded-full text-[10px] font-black tracking-tighter"
+                            title="Type Effectiveness Chart"
+                            aria-label="View type effectiveness chart"
+                        >
+                            TYPE
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="w-12 h-12 bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all rounded-full"
+                            title="De-sync Uplink"
+                        >
+                            ✕
+                        </button>
+                    </div>
 
                     {/* Expansive Battle Console */}
-                    <div className="ds-terminal relative flex flex-col lg:flex-row gap-4 p-2 lg:p-6 w-full max-w-[1240px] items-stretch h-full lg:h-[800px] overflow-y-auto lg:overflow-visible">
+                    <div className="ds-terminal relative flex flex-col lg:flex-row gap-2 md:gap-4 p-1 md:p-2 lg:p-6 w-full max-w-[1240px] items-stretch h-full lg:h-[800px] overflow-y-auto lg:overflow-visible">
 
                         {/* Top Screen / Sector 7 Arena */}
                         <BattleArena
@@ -386,10 +412,11 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                             onItemEffectComplete={(_id) => setItemEffects(prev => prev.filter(e => e.id !== _id))}
                             onDamagePopupComplete={(_id) => setDamagePopups(prev => prev.filter(p => p.id !== _id))}
                             statsKey={statsKey}
+                            isComplete={isComplete}
                         />
 
                         {/* Right Section / Command Deck */}
-                        <div className="relative flex-1 bg-[#050505] border-2 border-white/10 flex flex-col p-4 lg:p-6 rounded-lg lg:overflow-visible">
+                        <div className="relative flex-1 bg-[#050505] border-2 border-white/10 flex flex-col p-2 md:p-4 lg:p-6 rounded-lg overflow-y-auto">
                             {/* Neural Narrator Overlay */}
                             <div className="mb-4 p-3 bg-white/5 border-l-2 border-neon-blue rounded flex flex-col gap-1">
                                 <span className="text-[10px] text-neon-blue font-bold tracking-widest uppercase">{"// Neural_Narrator"}</span>
@@ -476,11 +503,12 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                 showItems={showItems}
                             />
 
-                            {/* Faction Chat Feed */}
-                            {/* Faction Chat Feed */}
-                            <div className="mt-4 flex-1 min-h-[200px]">
-                                <FactionChatWidget factionId={userFaction === 'NONE' ? 'RED' : userFaction} senderName="Operative" />
-                            </div>
+                            {/* Faction Chat Feed — only shown if player has joined a faction */}
+                            {userFaction !== 'NONE' && (
+                                <div className="mt-4 flex-1 min-h-[200px]">
+                                    <FactionChatWidget factionId={userFaction} senderName="Operative" />
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -521,6 +549,12 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                 resultStep={resultStep}
                                 lootedItems={lootedItems}
                                 onClose={onClose}
+                                onViewRankings={() => {
+                                    onClose();
+                                    setTimeout(() => {
+                                        useModalStore.getState().openModal('leaderboard');
+                                    }, 300);
+                                }}
                             />
                         )}
                     </AnimatePresence>
@@ -540,6 +574,9 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                             </motion.div>
                         )}
                     </AnimatePresence>
+
+                    {/* Type Chart Modal */}
+                    <TypeChartModal isOpen={showTypeChart} onClose={() => setShowTypeChart(false)} />
 
                     {/* Lore Overlay Layer */}
                     <AnimatePresence>

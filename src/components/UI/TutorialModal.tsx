@@ -11,33 +11,45 @@ interface TutorialModalProps {
 
 const tutorialSteps = [
     {
-        title: "WELCOME_TO_THE_RESISTANCE",
+        title: "WELCOME_OPERATIVE",
         icon: "⚡",
-        content: "The Corporate Authority has initiated THE BLACKOUT. Your mission: protect the most influential voices of the digital age.",
+        content: "The Corporate Authority has initiated THE BLACKOUT — silencing independent streamers worldwide. You are the Resistance. Your mission: mint defense cards, fight back, and climb the ranks.",
         highlight: "neon-blue"
     },
     {
-        title: "MINT_YOUR_DEFENSE_CARDS",
-        icon: "🎴",
-        content: "Each streamer is a unique tactical asset. Connect your Solana wallet and mint NFT defense cards to secure them in your collection.",
+        title: "STEP_1:_CONNECT_WALLET",
+        icon: "🔗",
+        content: "Hit the wallet button in the top-right to connect your Solana wallet (Phantom, Backpack, etc.). This is your identity in the Resistance network. No wallet? No problem — browse the roster first.",
         highlight: "neon-pink"
     },
     {
-        title: "NAVIGATE_THE_SECTOR_MAP",
-        icon: "🗺️",
-        content: "The Resistance Map shows controlled territories. Click on any sector node to initiate a liberation mission. Clear all sectors to unlock the Corporate HQ.",
+        title: "STEP_2:_MINT_YOUR_FIRST_CARD",
+        icon: "🎴",
+        content: "Scroll down to the Resistance Roster and click MINT on any streamer. Each card is a unique NFT on Solana. Owning a card unlocks missions, PvP, and the Sector Map.",
         highlight: "neon-green"
     },
     {
-        title: "MASTER_TACTICAL_COMBAT",
-        icon: "⚔️",
-        content: "Battles use a turn-based system. Each streamer has 3 unique moves + an Ultimate ability. Build your charge meter by attacking, then unleash devastating finishers!",
+        title: "STEP_3:_START_A_MISSION",
+        icon: "🎯",
+        content: "Click TERMINAL on any card you own to enter a liberation mission. Fight through 3 stages of enemies + a final boss. Your performance earns a rank: S, A, B, or C.",
         highlight: "neon-blue"
+    },
+    {
+        title: "COMBAT_BASICS",
+        icon: "⚔️",
+        content: "Battles are turn-based. Each streamer has 3 moves + an Ultimate. Your charge meter builds +20% per attack — at 100%, unleash your finisher! Use the TYPE button in battle to check matchups.",
+        highlight: "neon-pink"
+    },
+    {
+        title: "EARN_AND_SPEND",
+        icon: "🛒",
+        content: "Win missions to earn PTS tokens and XP. Spend PTS at the Black Market on healing chips, attack boosts, and gear. Deploy items mid-battle from your inventory.",
+        highlight: "neon-green"
     },
     {
         title: "RISE_THROUGH_THE_RANKS",
         icon: "🏆",
-        content: "Win battles to earn XP and level up your streamers. The higher your performance rank (S, A, B, C), the faster you'll grow. Good luck, Operative.",
+        content: "Join RED or PURPLE faction to compete on leaderboards. Level up your streamers, challenge other players in PvP, and explore Streamer Journeys in your Barracks. Good luck, Operative.",
         highlight: "resistance-accent"
     }
 ];

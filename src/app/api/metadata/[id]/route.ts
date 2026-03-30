@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { streamers } from '@/data/streamers';
+import { checkRateLimit } from '@/lib/rateLimit';
+
+const RATE_LIMIT = { name: 'metadata', maxRequests: 120, windowMs: 60_000 };
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: Promise<{ id: string }> } // Next.js 15+ params are promises? Or standard. Safe to treat as object in Next 14.
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const limited = checkRateLimit(request, RATE_LIMIT);
+    if (limited) return limited;
+
     const p = await params;
     const { id } = p;
 
@@ -15,8 +21,8 @@ export async function GET(
         return NextResponse.json({ error: 'Streamer not found' }, { status: 404 });
     }
 
-    const hostHeader = request.headers.get('host');
-    const host = process.env.NEXT_PUBLIC_HOST_URL || (hostHeader ? `https://${hostHeader}` : 'https://protectthestreamers.xyz');
+    // Use canonical host — never trust the Host header to prevent injection
+    const host = process.env.NEXT_PUBLIC_HOST_URL || 'https://protectthestreamers.xyz';
 
     // Construct Metadata (Metaplex Core Standard / JSON Standard)
     const metadata = {
@@ -86,5 +92,9 @@ export async function GET(
         }
     };
 
-    return NextResponse.json(metadata);
+    return NextResponse.json(metadata, {
+        headers: {
+            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+    });
 }

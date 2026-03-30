@@ -1,8 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { items } from '@/data/items';
+import { toast } from '@/hooks/useToastStore';
 
 interface ResultOverlayProps {
     result: 'SUCCESS' | 'FAILURE' | null;
@@ -15,6 +16,7 @@ interface ResultOverlayProps {
     resultStep: number;
     lootedItems: string[];
     onClose: () => void;
+    onViewRankings?: () => void;
 }
 
 export const ResultOverlay: React.FC<ResultOverlayProps> = ({
@@ -27,8 +29,24 @@ export const ResultOverlay: React.FC<ResultOverlayProps> = ({
     xpProgress,
     resultStep,
     lootedItems,
-    onClose
+    onClose,
+    onViewRankings
 }) => {
+    // First-win guidance toast
+    const hasShownGuide = useRef(false);
+    useEffect(() => {
+        if (result === 'SUCCESS' && resultStep >= 1 && !hasShownGuide.current) {
+            hasShownGuide.current = true;
+            const isFirstWin = !localStorage.getItem('pts_first_win_toast');
+            if (isFirstWin) {
+                localStorage.setItem('pts_first_win_toast', 'true');
+                setTimeout(() => {
+                    toast.success('FIRST VICTORY!', 'You earned PTS tokens. Visit the Black Market to spend them on gear and healing items.');
+                }, 2500);
+            }
+        }
+    }, [result, resultStep]);
+
     if (!result) return null;
 
     return (
@@ -148,16 +166,28 @@ export const ResultOverlay: React.FC<ResultOverlayProps> = ({
                         )}
                     </AnimatePresence>
 
-                    <motion.button
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 1 }}
-                        onClick={onClose}
-                        className="w-full py-5 border-4 border-neon-green text-neon-green font-black tracking-[0.5em] hover:bg-neon-green hover:text-black transition-all group relative overflow-hidden mt-8"
+                        className="flex flex-col gap-3 mt-8"
                     >
-                        <span className="relative z-10">TERMINATE_UPLINK</span>
-                        <motion.div animate={{ x: ["-100%", "200%"] }} transition={{ duration: 2, repeat: Infinity }} className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                    </motion.button>
+                        <button
+                            onClick={onClose}
+                            className="w-full py-5 border-4 border-neon-green text-neon-green font-black tracking-[0.5em] hover:bg-neon-green hover:text-black transition-all relative overflow-hidden"
+                        >
+                            <span className="relative z-10">NEXT_MISSION</span>
+                            <motion.div animate={{ x: ["-100%", "200%"] }} transition={{ duration: 2, repeat: Infinity }} className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                        </button>
+                        {onViewRankings && (
+                            <button
+                                onClick={onViewRankings}
+                                className="w-full py-3 border border-neon-yellow/40 text-neon-yellow font-black tracking-[0.3em] text-[10px] hover:bg-neon-yellow/10 transition-all uppercase"
+                            >
+                                VIEW_RANKINGS
+                            </button>
+                        )}
+                    </motion.div>
                 </div>
             ) : (
                 <div className="w-full max-w-sm space-y-8">

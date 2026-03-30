@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Streamer } from '@/data/streamers';
 import { StreamerCard } from '@/components/Cards/StreamerCard';
 import { usePriceData } from '@/hooks/usePriceData';
@@ -31,6 +32,7 @@ export const RosterSection: React.FC<RosterSectionProps> = ({
     onPvP,
     onMission,
 }) => {
+    const { connected, select, wallets } = useWallet();
     const { prices, loading: priceLoading } = usePriceData();
 
     return (
@@ -105,18 +107,32 @@ export const RosterSection: React.FC<RosterSectionProps> = ({
                                         )}
                                     </>
                                 ) : (
-                                    /* Not owned: show MINT button */
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); playClick(); mint(streamer.id); }}
-                                        disabled={isMintingThis}
-                                        className={`px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm ${isMintingThis
-                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                            : 'bg-neon-blue text-black hover:bg-white'
-                                            }`}
-                                        aria-label={`Mint ${streamer.name} NFT card`}
-                                    >
-                                        {isMintingThis ? 'MINTING...' : (priceLoading || !prices ? 'LOADING...' : `MINT (${prices.mintPriceSol} SOL ≈ $${prices.mintPriceUsd})`)}
-                                    </button>
+                                    /* Not owned: show MINT or CONNECT WALLET button */
+                                    connected ? (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); playClick(); mint(streamer.id); }}
+                                            disabled={isMintingThis}
+                                            className={`px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm ${isMintingThis
+                                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                                : 'bg-neon-blue text-black hover:bg-white'
+                                                }`}
+                                            aria-label={`Mint ${streamer.name} NFT card`}
+                                        >
+                                            {isMintingThis ? 'MINTING...' : (priceLoading || !prices ? 'LOADING...' : `MINT (${prices.mintPriceSol} SOL ≈ $${prices.mintPriceUsd})`)}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                playClick();
+                                                if (wallets.length > 0) select(wallets[0].adapter.name);
+                                            }}
+                                            className="px-4 py-2 min-h-[44px] text-xs font-black uppercase rounded-sm bg-neon-orange text-black hover:bg-white animate-pulse"
+                                            aria-label="Connect wallet to mint"
+                                        >
+                                            CONNECT WALLET TO MINT
+                                        </button>
+                                    )
                                 )}
                             </div>
                         </motion.div>

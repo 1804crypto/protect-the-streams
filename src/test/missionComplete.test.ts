@@ -10,12 +10,18 @@ describe('computeRank', () => {
         expect(computeRank(90, 100, 8, false)).toBe('S');
     });
 
-    it('returns A for high HP and high turns', () => {
-        expect(computeRank(90, 100, 12, false)).toBe('A');
+    it('returns A for high HP AND low turns', () => {
+        expect(computeRank(60, 100, 12, false)).toBe('A');
     });
 
-    it('returns A for low HP and low turns', () => {
-        expect(computeRank(30, 100, 8, false)).toBe('A');
+    it('returns B for high HP but high turns (AND logic)', () => {
+        // >50% HP but >=15 turns → B (not A, because AND requires BOTH conditions)
+        expect(computeRank(90, 100, 20, false)).toBe('B');
+    });
+
+    it('returns B for low HP and low turns (AND logic)', () => {
+        // <50% HP but <15 turns → B (not A, because AND requires BOTH conditions)
+        expect(computeRank(30, 100, 8, false)).toBe('B');
     });
 
     it('returns B for low HP and high turns', () => {
@@ -31,12 +37,13 @@ describe('computeRank', () => {
         expect(computeRank(81, 100, 9, false)).toBe('S');
     });
 
-    it('A rank for >50% HP regardless of turns', () => {
-        expect(computeRank(51, 100, 50, false)).toBe('A');
-    });
-
-    it('A rank for <15 turns regardless of HP', () => {
-        expect(computeRank(10, 100, 14, false)).toBe('A');
+    it('A rank requires BOTH >50% HP AND <15 turns', () => {
+        // Both conditions met → A
+        expect(computeRank(51, 100, 14, false)).toBe('A');
+        // Only HP condition met → B
+        expect(computeRank(51, 100, 50, false)).toBe('B');
+        // Only turns condition met → B
+        expect(computeRank(10, 100, 14, false)).toBe('B');
     });
 });
 
@@ -57,9 +64,9 @@ describe('computeXp', () => {
 
 describe('computePtsReward', () => {
     it('returns correct PTS for each rank', () => {
-        expect(computePtsReward('S')).toBe(100);
-        expect(computePtsReward('A')).toBe(50);
-        expect(computePtsReward('B')).toBe(25);
+        expect(computePtsReward('S')).toBe(150);
+        expect(computePtsReward('A')).toBe(75);
+        expect(computePtsReward('B')).toBe(40);
         expect(computePtsReward('F')).toBe(0);
     });
 });

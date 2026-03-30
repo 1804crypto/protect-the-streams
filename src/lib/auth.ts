@@ -6,10 +6,14 @@ let _secretKey: Uint8Array | null = null;
 
 function getSecretKey(): Uint8Array {
     if (!_secretKey) {
-        if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-            console.error('FATAL: JWT_SECRET environment variable is not set in production.');
+        const secret = process.env.JWT_SECRET;
+        if (!secret && process.env.NODE_ENV === 'production') {
+            throw new Error('FATAL: JWT_SECRET environment variable is not set in production. Refusing to start with insecure default.');
         }
-        _secretKey = new TextEncoder().encode(process.env.JWT_SECRET || 'pts-dev-only-secret-key');
+        if (secret && secret.length < 32) {
+            throw new Error('FATAL: JWT_SECRET must be at least 32 characters.');
+        }
+        _secretKey = new TextEncoder().encode(secret || 'pts-dev-only-secret-key');
     }
     return _secretKey;
 }

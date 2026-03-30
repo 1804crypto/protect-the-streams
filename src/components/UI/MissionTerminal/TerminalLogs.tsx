@@ -9,7 +9,7 @@ interface TerminalLogsProps {
 
 export const TerminalLogs: React.FC<TerminalLogsProps> = ({ logs }) => {
     return (
-        <div className="flex-1 bg-black/60 border border-white/5 p-4 mb-6 font-mono text-[10px] leading-relaxed shadow-inner overflow-y-auto lg:h-[200px] rounded-sm">
+        <div className="flex-1 bg-black/60 border border-white/5 p-4 mb-6 font-mono text-[10px] leading-relaxed shadow-inner overflow-y-auto lg:h-[200px] rounded-sm" role="log" aria-label="Battle log" aria-live="polite" aria-relevant="additions">
             <div className="space-y-1">
                 {logs.map((log, i) => (
                     <motion.div

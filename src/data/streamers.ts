@@ -88,11 +88,11 @@ export const applyNatureToStats = (baseStats: StreamerStats, nature: NatureType)
     const modifiedStats = { ...baseStats };
 
     modifier.boost.forEach(stat => {
-        modifiedStats[stat] = Math.min(100, Math.floor(modifiedStats[stat] * 1.1));
+        modifiedStats[stat] = Math.min(100, Math.floor(modifiedStats[stat] * 1.15));
     });
 
     modifier.nerf.forEach(stat => {
-        modifiedStats[stat] = Math.floor(modifiedStats[stat] * 0.9);
+        modifiedStats[stat] = Math.floor(modifiedStats[stat] * 0.85);
     });
 
     return modifiedStats;
@@ -343,7 +343,7 @@ export const streamers: Streamer[] = [
             { name: 'Dry Commentary', type: 'INTEL', power: 55, pp: 18, description: 'Analytical review' },
             { name: 'Woooo', type: 'CHAOS', power: 65, pp: 10, description: 'Excitement burst' }
         ],
-        ultimateMove: { name: 'Slap God', type: 'REBELLION', power: 1000, pp: 1, description: 'The ultimate strike' },
+        ultimateMove: { name: 'Slap God', type: 'REBELLION', power: 170, pp: 1, description: 'The ultimate strike' },
         narrative: {
             role: 'RESISTANCE',
             codename: 'JESUS',

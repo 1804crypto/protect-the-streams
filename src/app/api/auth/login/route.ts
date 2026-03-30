@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import { signSession } from '@/lib/auth';
+import { getServiceSupabase } from '@/lib/supabaseClient';
+import { checkRateLimit } from '@/lib/rateLimit';
 
-// Initialize Supabase Service Client
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = getServiceSupabase();
+const LOGIN_RATE_LIMIT = { name: 'auth_login', maxRequests: 15, windowMs: 60_000 };
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        const limited = checkRateLimit(req, LOGIN_RATE_LIMIT);
+        if (limited) return limited;
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
         const { publicKey, signature, message } = body;
 
         if (process.env.NODE_ENV !== 'production') {
@@ -32,34 +37,30 @@ export async function POST(req: NextRequest) {
 
         const timestamp = parseInt(timestampMatch[1]);
         const now = Date.now();
-        const FIVE_MINUTES = 5 * 60 * 1000;
+        const TWO_MINUTES = 2 * 60 * 1000;
 
-        // Check if timestamp is within accepted window (allow 5 mins past, 1 min future for clock skew)
-        if (now - timestamp > FIVE_MINUTES || timestamp > now + 60 * 1000) {
+        // Check if timestamp is within accepted window (allow 2 mins past, 30s future for clock skew)
+        if (now - timestamp > TWO_MINUTES || timestamp > now + 30 * 1000) {
             return NextResponse.json({ error: 'Signature expired. Please try again.' }, { status: 401 });
         }
 
-        // 2. Verify Signature
+        // 2. Verify Signature (always required — no dev bypass)
         try {
-            // Encode message to Uint8Array
-            const messageUint8 = new TextEncoder().encode(message);
+            {
+                const messageUint8 = new TextEncoder().encode(message);
+                const publicKeyUint8 = bs58.decode(publicKey);
+                const signatureUint8 = bs58.decode(signature);
 
-            // Decode Public Key (Base58)
-            const publicKeyUint8 = bs58.decode(publicKey);
+                const verified = nacl.sign.detached.verify(
+                    messageUint8,
+                    signatureUint8,
+                    publicKeyUint8
+                );
 
-            // Decode Signature (Base58) - The logic assumes frontend sends Base58 string
-            const signatureUint8 = bs58.decode(signature);
-
-            // Verify
-            const verified = nacl.sign.detached.verify(
-                messageUint8,
-                signatureUint8,
-                publicKeyUint8
-            );
-
-            if (!verified) {
-                console.error("Signature verification failed for", publicKey);
-                return NextResponse.json({ error: 'Invalid signature verification' }, { status: 401 });
+                if (!verified) {
+                    console.error("Signature verification failed for", publicKey);
+                    return NextResponse.json({ error: 'Invalid signature verification' }, { status: 401 });
+                }
             }
         } catch (err) {
             console.error("Signature verification error details:", err);
@@ -88,7 +89,6 @@ export async function POST(req: NextRequest) {
                 .insert([{
                     wallet_address: publicKey,
                     username: `Operator_${publicKey.slice(0, 4)}`,
-                    last_login: new Date().toISOString(),
                     // Default values handled by DB
                 }])
                 .select()
@@ -100,19 +100,32 @@ export async function POST(req: NextRequest) {
             }
             user = newUser;
         } else {
-            // Update Last Login
-            await supabase
-                .from('users')
-                .update({ last_login: new Date().toISOString() })
-                .eq('id', existingUser.id);
+            // Record exists, no schema-breaking updates required.
         }
 
         // 4. Issue JWT Session
         const token = await signSession({ userId: user.id, wallet: publicKey });
 
+        // Return only safe fields — don't expose internal DB columns
         const response = NextResponse.json({
             success: true,
-            user: user,
+            user: {
+                id: user.id,
+                wallet_address: user.wallet_address,
+                username: user.username,
+                xp: user.xp,
+                level: user.level,
+                wins: user.wins,
+                losses: user.losses,
+                inventory: user.inventory,
+                secured_ids: user.secured_ids,
+                streamer_natures: user.streamer_natures,
+                completed_missions: user.completed_missions,
+                faction: user.faction,
+                pts_balance: user.pts_balance,
+                is_faction_minted: user.is_faction_minted,
+                equipment_slots: user.equipment_slots,
+            },
             message: 'Authenticated successfully'
         });
 

@@ -11,7 +11,7 @@ export function computeRank(
     if (isFailure) return 'F';
     const hpPercent = (hpRemaining / maxHp) * 100;
     if (hpPercent > 80 && turnsUsed < 10) return 'S';
-    if (hpPercent > 50 || turnsUsed < 15) return 'A';
+    if (hpPercent > 50 && turnsUsed < 15) return 'A';
     return 'B';
 }
 
@@ -23,9 +23,9 @@ export function computeXp(rank: MissionRank, isBoss: boolean): number {
 
 export function computePtsReward(rank: MissionRank): number {
     const rewardMap: Record<MissionRank, number> = {
-        'S': 100,
-        'A': 50,
-        'B': 25,
+        'S': 150,
+        'A': 75,
+        'B': 40,
         'F': 0
     };
     return rewardMap[rank];

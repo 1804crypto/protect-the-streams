@@ -1,43 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { verifySession } from '@/lib/auth';
+import { getServiceSupabase } from '@/lib/supabaseClient';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = getServiceSupabase();
 
 /**
  * POST /api/mint/confirm
- * 
+ *
  * Called by the client after on-chain transaction confirmation.
  * Marks the mint_attempts record as COMPLETED so the idempotency
  * system prevents duplicate mints on page refresh.
  */
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        // Verify session — only authenticated users can confirm their own mints
+        const token = req.cookies.get('pts_session')?.value;
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const session = await verifySession(token);
+        if (!session?.wallet) {
+            return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+        }
+        const wallet = session.wallet as string;
+
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
         const { idempotencyKey } = body;
 
         if (!idempotencyKey) {
             return NextResponse.json({ error: 'Missing idempotencyKey' }, { status: 400 });
         }
 
-        // Only transition BUILT → COMPLETED (prevents race conditions)
+        // Only transition BUILT → COMPLETED, and only for this user's wallet
         const { data, error } = await supabase
             .from('mint_attempts')
             .update({ status: 'COMPLETED' } as Record<string, unknown>)
             .eq('idempotency_key', idempotencyKey)
+            .eq('user_wallet', wallet)
             .eq('status', 'BUILT')
             .select('idempotency_key, status')
             .single();
 
         if (error || !data) {
-            // Not finding a BUILT record is not fatal — it may already be COMPLETED
-            // or the idempotency key was invalid
-            console.warn('[MINT CONFIRM] No BUILT record found for key:', idempotencyKey, error?.message);
+            console.warn('[MINT CONFIRM] No BUILT record found for key:', idempotencyKey, 'wallet:', wallet, error?.message);
             return NextResponse.json({
                 warning: 'No pending mint found for this key',
                 detail: error?.message
-            }, { status: 200 });
+            }, { status: 404 });
         }
 
         console.log('[MINT CONFIRM] Mint confirmed:', data.idempotency_key);

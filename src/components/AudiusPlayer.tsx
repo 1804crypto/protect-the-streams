@@ -46,7 +46,7 @@ export function AudiusPlayer() {
 
     // The embed URL with autoPlay enabled
     // Note: Most browsers block autoplay with audio, so we rely on user interaction
-    const embedUrl = "https://audius.co/embed/track/9OmXQ3O?flavor=card";
+    const embedUrl = "https://audius.co/embed/track/9OmXQ3O?flavor=card&autoplay=true";
 
     // When muted globally or hasn't interacted, hide the player (it's already non-visible)
     // When unmuted and has interacted, the iframe plays

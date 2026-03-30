@@ -6,24 +6,24 @@ describe('calculateLevel', () => {
         expect(calculateLevel(0)).toBe(1);
     });
 
-    it('returns level 2 for 100 XP', () => {
-        expect(calculateLevel(100)).toBe(2);
+    it('returns level 2 for 25 XP', () => {
+        expect(calculateLevel(25)).toBe(2);
     });
 
-    it('returns level 3 for 400 XP', () => {
-        expect(calculateLevel(400)).toBe(3);
+    it('returns level 3 for 200 XP', () => {
+        expect(calculateLevel(200)).toBe(3);
     });
 
-    it('returns level 4 for 900 XP', () => {
-        expect(calculateLevel(900)).toBe(4);
+    it('returns level 4 for 675 XP', () => {
+        expect(calculateLevel(675)).toBe(4);
     });
 
-    it('returns level 6 for 2500 XP', () => {
-        expect(calculateLevel(2500)).toBe(6);
+    it('returns level 6 for 3125 XP', () => {
+        expect(calculateLevel(3125)).toBe(6);
     });
 
     it('caps at LEVEL_CAP for massive XP', () => {
-        expect(calculateLevel(10_000_000)).toBe(LEVEL_CAP);
+        expect(calculateLevel(25_000_000)).toBe(LEVEL_CAP);
     });
 
     it('returns level 1 for negative XP', () => {
@@ -31,8 +31,8 @@ describe('calculateLevel', () => {
     });
 
     it('handles edge case XP just below level threshold', () => {
-        expect(calculateLevel(99)).toBe(1);
-        expect(calculateLevel(399)).toBe(2);
+        expect(calculateLevel(24)).toBe(1);
+        expect(calculateLevel(199)).toBe(2);
     });
 });
 
@@ -41,12 +41,12 @@ describe('xpForLevel', () => {
         expect(xpForLevel(1)).toBe(0);
     });
 
-    it('returns 100 for level 2', () => {
-        expect(xpForLevel(2)).toBe(100);
+    it('returns 25 for level 2', () => {
+        expect(xpForLevel(2)).toBe(25);
     });
 
-    it('returns 400 for level 3', () => {
-        expect(xpForLevel(3)).toBe(400);
+    it('returns 200 for level 3', () => {
+        expect(xpForLevel(3)).toBe(200);
     });
 
     it('returns 0 for level <= 0', () => {
@@ -67,8 +67,9 @@ describe('getLevelProgress', () => {
         expect(getLevelProgress(0)).toBe(0);
     });
 
-    it('returns 0.5 for halfway through level 1→2', () => {
-        expect(getLevelProgress(50)).toBeCloseTo(0.5, 1);
+    it('returns ~0.5 for halfway through level 1→2', () => {
+        // Level 1 starts at 0 XP, level 2 at 25 XP. Halfway = 12.5 XP ≈ 12
+        expect(getLevelProgress(12)).toBeCloseTo(0.48, 1);
     });
 
     it('returns 1.0 at level cap', () => {

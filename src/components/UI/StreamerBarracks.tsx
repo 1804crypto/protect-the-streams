@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
 import { streamers, Streamer } from '@/data/streamers';
@@ -17,6 +17,14 @@ export const StreamerBarracks: React.FC<StreamerBarracksProps> = ({ isOpen, onCl
     const securedIds = useCollectionStore(state => state.securedIds);
     const completedMissions = useCollectionStore(state => state.completedMissions);
     const { playHover, playClick } = useAudioSystem();
+
+    // Escape key to close
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [isOpen, onClose]);
 
     const securedAssets = streamers.filter(s => securedIds.includes(s.id));
 
@@ -50,7 +58,8 @@ export const StreamerBarracks: React.FC<StreamerBarracksProps> = ({ isOpen, onCl
                             </div>
                             <button
                                 onClick={() => { playClick(); onClose(); }}
-                                className="w-10 h-10 flex items-center justify-center border border-white/10 hover:border-neon-pink text-white/40 hover:text-neon-pink transition-all bg-black/50"
+                                className="w-10 h-10 flex items-center justify-center border border-white/10 hover:border-neon-pink text-white/40 hover:text-neon-pink transition-all bg-black/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-blue"
+                                aria-label="Close barracks"
                             >
                                 ✕
                             </button>
@@ -99,9 +108,20 @@ export const StreamerBarracks: React.FC<StreamerBarracksProps> = ({ isOpen, onCl
                                         <span className="text-2xl">?</span>
                                     </div>
                                     <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">No Assets Found</h3>
-                                    <p className="text-xs font-mono text-white/60 tracking-widest max-w-sm">
+                                    <p className="text-xs font-mono text-white/60 tracking-widest max-w-sm mb-4">
                                         You have not secured any streamer cards yet. Mint cards on the Global Roster to add them to your barracks.
                                     </p>
+                                    <button
+                                        onClick={() => {
+                                            onClose();
+                                            setTimeout(() => {
+                                                document.getElementById('roster')?.scrollIntoView({ behavior: 'smooth' });
+                                            }, 300);
+                                        }}
+                                        className="px-4 py-2 bg-neon-blue/20 border border-neon-blue text-neon-blue text-[10px] font-black uppercase tracking-widest hover:bg-neon-blue/30 transition-colors"
+                                    >
+                                        BROWSE_ROSTER
+                                    </button>
                                 </div>
                             )}
                         </div>

@@ -53,7 +53,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
         userFaction !== 'NONE' ? userFaction : null
     );
     const [memberId, setMemberId] = useState<number | null>(null);
-    const focusTrapRef = useFocusTrap(isOpen);
+    const focusTrapRef = useFocusTrap(isOpen, onClose);
 
     // Wallet Hooks
     const { connection } = useConnection();
@@ -144,6 +144,9 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                                 <h2 id="faction-selection-title" className="text-5xl font-black italic tracking-tighter text-white mb-4 uppercase">CHOOSE_YOUR_ALLEGIANCE</h2>
                                 <p className="text-white/40 font-mono text-xs tracking-[0.3em] uppercase underline underline-offset-8 decoration-neon-blue/30">
                                     The_Resistance_is_fractured._Which_signal_will_you_amplify?
+                                </p>
+                                <p className="text-white/25 font-mono text-[9px] tracking-wider mt-4 max-w-md mx-auto normal-case">
+                                    Factions unlock faction chat, leaderboard rankings, and unique PvP wagers. Choose wisely — your allegiance shapes your journey.
                                 </p>
                             </div>
 

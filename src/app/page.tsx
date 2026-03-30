@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Streamer } from '@/data/streamers';
 import { CONFIG } from '@/data/config';
 import { CollectionHub } from '@/components/UI/CollectionHub';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,11 +11,18 @@ import { useVoiceOperator } from '@/hooks/useVoiceOperator';
 import { useGameDataStore } from '@/hooks/useGameDataStore';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
 import { useCheckUplinkStatus } from '@/hooks/useCheckUplinkStatus';
+import { useModalStore } from '@/hooks/useModalStore';
 
-const Scene = dynamic(() => import('@/components/Three/Scene'), { ssr: false });
+const Scene = dynamic(() => import('@/components/Three/Scene'), {
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-resistance-dark" />
+});
 const WalletMultiButton = dynamic(
     () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
-    { ssr: false }
+    {
+        ssr: false,
+        loading: () => <div className="h-10 w-36 bg-white/5 border border-white/10 animate-pulse" />
+    }
 );
 
 import { ResistanceMap } from '@/components/UI/ResistanceMap';
@@ -35,35 +41,23 @@ import { RosterSection } from '@/components/sections/RosterSection';
 import { MintStepIndicator } from '@/components/UI/MintStepIndicator';
 import { StreamerBarracks } from '@/components/UI/StreamerBarracks';
 import { StreamerJourney } from '@/components/UI/StreamerJourney';
+import { OfflineDetector } from '@/components/UI/OfflineDetector';
+import { OnboardingOverlay } from '@/components/UI/OnboardingOverlay';
+import { GlossaryModal } from '@/components/UI/GlossaryModal';
+import { AchievementTracker } from '@/components/UI/AchievementTracker';
+import { MobileMenu } from '@/components/UI/MobileMenu';
 
 export default function Home() {
     const { mint, loading, mintingStreamerId, status, error, signature } = useMintStreamer();
     const { isMuted, toggleMute, playHover, playClick, playSuccess, forceUnmute } = useAudioSystem();
-    const [isHubOpen, setIsHubOpen] = useState(false);
-    const [activeMissionStreamer, setActiveMissionStreamer] = useState<Streamer | null>(null);
-    const [activePvPStreamer, setActivePvPStreamer] = useState<Streamer | null>(null);
     const { streamers, fetchGameData, isInitialized, isLoading: _isDataLoading } = useGameDataStore();
     const [mounted, setMounted] = useState(false);
-    const [isTutorialOpen, setIsTutorialOpen] = useState(false);
-    const [isFactionOpen, setIsFactionOpen] = useState(false);
-    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
-    const [isArchiveOpen, setIsArchiveOpen] = useState(false);
-    const [isBarracksOpen, setIsBarracksOpen] = useState(false);
-    const [activeJourneyStreamer, setActiveJourneyStreamer] = useState<Streamer | null>(null);
 
-    // Derived: is any panel/modal currently open?
-    const anyModalOpen = isLeaderboardOpen || isArchiveOpen || isHubOpen || isTutorialOpen || isFactionOpen || isBarracksOpen || !!activeMissionStreamer || !!activePvPStreamer || !!activeJourneyStreamer;
-
-    // Close all panels before opening a new one — prevents modal stacking (BUG-04)
-    const closeAllPanels = () => {
-        setIsLeaderboardOpen(false);
-        setIsArchiveOpen(false);
-        setIsHubOpen(false);
-        setIsTutorialOpen(false);
-        setIsFactionOpen(false);
-        setIsBarracksOpen(false);
-        setActiveJourneyStreamer(null);
-    };
+    // Consolidated modal state (replaces 9 separate useState calls)
+    const modal = useModalStore();
+    const { activeMissionStreamer, activePvPStreamer, activeJourneyStreamer } = modal;
+    const anyModalOpen = modal.anyOpen();
+    const closeAllPanels = modal.closeAll;
 
     // GATED REBELLION LOGIC - ON-CHAIN NFT VERIFICATION (Signal Lock)
     const { userFaction } = useCollectionStore();
@@ -92,7 +86,7 @@ export default function Home() {
         // Check for first visit
         const hasSeenTutorial = localStorage.getItem('pts_tutorial_complete');
         if (!hasSeenTutorial) {
-            setIsTutorialOpen(true);
+            modal.openModal('tutorial');
         }
 
         // Trigger Operator Onboarding & Aida Greeting — only once per session (BUG-05)
@@ -130,7 +124,7 @@ export default function Home() {
                 </div>
 
                 {/* Collection Hub Overlay */}
-                <CollectionHub isOpen={isHubOpen} onClose={() => setIsHubOpen(false)} />
+                <CollectionHub isOpen={modal.activeModal === 'hub'} onClose={closeAllPanels} />
 
                 {/* Navigation */}
                 <nav className="relative z-50 flex justify-between items-center p-6 md:px-12 backdrop-blur-md bg-black/20">
@@ -141,90 +135,79 @@ export default function Home() {
 
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => { playClick(); forceUnmute(); closeAllPanels(); setIsTutorialOpen(true); }}
+                            onClick={() => { playClick(); forceUnmute(); modal.openModal('tutorial'); }}
                             className="px-4 py-2 border border-neon-green/40 text-[10px] font-bold tracking-widest hover:bg-neon-green/10 transition-all hidden md:block text-neon-green"
                         >
                             [HOW_TO_PLAY]
                         </button>
                         <button
-                            onClick={() => { playClick(); closeAllPanels(); setIsLeaderboardOpen(true); }}
+                            onClick={() => { playClick(); modal.openModal('leaderboard'); }}
                             className="px-4 py-2 border border-neon-yellow/40 text-[10px] font-bold tracking-widest hover:bg-neon-yellow/10 transition-all hidden md:block text-neon-yellow"
                         >
                             [RANKINGS]
                         </button>
                         <button
-                            onClick={() => { playClick(); closeAllPanels(); setIsHubOpen(true); }}
+                            onClick={() => { playClick(); modal.openModal('hub'); }}
                             className="px-4 py-2 border border-neon-blue/40 text-[10px] font-bold tracking-widest hover:bg-neon-blue/10 transition-all hidden md:block"
                         >
-                            [SECTOR_7_OPERATIONS]
+                            [MY_COLLECTION]
                         </button>
                         <button
-                            onClick={() => { playClick(); closeAllPanels(); setIsBarracksOpen(true); }}
+                            onClick={() => { playClick(); modal.openModal('barracks'); }}
                             className="px-4 py-2 border border-neon-green/40 text-[10px] font-bold tracking-widest hover:bg-neon-green/10 transition-all hidden md:block text-neon-green shadow-sm"
                         >
                             [MY_BARRACKS]
                         </button>
                         <button
-                            onClick={() => { playClick(); closeAllPanels(); setIsArchiveOpen(true); }}
+                            onClick={() => { playClick(); modal.openModal('archive'); }}
                             className="px-4 py-2 border border-neon-orange/40 text-[10px] font-bold tracking-widest hover:bg-neon-orange/10 transition-all hidden md:block text-neon-orange"
                         >
-                            [ARCHIVES]
+                            [LORE]
                         </button>
 
                         <button
-                            onClick={() => { playClick(); closeAllPanels(); setIsFactionOpen(true); }}
+                            onClick={() => { playClick(); modal.openModal('faction'); }}
                             className="px-4 py-2 border border-neon-purple/40 text-[10px] font-bold tracking-widest hover:bg-neon-purple/10 transition-all hidden md:block text-neon-purple"
                         >
                             [JOIN_FACTION]
                         </button>
+                        <button
+                            onClick={() => { playClick(); modal.openModal('glossary'); }}
+                            className="px-4 py-2 border border-neon-blue/40 text-[10px] font-bold tracking-widest hover:bg-neon-blue/10 transition-all hidden md:block text-neon-blue"
+                        >
+                            [CODEX]
+                        </button>
 
                         <button
                             onClick={toggleMute}
-                            className="w-10 h-10 border border-white/10 flex items-center justify-center hover:bg-white/5 transition-all"
+                            className="w-10 h-10 border border-white/10 flex items-center justify-center hover:bg-white/5 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-blue"
                             title={isMuted ? "Unmute Resistance Signal" : "Mute Signal"}
+                            aria-label={isMuted ? "Unmute Resistance Signal" : "Mute Signal"}
                         >
                             {isMuted ? '🔇' : '🔊'}
                         </button>
 
                         <AuthStatus />
 
-                        <WalletMultiButton className="!bg-neon-blue !rounded-none !font-display !uppercase !font-bold hover:!shadow-[0_0_15px_#00f3ff] transition-all !text-[12px]" />
+                        <div id="wallet-connect-area">
+                            <WalletMultiButton className="!bg-neon-blue !rounded-none !font-display !uppercase !font-bold hover:!shadow-[0_0_15px_#00f3ff] transition-all !text-[12px]" />
+                        </div>
                     </div>
                 </nav>
 
-                {/* Mobile FABs — hidden when any modal is open to prevent overlap (BUG-03) */}
-                {!anyModalOpen && (
-                    <div className="md:hidden fixed bottom-6 right-4 z-50 flex flex-col gap-3 safe-padding-bottom">
-                        <button
-                            onClick={() => { playClick(); closeAllPanels(); setIsTutorialOpen(true); }}
-                            className="w-14 h-14 rounded-full bg-neon-green shadow-[0_0_20px_rgba(0,255,159,0.5)] flex items-center justify-center font-black text-xl"
-                            title="How to Play"
-                        >
-                            ❓
-                        </button>
-                        <button
-                            onClick={() => { playClick(); closeAllPanels(); setIsLeaderboardOpen(true); }}
-                            className="w-14 h-14 rounded-full bg-neon-yellow shadow-[0_0_20px_rgba(255,255,0,0.5)] flex items-center justify-center font-black text-xl"
-                            title="Rankings"
-                        >
-                            🏆
-                        </button>
-                        <button
-                            onClick={() => { playClick(); closeAllPanels(); setIsHubOpen(true); }}
-                            className="w-14 h-14 rounded-full bg-resistance-accent shadow-[0_0_20px_rgba(255,0,60,0.5)] flex items-center justify-center font-black text-xl"
-                            title="Sector 7 Operations"
-                        >
-                            📁
-                        </button>
-                        <button
-                            onClick={() => { playClick(); closeAllPanels(); setIsArchiveOpen(true); }}
-                            className="w-14 h-14 rounded-full bg-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.5)] flex items-center justify-center font-black text-xl"
-                            title="Neural Archives"
-                        >
-                            📜
-                        </button>
-                    </div>
-                )}
+                {/* Mobile Hamburger Menu — replaces individual FABs for cleaner UX */}
+                <MobileMenu
+                    isHidden={anyModalOpen}
+                    items={[
+                        { label: 'HOW TO PLAY', icon: '❓', color: 'text-neon-green', borderColor: 'border-neon-green/30', action: () => { playClick(); forceUnmute(); modal.openModal('tutorial'); } },
+                        { label: 'RANKINGS', icon: '🏆', color: 'text-neon-yellow', borderColor: 'border-neon-yellow/30', action: () => { playClick(); modal.openModal('leaderboard'); } },
+                        { label: 'MY COLLECTION', icon: '📁', color: 'text-resistance-accent', borderColor: 'border-resistance-accent/30', action: () => { playClick(); modal.openModal('hub'); } },
+                        { label: 'MY BARRACKS', icon: '🏠', color: 'text-neon-green', borderColor: 'border-neon-green/30', action: () => { playClick(); modal.openModal('barracks'); } },
+                        { label: 'LORE', icon: '📜', color: 'text-neon-orange', borderColor: 'border-neon-orange/30', action: () => { playClick(); modal.openModal('archive'); } },
+                        { label: 'JOIN FACTION', icon: '⚔️', color: 'text-neon-purple', borderColor: 'border-neon-purple/30', action: () => { playClick(); modal.openModal('faction'); } },
+                        { label: 'CODEX', icon: '📖', color: 'text-neon-blue', borderColor: 'border-neon-blue/30', action: () => { playClick(); modal.openModal('glossary'); } },
+                    ]}
+                />
 
                 {/* Hero Content */}
                 <section className="relative z-10 flex flex-col items-center justify-center pt-32 pb-16 text-center px-4">
@@ -252,19 +235,18 @@ export default function Home() {
                                 onClick={() => { playClick(); document.getElementById('roster')?.scrollIntoView({ behavior: 'smooth' }); }}
                                 className="btn-resistance text-xl"
                             >
-                                BROWSE ROSTER
+                                MINT YOUR FIRST CARD
                             </motion.button>
 
-                            <motion.a
-                                href="#roster"
+                            <motion.button
                                 onMouseEnter={playHover}
-                                onClick={playClick}
+                                onClick={() => { playClick(); forceUnmute(); modal.openModal('tutorial'); }}
                                 whileHover={{ scale: 1.02 }}
                                 className="px-10 py-4 bg-white/5 border border-white/20 text-white font-display uppercase font-bold hover:bg-neon-pink/10 hover:border-neon-pink transition-all tracking-widest flex items-center gap-2"
                             >
-                                RESISTANCE ROSTER
-                                <span className="text-[10px] animate-bounce">↓</span>
-                            </motion.a>
+                                HOW TO PLAY
+                                <span className="text-[10px]">❓</span>
+                            </motion.button>
                         </div>
 
                         {/* Minting Status Feedback */}
@@ -327,21 +309,32 @@ export default function Home() {
                             <ResistanceMap onSectorClick={(s) => {
                                 // BUG 20 FIX: Look up full streamer data instead of blind cast
                                 const fullStreamer = streamers.find(st => st.id === s.id);
-                                if (fullStreamer) setActiveMissionStreamer(fullStreamer);
+                                if (fullStreamer) modal.setMissionStreamer(fullStreamer);
                             }} />
                         ) : (
-                            <div className="w-full h-[400px] border border-red-500/30 bg-red-500/5 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,0,0,0.05)_10px,rgba(255,0,0,0.05)_20px)]" />
-                                <div className="relative z-10">
-                                    <h3 className="text-4xl font-black text-red-500 mb-4 tracking-tighter flex items-center justify-center gap-4">
-                                        <span className="text-2xl">🔒</span> SIGNAL LOCKED
-                                    </h3>
-                                    <p className="text-red-400 font-mono text-sm max-w-lg mx-auto tracking-widest leading-relaxed">
-                                        SIGNAL LOCKED: MINT TO UNLOCK TERMINAL.
-                                    </p>
-                                    <div className="mt-8 animate-pulse">
-                                        <a href="#roster" className="text-neon-blue underline font-bold text-xs tracking-[0.2em]">[PROCEED_TO_UPLINK_TERMINAL]</a>
+                            <div className="w-full h-[400px] border border-white/10 bg-white/[0.02] backdrop-blur-sm flex flex-col items-center justify-center text-center p-8 relative overflow-hidden group rounded-lg">
+                                {/* Faded map preview background */}
+                                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_50%,rgba(0,243,255,0.3),transparent_70%)]" />
+                                <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_20px,rgba(255,255,255,0.02)_20px,rgba(255,255,255,0.02)_40px)]" />
+                                <div className="relative z-10 max-w-md">
+                                    <div className="w-16 h-16 mx-auto mb-4 border-2 border-neon-blue/30 rounded-full flex items-center justify-center bg-neon-blue/5">
+                                        <span className="text-3xl">🗺️</span>
                                     </div>
+                                    <h3 className="text-2xl font-black text-white mb-3 tracking-tighter">
+                                        SECTOR MAP LOCKED
+                                    </h3>
+                                    <p className="text-white/50 text-sm max-w-md mx-auto leading-relaxed mb-2">
+                                        Own at least one Streamer NFT to unlock the Strategic Sector Map, start missions, and fight for the Resistance.
+                                    </p>
+                                    <p className="text-white/30 text-xs font-mono tracking-wider mb-6">
+                                        Joining a faction also grants access.
+                                    </p>
+                                    <a
+                                        href="#roster"
+                                        className="inline-block px-6 py-3 bg-neon-blue/10 border border-neon-blue text-neon-blue font-black text-xs tracking-[0.2em] hover:bg-neon-blue/20 transition-all uppercase"
+                                    >
+                                        MINT YOUR FIRST CARD
+                                    </a>
                                 </div>
                             </div>
                         )}
@@ -359,12 +352,12 @@ export default function Home() {
                     mint={mint}
                     playHover={playHover}
                     playClick={playClick}
-                    onPvP={(streamer) => setActivePvPStreamer(streamer)}
-                    onMission={(streamer) => setActiveMissionStreamer(streamer)}
+                    onPvP={(streamer) => modal.setPvPStreamer(streamer)}
+                    onMission={(streamer) => modal.setMissionStreamer(streamer)}
                 />
 
                 {/* Footer / Status Bar */}
-                <footer className="fixed bottom-0 inset-x-0 z-40 bg-background/80 backdrop-blur-md border-t border-white/10 p-3 md:p-4 flex justify-between items-center px-4 md:px-12 text-[9px] md:text-[10px] font-mono text-white/40 uppercase tracking-widest safe-padding-bottom">
+                <footer className="fixed bottom-0 inset-x-0 z-40 bg-background/80 backdrop-blur-md border-t border-white/10 p-3 md:p-4 flex justify-between items-center px-4 md:px-12 text-[9px] md:text-[10px] font-mono text-white/60 uppercase tracking-widest safe-padding-bottom">
                     <div className="hidden sm:block">© 2025 THE_RESISTANCE</div>
                     <div className="flex gap-4 md:gap-8">
                         <span className="flex items-center gap-2">
@@ -381,7 +374,7 @@ export default function Home() {
                         key={activeMissionStreamer.id}
                         streamer={activeMissionStreamer}
                         isOpen={!!activeMissionStreamer}
-                        onClose={() => setActiveMissionStreamer(null)}
+                        onClose={() => modal.setMissionStreamer(null)}
                     />
                 )}
 
@@ -391,15 +384,15 @@ export default function Home() {
                         streamer={activePvPStreamer}
                         matchId="global_queue"
                         isOpen={!!activePvPStreamer}
-                        onClose={() => setActivePvPStreamer(null)}
+                        onClose={() => modal.setPvPStreamer(null)}
                     />
                 )}
 
                 {/* Barracks Instance */}
                 <StreamerBarracks
-                    isOpen={isBarracksOpen}
-                    onClose={() => setIsBarracksOpen(false)}
-                    onStartJourney={(s) => setActiveJourneyStreamer(s)}
+                    isOpen={modal.activeModal === 'barracks'}
+                    onClose={closeAllPanels}
+                    onStartJourney={(s) => modal.setJourneyStreamer(s)}
                 />
 
                 {/* Streamer Journey GameFi Layer Instance */}
@@ -407,30 +400,46 @@ export default function Home() {
                     <StreamerJourney
                         streamer={activeJourneyStreamer}
                         isOpen={!!activeJourneyStreamer}
-                        onClose={() => setActiveJourneyStreamer(null)}
+                        onClose={() => modal.setJourneyStreamer(null)}
                     />
                 )}
 
                 {/* Faction Selection Instance */}
-                <FactionSelection isOpen={isFactionOpen} onClose={() => setIsFactionOpen(false)} />
+                <FactionSelection isOpen={modal.activeModal === 'faction'} onClose={closeAllPanels} />
 
                 {/* Leaderboard Instance */}
-                <Leaderboard isOpen={isLeaderboardOpen} onClose={() => setIsLeaderboardOpen(false)} />
+                <Leaderboard isOpen={modal.activeModal === 'leaderboard'} onClose={closeAllPanels} />
 
                 {/* Tutorial Modal */}
-                <TutorialModal isOpen={isTutorialOpen} onClose={() => {
+                <TutorialModal isOpen={modal.activeModal === 'tutorial'} onClose={() => {
                     localStorage.setItem('pts_tutorial_complete', 'true');
-                    setIsTutorialOpen(false);
+                    closeAllPanels();
+                    // After tutorial closes, scroll to roster so onboarding spotlight can find targets
+                    setTimeout(() => {
+                        document.getElementById('roster')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 500);
                 }} />
 
                 {/* Narrative Archive Instance */}
-                <NarrativeArchive isOpen={isArchiveOpen} onClose={() => setIsArchiveOpen(false)} />
+                <NarrativeArchive isOpen={modal.activeModal === 'archive'} onClose={closeAllPanels} />
+
+                {/* Glossary/Codex Modal */}
+                <GlossaryModal isOpen={modal.activeModal === 'glossary'} onClose={closeAllPanels} />
 
                 {/* Notification System */}
                 <ToastSystem />
 
                 {/* Operator Comms System */}
                 <OperatorComms />
+
+                {/* Offline Detection */}
+                <OfflineDetector />
+
+                {/* Interactive Onboarding (shows once after tutorial) */}
+                <OnboardingOverlay />
+
+                {/* Achievement Tracker (invisible — fires toasts on milestones) */}
+                <AchievementTracker />
 
                 {/* Media Uplink System */}
                 <MediaUplink />

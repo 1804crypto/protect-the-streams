@@ -24,6 +24,14 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
     const { getBattleCommentary } = useNeuralNarrative();
     const [neuralNarrative, setNeuralNarrative] = useState<string>("Scanning for viable combatants...");
 
+    // Escape key to close
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [isOpen, onClose]);
+
     // Inventory State
     const [showInventory, setShowInventory] = useState(false);
     const inventory = useCollectionStore(state => state.inventory);
@@ -274,7 +282,12 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                             {/* Status Bar */}
                             <div className="absolute top-0 inset-x-0 p-4 flex justify-between z-50 bg-gradient-to-b from-black/80 to-transparent">
                                 <div className="hud-node min-w-0 w-full max-w-[200px]">
-                                    <p className="text-[10px] font-black text-neon-pink uppercase tracking-widest mb-1">{opponent?.name || 'SEARCHING_PEER...'}</p>
+                                    <p className="text-[10px] font-black text-neon-pink uppercase tracking-widest mb-1">
+                                        {opponent?.name || 'SEARCHING_PEER...'}
+                                        {matchedRoomId?.startsWith('bot_match_') && (
+                                            <span className="ml-2 text-[8px] px-1.5 py-0.5 bg-white/10 border border-white/20 text-white/50 font-mono rounded-sm">BOT</span>
+                                        )}
+                                    </p>
                                     <div className="h-2 bg-white/5 border border-white/10 rounded-sm overflow-hidden">
                                         <motion.div
                                             animate={{ width: `${opponent ? (opponent.hp / opponent.maxHp) * 100 : 0}%` }}
@@ -473,19 +486,33 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                                 {showInventory ? 'CLOSE_INVENTORY' : 'ACCESS_INVENTORY'}
                             </button>
 
-                            {isComplete && (
-                                <div className="mt-6 p-6 border-2 border-neon-yellow bg-neon-yellow/10 text-center animate-pulse rounded-md">
-                                    <h4 className="text-neon-yellow font-black text-xl mb-2 italic">COMBAT_TERMINATED</h4>
-                                    <p className="text-white font-bold uppercase tracking-widest mb-2">{winnerId === (isSpectator ? player.id : playerId) ? 'VICTORY_SECURED' : 'DATA_PURGED'}</p>
-                                    {glrChange !== null && <p className="text-neon-green text-[10px] font-mono tracking-widest uppercase mt-4">GLR_DELTA: +{glrChange} POINTS</p>}
-                                    <button
-                                        onClick={onClose}
-                                        className="mt-6 px-6 py-2 bg-neon-yellow text-black font-black text-[10px] tracking-[0.3em] hover:bg-white transition-all w-full"
-                                    >
-                                        CLOSE_UPLINK
-                                    </button>
-                                </div>
-                            )}
+                            {isComplete && (() => {
+                                const isWinner = winnerId === (isSpectator ? player.id : playerId);
+                                return (
+                                    <div className={`mt-6 p-6 border-2 ${isWinner ? 'border-neon-green bg-neon-green/10' : 'border-resistance-accent bg-resistance-accent/10'} text-center rounded-md`}>
+                                        <h4 className={`${isWinner ? 'text-neon-green' : 'text-resistance-accent'} font-black text-xl mb-2 italic`}>
+                                            {isWinner ? 'VICTORY_SECURED' : 'DEFEAT'}
+                                        </h4>
+                                        {wagerAmount > 0 && (
+                                            <div className={`text-2xl font-black mb-3 ${isWinner ? 'text-neon-yellow' : 'text-resistance-accent'}`}>
+                                                {isWinner ? `+${wagerAmount * 2} PTS` : `-${wagerAmount} PTS`}
+                                            </div>
+                                        )}
+                                        {wagerAmount > 0 && (
+                                            <p className="text-[10px] font-mono text-white/40 tracking-widest mb-2">
+                                                {isWinner ? `Wager won: ${wagerAmount} staked + ${wagerAmount} from opponent` : `Wager lost: ${wagerAmount} PTS forfeited`}
+                                            </p>
+                                        )}
+                                        {glrChange !== null && <p className="text-neon-blue text-[10px] font-mono tracking-widest uppercase mt-2">GLR_DELTA: +{glrChange} POINTS</p>}
+                                        <button
+                                            onClick={onClose}
+                                            className={`mt-6 px-6 py-2 ${isWinner ? 'bg-neon-green' : 'bg-resistance-accent'} text-black font-black text-[10px] tracking-[0.3em] hover:bg-white transition-all w-full`}
+                                        >
+                                            CLOSE_UPLINK
+                                        </button>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 )}

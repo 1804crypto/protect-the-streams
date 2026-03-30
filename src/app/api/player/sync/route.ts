@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { verifySession } from '@/lib/auth';
-import { calculateLevel } from '@/lib/gameMechanics';
 import { sanitizeInventory } from '@/lib/sanitizeInventory';
 import { Logger } from '@/lib/logger';
+import { getServiceSupabase } from '@/lib/supabaseClient';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = getServiceSupabase();
 
 // DB-based rate limit: minimum 2s between syncs (survives serverless cold starts)
 const MIN_SYNC_INTERVAL_MS = 2000;
@@ -21,6 +17,16 @@ export const VALID_STREAMER_IDS = new Set([
     'ddg', 'extraemily', 'rayasianboy', 'tylil', 'jazzygunz'
 ]);
 
+/**
+ * HARDENED SYNC ENDPOINT — state reconciliation only.
+ *
+ * This endpoint persists client-side state changes (inventory, natures, faction).
+ * It does NOT grant rewards. All XP, PTS, wins, and losses are awarded exclusively
+ * by server-authoritative endpoints:
+ *   - /api/mission/complete  (XP, PTS, wins, losses, items, rank)
+ *   - /api/pvp/forfeit       (wins, losses, wager PTS)
+ *   - /api/shop/purchase     (PTS deduction, item grants)
+ */
 export async function POST(req: NextRequest) {
     try {
         // 1. Verify Session
@@ -37,61 +43,25 @@ export async function POST(req: NextRequest) {
         const userId = session.userId as string;
 
         // 2. Parse Body
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+
         const {
-            deltaXp,
             inventory,
-            missionId,
-            rank,
-            duration,
-            deltaWins,
-            deltaLosses,
             streamerNatures,
             completedMissions,
             faction,
             isFactionMinted
-        } = await req.json();
+        } = body;
 
-        // 3. Validation (Basic Sanity Checks)
-        if (deltaXp && deltaXp > 5000) {
-            return NextResponse.json({ error: 'Suspicious Activity Detected: XP gain too high' }, { status: 400 });
-        }
-
-        // BUG 7 FIX: Validate delta values are 0 or 1 (not arbitrary numbers)
-        if (deltaWins !== undefined && (deltaWins < 0 || deltaWins > 1)) {
-            return NextResponse.json({ error: 'Invalid win delta' }, { status: 400 });
-        }
-        if (deltaLosses !== undefined && (deltaLosses < 0 || deltaLosses > 1)) {
-            return NextResponse.json({ error: 'Invalid loss delta' }, { status: 400 });
-        }
-
-        // ANTI-CHEAT: Duration Check
-        if (missionId && (!duration || duration < 30000)) {
-            Logger.warn('API_Sync', `Suspicious Mission Duration: ${duration}ms for User ${userId}`);
-            return NextResponse.json({ error: 'Suspicious Cycle Time: Uplink Rejected.' }, { status: 400 });
-        }
-
-        // Validate missionId is a real streamer ID (if provided)
-        if (missionId && !VALID_STREAMER_IDS.has(missionId)) {
-            return NextResponse.json({ error: 'Invalid mission target' }, { status: 400 });
-        }
-
-        // 4. Calculate Rewards
-        let ptsReward = 0;
-        if (missionId && rank) {
-            const rewardMap: Record<string, number> = {
-                'S': 100,
-                'A': 50,
-                'B': 25,
-                'F': 0
-            };
-            ptsReward = rewardMap[rank] || 0;
-            Logger.info('API_Sync', `Mission ${missionId} Rank ${rank}: Awarding ${ptsReward} $PTS`);
-        }
-
-        // 5. Fetch user from DB
+        // 3. Fetch user from DB
         const { data: user, error: fetchError } = await supabase
             .from('users')
-            .select('*')
+            .select('id, inventory, streamer_natures, completed_missions, faction, is_faction_minted, xp, level, pts_balance, updated_at')
             .eq('id', userId)
             .single();
 
@@ -107,60 +77,54 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Calculate New State
-        const newXp = (user.xp || 0) + (deltaXp || 0);
-        const newPtsBalance = (user.pts_balance || 0) + ptsReward;
-
-        // SERVER AUTHORITATIVE LEVEL CALCULATION
-        const newLevel = calculateLevel(newXp);
-
-        // HARDENED INVENTORY: Sanitize client inventory against whitelist
-        const newInventory = inventory
-            ? sanitizeInventory(inventory, user.inventory)
-            : user.inventory;
-
+        // 4. Build update — state fields only, NO reward fields
         const updates: Record<string, unknown> = {
-            xp: newXp,
-            level: newLevel,
-            inventory: newInventory,
-            pts_balance: newPtsBalance,
             updated_at: new Date().toISOString()
         };
 
-        // BUG 7 FIX: Server-side increment for wins/losses
-        if (deltaWins === 1) updates.wins = (user.wins || 0) + 1;
-        if (deltaLosses === 1) updates.losses = (user.losses || 0) + 1;
-        if (streamerNatures !== undefined) updates.streamer_natures = streamerNatures;
-        // HARDENED: Only accept completedMissions when a valid missionId accompanies the request
-        if (completedMissions !== undefined && missionId) {
-            updates.completed_missions = completedMissions;
+        // HARDENED INVENTORY: Sanitize client inventory against whitelist
+        if (inventory) {
+            updates.inventory = sanitizeInventory(inventory, user.inventory);
         }
+
+        if (streamerNatures !== undefined) updates.streamer_natures = streamerNatures;
+        if (completedMissions !== undefined) updates.completed_missions = completedMissions;
         if (faction !== undefined && (faction === 'RED' || faction === 'PURPLE' || faction === 'NONE')) {
             updates.faction = faction;
         }
         if (isFactionMinted !== undefined) updates.is_faction_minted = isFactionMinted;
 
-        const { error: updateError } = await supabase
+        // 5. Optimistic lock: only update if updated_at hasn't changed since we read it
+        let updateQuery = supabase
             .from('users')
             .update(updates)
             .eq('id', userId);
+
+        if (user.updated_at) {
+            updateQuery = updateQuery.eq('updated_at', user.updated_at);
+        }
+
+        const { data: updateResult, error: updateError } = await updateQuery.select('id').maybeSingle();
 
         if (updateError) {
             Logger.error('API_Sync', "Sync Update Error", updateError);
             return NextResponse.json({ error: 'Failed to persist' }, { status: 500 });
         }
 
+        if (!updateResult) {
+            return NextResponse.json({ error: 'Conflict: state changed. Please retry.' }, { status: 409 });
+        }
+
+        // Return current authoritative values so client stays in sync
         return NextResponse.json({
             success: true,
-            newXp,
-            newLevel,
-            newPtsBalance,
-            ptsGained: ptsReward
+            newXp: user.xp,
+            newLevel: user.level,
+            newPtsBalance: user.pts_balance
         });
 
     } catch (error) {
         Logger.error('API_Sync', "Sync API Error", error);
-
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

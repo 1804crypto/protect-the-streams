@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { CONFIG } from '@/data/config';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
@@ -26,8 +26,20 @@ export const useMintStreamer = () => {
     const [status, setStatus] = useState<string | null>(null);
     const [signature, setSignature] = useState<string | null>(null);
     const [error, setError] = useState<{ code: string; message: string } | null>(null);
-    // Idempotency key: persists across retries, resets on success or non-retryable error
-    const idempotencyKeyRef = useRef<string | null>(null);
+
+    // Idempotency key: persisted in sessionStorage so it survives page refresh mid-mint.
+    // Resets on success or non-retryable error.
+    const getIdempotencyKey = (streamerId: string): string => {
+        const storageKey = `pts_mint_idem_${streamerId}`;
+        const existing = sessionStorage.getItem(storageKey);
+        if (existing) return existing;
+        const newKey = crypto.randomUUID();
+        sessionStorage.setItem(storageKey, newKey);
+        return newKey;
+    };
+    const clearIdempotencyKey = (streamerId: string) => {
+        sessionStorage.removeItem(`pts_mint_idem_${streamerId}`);
+    };
 
     const mint = async (streamerId?: string, currency: 'SOL' | 'USDC' | 'PTS' = 'SOL') => {
         console.log('🎯 [MINT] Starting mint process', { streamerId, currency, connected, publicKey: publicKey?.toBase58() });
@@ -50,11 +62,8 @@ export const useMintStreamer = () => {
         setError(null);
         setSignature(null);
 
-        // Generate idempotency key (reuse existing if retrying)
-        if (!idempotencyKeyRef.current) {
-            idempotencyKeyRef.current = crypto.randomUUID();
-        }
-        const idempotencyKey = idempotencyKeyRef.current;
+        // Idempotency key: reuse from sessionStorage if retrying (survives page refresh)
+        const idempotencyKey = getIdempotencyKey(streamerId);
 
         const umi = createUmi(connection);
         umi.use(walletAdapterIdentity(wallet.adapter));
@@ -178,7 +187,7 @@ export const useMintStreamer = () => {
                 console.log(`🎉 [MINT] Mint successful!`);
                 setStatus("Asset Secured. NFT Verified on Blockchain. Corporate Control Severed.");
                 secureAsset(streamerId);
-                idempotencyKeyRef.current = null;
+                clearIdempotencyKey(streamerId);
                 setMintingStreamerId(null);
                 setLoading(false);
                 mintSucceeded = true;
@@ -192,7 +201,7 @@ export const useMintStreamer = () => {
 
                 // User rejected — never retry
                 if (errMsg.includes("User rejected") || errMsg.includes("user rejected")) {
-                    idempotencyKeyRef.current = null;
+                    clearIdempotencyKey(streamerId);
                     setError({ code: "SIGNAL_JAMMED", message: "Uplink Request Rejected by Agent. Security Protocol Intact." });
                     setStatus(null);
                     setMintingStreamerId(null);
@@ -202,7 +211,7 @@ export const useMintStreamer = () => {
 
                 // Already minted — show info message
                 if (errMsg.includes("already minted") || errMsg.includes("ALREADY_COMPLETED")) {
-                    idempotencyKeyRef.current = null;
+                    clearIdempotencyKey(streamerId);
                     setError({ code: "DUPLICATE_SIGNAL", message: "This asset has already been secured. No duplicate minting needed." });
                     setStatus(null);
                     setMintingStreamerId(null);
@@ -280,22 +289,21 @@ async function pollForConfirmation(
         }
     }
 
-    // Manual polling fallback
+    // Manual polling fallback with circuit breaker
+    const MAX_CONSECUTIVE_ERRORS = 5;
+    let consecutiveErrors = 0;
+
     while (Date.now() < deadline) {
         await sleep(intervalMs);
 
         try {
-            // Check current block height — if it has already exceeded lastValidBlockHeight,
-            // there's no point waiting: the transaction can never land.
-            const currentSlotInfo = await (umi.rpc as unknown as { getSlot?: () => Promise<number> }).getSlot?.();
-            if (currentSlotInfo !== undefined) {
-                // We can't directly get block height from UMI easily, so skip this check
-            }
-
             interface SigStatus { err: unknown; confirmationStatus?: string; }
             const statuses = await umi.rpc.getSignatureStatuses([signature]);
             const sigStatus = statuses[0] as SigStatus | null;
-            console.log('📊 [MINT POLL] Status:', sigStatus?.confirmationStatus, 'err:', sigStatus?.err);
+            console.log('[MINT POLL] Status:', sigStatus?.confirmationStatus, 'err:', sigStatus?.err);
+
+            // Reset error counter on successful RPC call
+            consecutiveErrors = 0;
 
             if (sigStatus) {
                 if (sigStatus.err) return 'failed';
@@ -303,20 +311,30 @@ async function pollForConfirmation(
                     return 'confirmed';
                 }
                 if (sigStatus.confirmationStatus === 'processed') {
-                    // Tx is in — keep polling for confirmed/finalized
                     continue;
                 }
             }
         } catch (pollErr) {
+            consecutiveErrors++;
             const errMsg = pollErr instanceof Error ? pollErr.message : String(pollErr);
+
             if (errMsg.toLowerCase().includes('blockheight') || errMsg.toLowerCase().includes('expired')) {
                 return 'blockhash_expired';
             }
-            console.warn('⚠️ [MINT POLL] Poll error (will retry):', errMsg);
+
+            console.warn(`[MINT POLL] Poll error (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}):`, errMsg);
+
+            // Circuit breaker: stop polling after too many consecutive RPC failures
+            if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                console.error('[MINT POLL] Circuit breaker triggered — too many consecutive RPC errors');
+                return 'timeout';
+            }
+
+            // Exponential backoff on errors
+            await sleep(intervalMs * consecutiveErrors);
         }
     }
 
-    // Timed out — treat as blockhash_expired so outer loop fetches a fresh transaction
-    console.warn('⏱️ [MINT POLL] Confirmation timed out');
+    console.warn('[MINT POLL] Confirmation timed out');
     return 'timeout';
 }

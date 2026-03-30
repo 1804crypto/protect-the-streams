@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { verifySession } from '@/lib/auth';
+import { getServiceSupabase } from '@/lib/supabaseClient';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = getServiceSupabase();
 
 export async function GET(req: NextRequest) {
     try {
@@ -22,7 +19,7 @@ export async function GET(req: NextRequest) {
         // H5 FIX: Explicit column selection — don't expose internal fields
         const { data: user, error } = await supabase
             .from('users')
-            .select('id, wallet_address, xp, level, wins, losses, inventory, secured_ids, streamer_natures, completed_missions, faction, pts_balance, is_faction_minted')
+            .select('id, wallet_address, xp, level, wins, losses, inventory, secured_ids, streamer_natures, completed_missions, faction, pts_balance, is_faction_minted, equipment_slots')
             .eq('id', session.userId)
             .single();
 

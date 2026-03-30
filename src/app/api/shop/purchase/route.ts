@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { verifySession } from '@/lib/auth';
 import { blackMarketItems } from '@/data/storeItems';
 import { VALID_ITEM_IDS, MAX_ITEM_QUANTITY } from '@/lib/sanitizeInventory';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { getRpcUrl } from '@/lib/rpc';
 import { CONFIG } from '@/data/config';
+import { getServiceSupabase } from '@/lib/supabaseClient';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = getServiceSupabase();
 
 const MIN_PURCHASE_INTERVAL_MS = 2000;
 const MAX_QUANTITY = 10;
@@ -44,7 +42,13 @@ export async function POST(req: NextRequest) {
         const userId = session.userId as string;
 
         // 2. Parse & Validate Body
-        const { itemId, quantity, currency, purchaseId, txSignature } = await req.json();
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+        const { itemId, quantity, currency, purchaseId, txSignature } = body;
 
         if (!itemId || typeof itemId !== 'string') {
             return NextResponse.json({ error: 'Missing itemId' }, { status: 400 });
@@ -52,7 +56,7 @@ export async function POST(req: NextRequest) {
         if (!purchaseId || typeof purchaseId !== 'string') {
             return NextResponse.json({ error: 'Missing purchaseId' }, { status: 400 });
         }
-        if (!currency || !['PTS', 'SOL'].includes(currency)) {
+        if (!currency || !['PTS', 'SOL', 'USDC'].includes(currency)) {
             return NextResponse.json({ error: 'Invalid currency' }, { status: 400 });
         }
 
@@ -152,11 +156,21 @@ export async function POST(req: NextRequest) {
                     return NextResponse.json({ error: 'Transaction failed on-chain' }, { status: 400 });
                 }
 
-                // Verify transfer amount and recipient
+                // Verify transfer amount, recipient, AND payer identity
                 const expectedLamports = Math.round(amountSol * LAMPORTS_PER_SOL);
                 const accountKeys = txInfo.transaction.message.getAccountKeys();
                 const preBalances = txInfo.meta?.preBalances || [];
                 const postBalances = txInfo.meta?.postBalances || [];
+
+                // Verify the fee payer (first signer, index 0) is the authenticated user
+                const userWallet = session.wallet as string | undefined;
+                if (userWallet) {
+                    const userPubkey = new PublicKey(userWallet);
+                    const feePayer = accountKeys.get(0);
+                    if (!feePayer || !feePayer.equals(userPubkey)) {
+                        return NextResponse.json({ error: 'Transaction fee payer does not match authenticated wallet' }, { status: 400 });
+                    }
+                }
 
                 // Find treasury account index
                 let treasuryIndex = -1;
@@ -183,6 +197,68 @@ export async function POST(req: NextRequest) {
             } catch (err) {
                 console.error('SOL verification error:', err);
                 return NextResponse.json({ error: 'Failed to verify transaction' }, { status: 500 });
+            }
+        } else if (currency === 'USDC') {
+            // USDC uses SPL token transfer — verify tx signature on-chain same as SOL
+            if (!txSignature || typeof txSignature !== 'string') {
+                return NextResponse.json({ error: 'Missing transaction signature for USDC purchase' }, { status: 400 });
+            }
+
+            try {
+                const connection = new Connection(getRpcUrl());
+
+                let txInfo = null;
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    txInfo = await connection.getTransaction(txSignature, {
+                        commitment: 'confirmed',
+                        maxSupportedTransactionVersion: 0,
+                    });
+                    if (txInfo) break;
+                    if (attempt < 2) await new Promise(r => setTimeout(r, 2000));
+                }
+
+                if (!txInfo) {
+                    return NextResponse.json({ error: 'Transaction not found on-chain' }, { status: 400 });
+                }
+                if (txInfo.meta?.err) {
+                    return NextResponse.json({ error: 'Transaction failed on-chain' }, { status: 400 });
+                }
+
+                // Verify the payer is the authenticated user's wallet
+                const accountKeys = txInfo.transaction.message.getAccountKeys();
+                const userWallet = session.wallet as string | undefined;
+                if (userWallet) {
+                    const userPubkey = new PublicKey(userWallet);
+                    let payerFound = false;
+                    for (let i = 0; i < accountKeys.length; i++) {
+                        if (accountKeys.get(i)?.equals(userPubkey)) {
+                            payerFound = true;
+                            break;
+                        }
+                    }
+                    if (!payerFound) {
+                        return NextResponse.json({ error: 'Transaction payer does not match authenticated wallet' }, { status: 400 });
+                    }
+                }
+
+                // For SPL transfers, verify via token balance changes in meta
+                const preTokenBalances = txInfo.meta?.preTokenBalances || [];
+                const postTokenBalances = txInfo.meta?.postTokenBalances || [];
+
+                // Find treasury token balance increase
+                const treasuryStr = TREASURY.toBase58();
+                const postTreasury = postTokenBalances.find(b => b.owner === treasuryStr);
+                const preTreasury = preTokenBalances.find(b => b.owner === treasuryStr);
+
+                const received = Number(postTreasury?.uiTokenAmount?.uiAmount || 0) - Number(preTreasury?.uiTokenAmount?.uiAmount || 0);
+                const expectedUsdc = (storeItem.priceSol / 0.01) * qty; // Convert SOL price to approximate USDC
+
+                if (received < expectedUsdc * 0.95) {
+                    return NextResponse.json({ error: 'Insufficient USDC payment' }, { status: 400 });
+                }
+            } catch (err) {
+                console.error('USDC verification error:', err);
+                return NextResponse.json({ error: 'Failed to verify USDC transaction' }, { status: 500 });
             }
         }
 
@@ -219,14 +295,25 @@ export async function POST(req: NextRequest) {
             userUpdates.pts_balance = newPtsBalance;
         }
 
-        const { error: updateError } = await supabase
+        // Optimistic lock: only update if updated_at hasn't changed (prevents double-spend race)
+        let updateQuery = supabase
             .from('users')
             .update(userUpdates)
             .eq('id', userId);
 
+        if (user.updated_at) {
+            updateQuery = updateQuery.eq('updated_at', user.updated_at);
+        }
+
+        const { data: updateResult, error: updateError } = await updateQuery.select('id').maybeSingle();
+
         if (updateError) {
             console.error('Shop purchase DB update failed:', updateError);
             return NextResponse.json({ error: 'Failed to save purchase' }, { status: 500 });
+        }
+
+        if (!updateResult) {
+            return NextResponse.json({ error: 'Conflict: state changed. Please retry.' }, { status: 409 });
         }
 
         // Record purchase for audit trail

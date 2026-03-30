@@ -62,11 +62,12 @@ export const useResistanceMission = (streamer: Streamer) => {
 
         const bossData = bosses[key] || bosses.GENERIC;
 
-        // Scale boss HP based on threat level
+        // Scale boss HP: logarithmic curve caps runaway difficulty (max +500 bonus HP)
+        const bossHpBonus = Math.min(500, Math.floor(50 * Math.log2(threatLevel + 1)));
         return {
             ...bossData,
-            maxHp: bossData.maxHp + (threatLevel * 50),
-            hp: bossData.maxHp + (threatLevel * 50),
+            maxHp: bossData.maxHp + bossHpBonus,
+            hp: bossData.maxHp + bossHpBonus,
             image: bossData.image
         };
     }, [streamer.archetype, streamer.id, threatLevel]);
@@ -83,8 +84,8 @@ export const useResistanceMission = (streamer: Streamer) => {
             const equip = items[itemId];
             if (!equip || equip.category !== 'equipment') continue;
             switch (itemId) {
-                case 'TITAN_CHASSIS': bonuses.maxHpBonus += 50; break;
-                case 'QUANTUM_CORE': bonuses.damageMultiplier *= 1.1; break;
+                case 'TITAN_CHASSIS': bonuses.maxHpBonus += 30; break;
+                case 'QUANTUM_CORE': bonuses.damageMultiplier = Math.min(bonuses.damageMultiplier * 1.1, 2.0); break;
                 case 'NEURAL_AMPLIFIER': bonuses.chargeRateBonus += 0.15; break;
                 case 'SHADOW_CLOAK': bonuses.dodgeChance += 0.15; break;
             }
@@ -157,7 +158,7 @@ export const useResistanceMission = (streamer: Streamer) => {
 
     // Sync HP to global store
     useEffect(() => {
-        setIntegrity(player.hp / player.maxHp);
+        setIntegrity(player.maxHp > 0 ? player.hp / player.maxHp : 0);
     }, [player.hp, player.maxHp, setIntegrity]);
 
     // Cleanup on unmount
@@ -168,6 +169,9 @@ export const useResistanceMission = (streamer: Streamer) => {
     // Boost state
     const [attackBoost, setAttackBoost] = useState<{ multiplier: number; turnsLeft: number }>({ multiplier: 1, turnsLeft: 0 });
     const [defenseBoost, setDefenseBoost] = useState<{ multiplier: number; turnsLeft: number }>({ multiplier: 1, turnsLeft: 0 });
+    // Ref keeps defenseBoost fresh inside setTimeout callbacks (prevents stale closure)
+    const defenseBoostRef = useRef(defenseBoost);
+    useEffect(() => { defenseBoostRef.current = defenseBoost; }, [defenseBoost]);
 
     // PP tracking - initialize from streamer moves
     const [movePP, setMovePP] = useState<Record<string, number>>(() => {
@@ -227,9 +231,11 @@ export const useResistanceMission = (streamer: Streamer) => {
         // Authority Sweep / Difficulty Multiplier
         enemyDamage = Math.floor(enemyDamage * difficultyMultiplier);
 
-        // BUG 18 FIX: Divide by multiplier to reduce damage (1.5 → take 66% damage, not 150%)
-        if (defenseBoost.turnsLeft > 0) {
-            enemyDamage = Math.floor(enemyDamage / defenseBoost.multiplier);
+        // Defense boost: multiplier > 1 means damage reduction (e.g., 1.25 → take 80% damage)
+        // Use ref to avoid stale closure when called via setTimeout
+        const currentDefenseBoost = defenseBoostRef.current;
+        if (currentDefenseBoost.turnsLeft > 0 && currentDefenseBoost.multiplier > 0) {
+            enemyDamage = Math.floor(enemyDamage / Math.max(1, currentDefenseBoost.multiplier));
         }
 
         // Equipment: Shadow Cloak dodge chance
@@ -242,12 +248,13 @@ export const useResistanceMission = (streamer: Streamer) => {
 
         // BUG 14 FIX: Guard against double markMissionComplete on failure
         if (newHp === 0 && !hasMarkedComplete) {
-            // Last Stand: check if player has a revive item before ending
+            // Last Stand: check if player has a revive item — give ONE chance
             const hasRevive = getItemCount(useCollectionStore.getState(), 'PHOENIX_MODULE_V2') > 0;
-            if (hasRevive) {
+            if (hasRevive && playerRef.current.hp > 0) {
+                // Only grant last stand if player wasn't already at 0 HP (prevents infinite loop)
                 addLog("CRITICAL_DAMAGE: Phoenix Module detected! Use it now or fall!");
                 setPlayer(prev => ({ ...prev, hp: 0 }));
-                setIsTurn(true); // Give player one more turn to use revive
+                setIsTurn(true); // Give player one final turn to use revive
                 return;
             }
             setIsComplete(true);
@@ -277,7 +284,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         // Decrement boost counters
         setAttackBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
         setDefenseBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
-    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, defenseBoost, player, difficultyMultiplier, streamer.id, markMissionComplete, addLog, triggerShake, triggerGlitch, hasMarkedComplete]);
+    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, player, difficultyMultiplier, streamer.id, markMissionComplete, addLog, triggerShake, triggerGlitch, hasMarkedComplete]);
 
 
 
@@ -305,9 +312,9 @@ export const useResistanceMission = (streamer: Streamer) => {
 
     const calculateRank = useCallback((): 'S' | 'A' | 'B' | 'F' => {
         if (result === 'FAILURE') return 'F';
-        const hpPercent = (player.hp / player.maxHp) * 100;
+        const hpPercent = player.maxHp > 0 ? (player.hp / player.maxHp) * 100 : 0;
         if (hpPercent > 80 && turns < 10) return 'S';
-        if (hpPercent > 50 || turns < 15) return 'A';
+        if (hpPercent > 50 && turns < 15) return 'A';
         return 'B';
     }, [result, player.hp, player.maxHp, turns]);
 
@@ -450,11 +457,13 @@ export const useResistanceMission = (streamer: Streamer) => {
         if (charge < 100 || !isTurn || isComplete || isRateLimited()) return;
 
         setIsTurn(false);
-        setCharge(0);
+        setCharge(50); // Post-use: retain 50% charge for faster follow-up
         triggerGlitch(2);
         addLog(`ULTIMATE_UPLINK: ${player.name.toUpperCase()} ACTIVATES ${streamer.ultimateMove.name}!`);
 
-        const damage = Math.floor(streamer.ultimateMove.power * (1.5 + Math.random()));
+        // Cap ultimate power to prevent one-shot exploits
+        const ultPower = Math.min(streamer.ultimateMove.power, 200);
+        const damage = Math.floor(ultPower * (2.0 + Math.random() * 0.5));
 
         const newHp = Math.max(0, enemy.hp - damage);
 
@@ -542,10 +551,12 @@ export const useResistanceMission = (streamer: Streamer) => {
                 break;
             case 'revive':
                 setPlayer(prev => {
-                    const healTo = Math.floor(prev.maxHp * item.value);
-                    const newHp = Math.max(prev.hp, healTo);
-                    addLog(`PHOENIX PROTOCOL: Signal restored to ${healTo} HP!`);
-                    return { ...prev, hp: Math.min(prev.maxHp, newHp) };
+                    // Revive heals to a percentage of maxHp (item.value is the fraction, e.g. 0.5 = 50%)
+                    // If value >= 1, treat as absolute HP (e.g. RESTORE_CHIP value=100)
+                    const healTo = item.value >= 1 ? item.value : Math.floor(prev.maxHp * item.value);
+                    const newHp = Math.min(prev.maxHp, Math.max(1, healTo));
+                    addLog(`PHOENIX PROTOCOL: Signal restored to ${newHp} HP!`);
+                    return { ...prev, hp: newHp };
                 });
                 // If we were in "last stand" (hp=0 but battle not ended), clear the state
                 if (playerRef.current.hp <= 0) {

@@ -104,9 +104,26 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean, wager: n
                             p_defender_stats: { ...opponent.stats, name: opponent.name || 'DEFENDER', hp: opponent.stats?.hp || 100 }
                         }).then(({ data, error }) => {
                             if (error || (data && !data.success)) {
-                                console.error("Match Initialization Failed:", error || data?.error);
-                                toast.error('UPLINK_FAILURE', data?.error || 'Insufficient Funds');
-                                // Reset status so user isn't stuck in SEARCHING forever
+                                const errMsg = data?.error || error?.message || 'Match initialization failed';
+                                console.error("Match Initialization Failed:", errMsg);
+                                toast.error('UPLINK_FAILURE', errMsg);
+
+                                // Attempt wager refund if match init failed after deduction
+                                if (finalWager > 0) {
+                                    supabase.rpc('refund_pvp_wager', {
+                                        p_player_id: playerId,
+                                        p_opponent_id: opponent.playerId,
+                                        p_amount: finalWager
+                                    }).then(({ error: refundErr }) => {
+                                        if (refundErr) {
+                                            console.error("Wager refund failed:", refundErr);
+                                            toast.error('REFUND_FAILURE', 'Wager refund failed. Contact support.');
+                                        } else {
+                                            toast.success('WAGER_REFUNDED', 'Your wager has been returned.');
+                                        }
+                                    });
+                                }
+
                                 isMatchingRef.current = false;
                                 setMatchStatus('ERROR');
                                 return;

@@ -74,54 +74,69 @@ export const usePvPActions = ({
             return false;
         }
 
-        // Optimistically use item
-        if (!consumeItem(itemId)) return false;
-
-        // Apply Effect Locally
-        let effectLog = '';
-        let effectValue = 0;
-
-        switch (item.effect) {
-            case 'heal':
-                setPlayer((prev: PvPPlayerState) => {
-                    const healAmount = itemId === 'RESTORE_CHIP' ? prev.maxHp : item.value;
-                    const newHp = Math.min(prev.maxHp, prev.hp + healAmount);
-                    effectValue = newHp - prev.hp;
-                    effectLog = `Restored ${effectValue} HP`;
-                    return { ...prev, hp: newHp };
-                });
-                break;
-            case 'boostAttack':
-                // Note: PvP might need separate boost state, but for now we just log it and maybe 
-                // we send a 'CHAT' or 'EFFECT' action. Real implementation would need 'attackBoost' state in usePvPState.
-                // For simplified 10/10, we'll assume boosts handled or just visually acknowledged, 
-                // OR we strictly support Healing for now as primary PvP item.
-                // Let's support Healing primarily.
-                effectLog = `Attack boosted (Not fully supported in PvP yet)`;
-                break;
-            case 'boostDefense':
-                effectLog = `Defense boosted (Not fully supported in PvP yet)`;
-                break;
-            default:
-                effectLog = `Used ${item.name}`;
-        }
-
-        addLog(`${streamerName.toUpperCase()} used ${item.name}: ${effectLog}`);
-        setIsTurn(false);
-
-        // Send Action to Opponent
-        sendAction({
-            type: 'ITEM_USE',
-            senderId: playerId,
-            itemName: item.name,
-            itemEffect: item.effect,
-            itemValue: item.value // Or actual healed amount if we calculated it
-        });
-
-        // If Bot Match, trigger bot response
+        // Bot matches: apply locally (non-competitive)
         if (matchId.startsWith('bot_match_')) {
+            if (!consumeItem(itemId)) return false;
+
+            let effectLog = '';
+            switch (item.effect) {
+                case 'heal':
+                    setPlayer((prev: PvPPlayerState) => {
+                        const healAmount = itemId === 'RESTORE_CHIP' ? prev.maxHp : item.value;
+                        const newHp = Math.min(prev.maxHp, prev.hp + healAmount);
+                        effectLog = `Restored ${newHp - prev.hp} HP`;
+                        return { ...prev, hp: newHp };
+                    });
+                    break;
+                default:
+                    effectLog = `Used ${item.name}`;
+            }
+
+            addLog(`${streamerName.toUpperCase()} used ${item.name}: ${effectLog}`);
+            setIsTurn(false);
+            sendAction({ type: 'ITEM_USE', senderId: playerId, itemName: item.name, itemEffect: item.effect, itemValue: item.value });
             setLastAction({ type: 'ITEM_USE', senderId: playerId, timestamp: Date.now() });
+            return true;
         }
+
+        // Real matches: validate server-side
+        setIsTurn(false);
+        addLog(`${streamerName.toUpperCase()} uses ${item.name}...`);
+
+        fetch('/api/pvp/validate-item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ matchId, itemId }),
+        })
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) {
+                    Logger.warn('PvPActions', 'Item validation failed', data.error);
+                    toast.error("ITEM_REJECTED", data.error || "Item use denied by server.");
+                    if (!isComplete) setIsTurn(true);
+                    return;
+                }
+
+                // Server confirmed — apply canonical effect
+                consumeItem(itemId);
+                if (data.newHp !== undefined) {
+                    setPlayer((prev: PvPPlayerState) => ({ ...prev, hp: data.newHp }));
+                }
+                addLog(`${streamerName.toUpperCase()} used ${item.name}: ${data.description}`);
+
+                sendAction({
+                    type: 'ITEM_USE',
+                    senderId: playerId,
+                    itemName: item.name,
+                    itemEffect: item.effect,
+                    itemValue: data.hpHealed ?? item.value,
+                });
+            })
+            .catch((err) => {
+                Logger.error('PvPActions', 'Item validation error', err);
+                toast.error("COMM_LINK_ERROR", "Failed to validate item use.");
+                if (!isComplete) setIsTurn(true);
+            });
 
         return true;
 

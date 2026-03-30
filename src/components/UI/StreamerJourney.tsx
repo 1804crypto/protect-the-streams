@@ -25,6 +25,14 @@ export const StreamerJourney: React.FC<StreamerJourneyProps> = ({ streamer, isOp
     const journeyProgress = useCollectionStore(state => state.journeyProgress);
     const advanceJourney = useCollectionStore(state => state.advanceJourney);
 
+    // Escape key to close
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [isOpen, onClose]);
+
     // -1 means no node is currently active (e.g., viewing map), >=0 means actively playing that node
     const [activeEncounterNode, setActiveEncounterNode] = useState<number | null>(null);
     const [encounterLogs, setEncounterLogs] = useState<string[]>([]);

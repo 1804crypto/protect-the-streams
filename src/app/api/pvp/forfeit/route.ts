@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { Logger } from '@/lib/logger';
 import { verifySession } from '@/lib/auth';
+import { getServiceSupabase } from '@/lib/supabaseClient';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = getServiceSupabase();
 
 export async function POST(req: NextRequest) {
     try {
@@ -21,7 +18,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid Session' }, { status: 401 });
         }
 
-        const { matchId } = await req.json();
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+        const { matchId } = body;
         // Derive claimantId from verified session, not from client body
         const claimantId = session.userId as string;
 

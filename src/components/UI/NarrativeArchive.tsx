@@ -17,7 +17,7 @@ interface NarrativeArchiveProps {
 export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onClose }) => {
     const unlockedNarratives = useCollectionStore(state => state.unlockedNarratives);
     const [selectedStreamer, setSelectedStreamer] = useState<Streamer | null>(null);
-    const focusTrapRef = useFocusTrap(isOpen);
+    const focusTrapRef = useFocusTrap(isOpen, onClose);
 
     const starter5Ids = ['kaicenat', 'ishowspeed', 'dukedennis', 'druski', 'agent00'];
     const starter5 = streamers.filter(s => starter5Ids.includes(s.id));

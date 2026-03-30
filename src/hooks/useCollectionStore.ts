@@ -65,31 +65,21 @@ interface CollectionState {
 const MAX_SYNC_RETRIES = 2;
 
 const syncStateToCloud = async (
-    xpDelta: number,
     inventory: Record<string, number>,
-    missionId?: string,
-    rank?: string,
-    duration?: number,
     set?: (_partial: Partial<CollectionState> | ((_state: CollectionState) => Partial<CollectionState>)) => void,
     additionalParams?: {
-        deltaWins?: number,
-        deltaLosses?: number,
         streamerNatures?: Record<string, NatureType>,
         completedMissions?: MissionRecord[],
         faction?: string,
         isFactionMinted?: boolean
     }
 ) => {
+    // HARDENED: Sync only persists state — no reward fields (XP, PTS, wins, losses, rank).
+    // All rewards are granted exclusively by server-authoritative endpoints.
     const payload: Record<string, unknown> = {
-        deltaXp: xpDelta,
         inventory: inventory
     };
 
-    if (missionId) payload.missionId = missionId;
-    if (rank) payload.rank = rank;
-    if (duration) payload.duration = duration;
-    if (additionalParams?.deltaWins !== undefined) payload.deltaWins = additionalParams.deltaWins;
-    if (additionalParams?.deltaLosses !== undefined) payload.deltaLosses = additionalParams.deltaLosses;
     if (additionalParams?.streamerNatures !== undefined) payload.streamerNatures = additionalParams.streamerNatures;
     if (additionalParams?.completedMissions !== undefined) payload.completedMissions = additionalParams.completedMissions;
     if (additionalParams?.faction !== undefined) payload.faction = additionalParams.faction;
@@ -120,8 +110,10 @@ const syncStateToCloud = async (
                     return; // Non-retryable
                 }
                 console.error("Cloud Sync Rejected:", data.error);
-                // Rate limited — don't retry
+                // Rate limited — don't retry immediately
                 if (res.status === 429) return;
+                // Optimistic lock conflict — always retry (another request won the race)
+                if (res.status === 409) continue;
             }
         } catch (err) {
             console.error(`Cloud Sync Failed (attempt ${attempt + 1}/${MAX_SYNC_RETRIES + 1}):`, err);
@@ -138,7 +130,7 @@ const syncStateToCloud = async (
     toastHelper.withRetry(
         "SYNC_FAILURE",
         "Cloud synchronization failed. Your progress is saved locally.",
-        () => syncStateToCloud(xpDelta, inventory, missionId, rank, duration, set, additionalParams)
+        () => syncStateToCloud(inventory, set, additionalParams)
     );
 };
 
@@ -240,7 +232,7 @@ export const useCollectionStore = create<CollectionState>()(
                 // Sync nature to Cloud (BUG 8 FIX: securedIds no longer sent from client)
                 const { isAuthenticated } = get();
                 if (isAuthenticated) {
-                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, {
+                    syncStateToCloud(inventory, set, {
                         streamerNatures: { ...streamerNatures, [_id]: nature }
                     });
                 }
@@ -258,7 +250,7 @@ export const useCollectionStore = create<CollectionState>()(
                 // Sync Update
                 const { isAuthenticated } = get();
                 if (isAuthenticated) {
-                    syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                    syncStateToCloud(newInventory, set);
                 }
             },
 
@@ -276,7 +268,7 @@ export const useCollectionStore = create<CollectionState>()(
                 // Sync Update (Consumption)
                 const { isAuthenticated } = get();
                 if (isAuthenticated) {
-                    syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                    syncStateToCloud(newInventory, set);
                 }
 
                 return true;
@@ -300,7 +292,7 @@ export const useCollectionStore = create<CollectionState>()(
 
                 const { isAuthenticated } = get();
                 if (isAuthenticated) {
-                    syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                    syncStateToCloud(newInventory, set);
                 }
             },
 
@@ -318,7 +310,7 @@ export const useCollectionStore = create<CollectionState>()(
 
                 const { isAuthenticated } = get();
                 if (isAuthenticated) {
-                    syncStateToCloud(0, newInventory, undefined, undefined, undefined, set);
+                    syncStateToCloud(newInventory, set);
                 }
             },
 
@@ -332,7 +324,7 @@ export const useCollectionStore = create<CollectionState>()(
                 set({ userFaction: _faction, isFactionMinted: false });
                 const { inventory, isAuthenticated } = get();
                 if (isAuthenticated) {
-                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction: _faction });
+                    syncStateToCloud(inventory, set, { faction: _faction });
                 }
             },
 
@@ -340,7 +332,7 @@ export const useCollectionStore = create<CollectionState>()(
                 set({ isFactionMinted: true });
                 const { inventory, userFaction, isAuthenticated } = get();
                 if (isAuthenticated) {
-                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { faction: userFaction, isFactionMinted: true });
+                    syncStateToCloud(inventory, set, { faction: userFaction, isFactionMinted: true });
                 }
             },
 
@@ -376,6 +368,7 @@ export const useCollectionStore = create<CollectionState>()(
 
                 // SERVER-AUTHORITATIVE PATH: For authenticated users, server computes all rewards
                 if (isAuth && battleResult) {
+                    const missionIdempotencyKey = `mission_${_id}_${now}_${crypto.randomUUID()}`;
                     fetch('/api/mission/complete', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -385,21 +378,26 @@ export const useCollectionStore = create<CollectionState>()(
                             maxHp: battleResult.maxHp,
                             turnsUsed: battleResult.turnsUsed,
                             isBoss: battleResult.isBoss,
-                            duration
+                            duration,
+                            idempotencyKey: missionIdempotencyKey
                         })
                     })
-                        .then(res => res.json())
-                        .then(data => {
+                        .then(async res => {
+                            const data = await res.json();
                             if (data.success) {
-                                set({
+                                set((state) => ({
                                     totalResistanceScore: data.newXp,
                                     level: data.newLevel,
                                     ptsBalance: data.newPtsBalance,
                                     inventory: data.newInventory,
                                     completedMissions: data.completedMissions,
-                                    wins: data.newWins !== undefined ? data.newWins : get().wins,
-                                    losses: data.newLosses !== undefined ? data.newLosses : get().losses
-                                });
+                                    wins: data.newWins !== undefined ? data.newWins : state.wins,
+                                    losses: data.newLosses !== undefined ? data.newLosses : state.losses
+                                }));
+                            } else if (res.status === 429 && data.dailyLimit) {
+                                // Daily limit — don't fallback to local (would bypass anti-farm)
+                                const { toast: t } = await import('@/hooks/useToastStore');
+                                t.error("DAILY_LIMIT", data.error || "Daily mission limit reached.");
                             } else {
                                 console.error("Server mission complete failed:", data.error);
                                 // Fallback: apply local computation
@@ -423,16 +421,17 @@ export const useCollectionStore = create<CollectionState>()(
                 const newProgress = { ...journeyProgress, [_streamerId]: currentProgress + 1 };
 
                 // Add flat reward for advancing journey (300 XP + 50 $PTS)
-                set({
+                set((state) => ({
                     journeyProgress: newProgress,
-                    totalResistanceScore: get().totalResistanceScore + 300,
-                    ptsBalance: get().ptsBalance + 50
-                });
+                    totalResistanceScore: state.totalResistanceScore + 300,
+                    ptsBalance: state.ptsBalance + 50
+                }));
 
                 if (isAuthenticated) {
                     // For now, sync just the delta stats + inventory. 
                     // In a full implementation we'd probably add journeyProgress to the DB schema.
-                    syncStateToCloud(300, inventory, undefined, undefined, undefined, set);
+                    // Journey XP applied locally; sync persists inventory state only
+                    syncStateToCloud(inventory, set);
                 }
             },
 
@@ -460,21 +459,17 @@ export const useCollectionStore = create<CollectionState>()(
             },
 
             addWin: () => {
-                const { wins, inventory, isAuthenticated } = get();
+                // Local UI update only — server-authoritative wins come from
+                // /api/mission/complete and /api/pvp/forfeit
+                const { wins } = get();
                 set({ wins: wins + 1 });
-                if (isAuthenticated) {
-                    // BUG 7 FIX: Send delta increment, not absolute value
-                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { deltaWins: 1 });
-                }
             },
 
             addLoss: () => {
-                const { losses, inventory, isAuthenticated } = get();
+                // Local UI update only — server-authoritative losses come from
+                // /api/mission/complete and /api/pvp/forfeit
+                const { losses } = get();
                 set({ losses: losses + 1 });
-                if (isAuthenticated) {
-                    // BUG 7 FIX: Send delta increment, not absolute value
-                    syncStateToCloud(0, inventory, undefined, undefined, undefined, set, { deltaLosses: 1 });
-                }
             },
 
             refreshStats: async () => {

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceSupabase } from '@/lib/supabaseClient';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = getServiceSupabase();
 
 // Simple in-memory rate limiter: max 20 logs per IP per minute
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -32,7 +30,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
         }
 
-        const body = await req.json();
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
         const { level, component, message, metadata } = body;
 
         if (!level || !component || !message) {
@@ -47,6 +50,16 @@ export async function POST(req: NextRequest) {
         const safeMessage = String(message).slice(0, 2000);
         const safeComponent = String(component).slice(0, 200);
 
+        // Validate and size-limit metadata to prevent DB bloat / injection
+        let safeMetadata: Record<string, unknown> | null = null;
+        if (metadata && typeof metadata === 'object') {
+            const serialized = JSON.stringify(metadata);
+            if (serialized.length <= 5000) {
+                safeMetadata = JSON.parse(serialized);
+            }
+            // Silently drop oversized metadata
+        }
+
         // Fire-and-forget insert — don't block response on DB write
         supabase
             .from('error_logs')
@@ -54,7 +67,7 @@ export async function POST(req: NextRequest) {
                 level,
                 component: safeComponent,
                 message: safeMessage,
-                metadata: metadata ? JSON.parse(JSON.stringify(metadata)) : null,
+                metadata: safeMetadata,
                 environment: process.env.NODE_ENV || 'production',
             })
             .then(({ error }) => {

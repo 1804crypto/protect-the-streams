@@ -4,6 +4,18 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useAudioStore } from './useAudioStore';
 import { useCollectionStore } from './useCollectionStore';
 
+// Reuse global AudioContext from useAudioSystem to avoid multiple contexts
+let sharedMusicCtx: AudioContext | null = null;
+const getMusicCtx = () => {
+    if (!sharedMusicCtx && typeof window !== 'undefined') {
+        sharedMusicCtx = new (window.AudioContext || (window as import('@/types/audio').WebkitWindow).webkitAudioContext)();
+    }
+    if (sharedMusicCtx?.state === 'suspended') {
+        sharedMusicCtx.resume();
+    }
+    return sharedMusicCtx;
+};
+
 // Configuration
 const CROSSFADE_TIME = 2.0; // Seconds for smooth transitions
 const STEMS = {
@@ -25,7 +37,7 @@ export const useNeuralMusic = (
     const isMuted = useAudioStore(state => state.isMuted);
     const difficultyMultiplier = useCollectionStore(state => state.difficultyMultiplier); // Proxies for Global Threat Level
 
-    const audioCtxRef = useRef<AudioContext | null>(null);
+    const audioCtxRef = useRef<AudioContext | null>(getMusicCtx());
     const stemsRef = useRef<Record<string, { source: AudioBufferSourceNode | null, gain: GainNode | null, buffer: AudioBuffer | null }>>({
         BASE: { source: null, gain: null, buffer: null },
         MID: { source: null, gain: null, buffer: null },
@@ -42,9 +54,10 @@ export const useNeuralMusic = (
 
         const initAudio = async () => {
             if (!audioCtxRef.current) {
-                audioCtxRef.current = new (window.AudioContext || (window as import('@/types/audio').WebkitWindow).webkitAudioContext)();
+                audioCtxRef.current = getMusicCtx();
             }
             const ctx = audioCtxRef.current;
+            if (!ctx) return;
 
             // Load all buffers if not loaded
             const loadPromises = Object.entries(STEMS).map(async ([key, url]) => {
@@ -81,9 +94,18 @@ export const useNeuralMusic = (
         }
 
         return () => {
-            // Cleanup handled in separate effect or component unmount logic if needed
-            // But for now, we want persistence during the session, so we don't aggressively close
-            // unless isActive turns false (handled below)
+            // Stop all stems on unmount to prevent leaked audio nodes
+            Object.values(stemsRef.current).forEach(stem => {
+                if (stem.source) {
+                    try { stem.source.stop(); } catch { /* already stopped */ }
+                    try { stem.source.disconnect(); } catch { /* ignore */ }
+                    stem.source = null;
+                }
+                if (stem.gain) {
+                    try { stem.gain.disconnect(); } catch { /* ignore */ }
+                    stem.gain = null;
+                }
+            });
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- startPlayback intentionally excluded; including it would cause infinite reload
     }, [isActive, isLoaded]);

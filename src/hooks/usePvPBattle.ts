@@ -242,7 +242,8 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             const oppStatsObj = isAttacker ? matchData.defender_stats : matchData.attacker_stats;
             const oppHp = isAttacker ? matchData.defender_hp : matchData.attacker_hp;
             const oppId = isAttacker ? matchData.defender_id : matchData.attacker_id;
-            const oppMaxHp = oppStatsObj?.maxHp || calculatedMaxHp; // Fallback
+            // Use opponent's HP from match data (authoritative), not our own calculatedMaxHp
+            const oppMaxHp = oppStatsObj?.maxHp || oppStatsObj?.hp || oppHp || 100;
 
             setOpponent({
                 id: oppId,
@@ -285,16 +286,17 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
         // eslint-disable-next-line react-hooks/exhaustive-deps -- battleStatusRef is a ref, intentionally excluded
     }, [battleStatus, setBattleStatus, setIsTurn]);
 
-    // 7b. FREEZE FIX: Turn Safety Watchdog — if stuck on opponent turn for 10s, force our turn
+    // 7b. Turn Safety Watchdog — aligned with server-side 60s timeout (check_turn_timeout RPC)
+    // Client waits 65s (60s server + 5s grace) before forcing turn to avoid NOT_YOUR_TURN errors
     useEffect(() => {
         if (battleStatus === 'ACTIVE' && !isTurn && !isComplete) {
             const timer = setTimeout(() => {
                 if (!isTurnRef.current && !isCompleteRef.current) {
-                    Logger.warn('PvPBattle', 'Turn Safety: Forcing turn after 10s wait');
-                    addLog('SIGNAL_RECOVERY: Forcing turn due to opponent timeout.');
+                    Logger.warn('PvPBattle', 'Turn Safety: Forcing turn after 65s wait (server timeout: 60s)');
+                    addLog('SIGNAL_RECOVERY: Opponent turn timed out. Forcing your turn.');
                     setIsTurn(true);
                 }
-            }, 10000);
+            }, 65000);
             return () => clearTimeout(timer);
         }
     }, [battleStatus, isTurn, isComplete, setIsTurn, addLog, isTurnRef, isCompleteRef]);

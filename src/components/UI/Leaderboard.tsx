@@ -26,7 +26,8 @@ const GHOST_ENTRIES = [
 export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const focusTrapRef = useFocusTrap(isOpen);
+    const [fetchError, setFetchError] = useState<string | null>(null);
+    const focusTrapRef = useFocusTrap(isOpen, onClose);
 
     useEffect(() => {
         if (isOpen) {
@@ -36,6 +37,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
 
     const fetchLeaderboard = async () => {
         setIsLoading(true);
+        setFetchError(null);
         try {
             // Query the correct 'users' table (confirmed from DB migrations)
             const { data, error } = await supabase
@@ -46,6 +48,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
 
             if (error) {
                 console.error('Leaderboard fetch error:', error.message);
+                setFetchError('SIGNAL_LOST: Unable to retrieve rankings. Retry shortly.');
                 setEntries([]);
             } else if (!data || data.length === 0) {
                 setEntries([]);
@@ -63,6 +66,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
             }
         } catch (e) {
             console.error('Leaderboard error:', e);
+            setFetchError('SIGNAL_LOST: Unable to retrieve rankings. Retry shortly.');
             setEntries([]);
         } finally {
             setIsLoading(false);
@@ -95,7 +99,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                             <span className="text-neon-blue animate-pulse" aria-hidden="true">◈</span>
                             HIGH_COMMAND_Apex
                         </h2>
-                        <div className="text-[6px] md:text-[8px] font-mono text-white/40 tracking-[0.4em] mt-1 italic uppercase">Sector_00 // Global_Operative_Rankings</div>
+                        <div className="text-[6px] md:text-[8px] font-mono text-white/60 tracking-[0.4em] mt-1 italic uppercase">Sector_00 // Global_Operative_Rankings</div>
                     </div>
                     <button
                         onClick={onClose}
@@ -107,7 +111,19 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                 </div>
 
                 <div className="p-8 min-h-[500px] relative">
-                    {isLoading ? (
+                    {fetchError ? (
+                        <div className="flex flex-col items-center justify-center h-80 space-y-4">
+                            <span className="text-resistance-accent text-3xl">⚠</span>
+                            <p className="text-resistance-accent font-mono text-xs tracking-widest text-center">{fetchError}</p>
+                            <button
+                                type="button"
+                                onClick={fetchLeaderboard}
+                                className="px-4 py-2 border border-neon-blue/40 text-neon-blue text-[10px] font-bold tracking-widest hover:bg-neon-blue/10 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-blue"
+                            >
+                                [RETRY_UPLINK]
+                            </button>
+                        </div>
+                    ) : isLoading ? (
                         <div className="flex flex-col items-center justify-center h-80 space-y-6">
                             <div className="relative w-16 h-16">
                                 <div className="absolute inset-0 border-4 border-neon-blue/20 rounded-full" />
@@ -167,10 +183,10 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                 <td className="py-3 md:py-5 px-2 md:px-4 text-right">
                                                     <div className="flex flex-col items-end">
                                                         <span className="text-neon-blue font-black text-sm">
-                                                            {(entry.xp || 0).toLocaleString()} <span className="text-[8px] text-white/40">XP</span>
+                                                            {(entry.xp || 0).toLocaleString()} <span className="text-[8px] text-white/60">XP</span>
                                                         </span>
                                                         <span className="text-neon-green font-bold text-[10px]">
-                                                            {entry.wins || 0} <span className="text-[8px] text-white/40">WINS</span>
+                                                            {entry.wins || 0} <span className="text-[8px] text-white/60">WINS</span>
                                                         </span>
                                                     </div>
                                                 </td>
@@ -218,11 +234,11 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                     <div className="flex gap-4">
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-1 bg-neon-green rounded-full animate-pulse" />
-                            <span className="text-[7px] text-white/40 font-mono">UPLINK_LIVE</span>
+                            <span className="text-[7px] text-white/60 font-mono">UPLINK_LIVE</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-1 bg-neon-blue rounded-full animate-pulse" />
-                            <span className="text-[7px] text-white/40 font-mono">ENCRYPTION: MAX</span>
+                            <span className="text-[7px] text-white/60 font-mono">ENCRYPTION: MAX</span>
                         </div>
 
                         {/* First Operative Hook — only shown when no real entries exist */}

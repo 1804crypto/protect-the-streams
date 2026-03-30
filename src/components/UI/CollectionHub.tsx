@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
@@ -40,6 +40,14 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
         window.addEventListener('SPECTATE_MATCH', handleSpectate);
         return () => window.removeEventListener('SPECTATE_MATCH', handleSpectate);
     }, []);
+
+    // Escape key to close
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [isOpen, onClose]);
     const securedAssets = streamers.filter(s => securedIds.includes(s.id));
 
     return (
@@ -98,7 +106,8 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                     </button>
                                     <button
                                         onClick={onClose}
-                                        className="w-10 h-10 flex items-center justify-center border border-white/10 hover:border-neon-pink text-white/40 hover:text-neon-pink transition-all"
+                                        className="w-10 h-10 flex items-center justify-center border border-white/10 hover:border-neon-pink text-white/40 hover:text-neon-pink transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-neon-blue"
+                                        aria-label="Close panel"
                                     >
                                         ✕
                                     </button>
@@ -154,8 +163,8 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                             </span>
                                         </div>
                                         <div className="flex flex-col gap-1 md:text-right">
-                                            <span className="text-[8px] text-white/30 font-mono uppercase">Global_Liberation_Rating:</span>
-                                            <span className="text-[10px] font-black text-neon-green">
+                                            <span className="text-[8px] text-white/30 font-mono uppercase" title="Earned from missions, PvP wins, and journey progress">Global_Liberation_Rating:</span>
+                                            <span className="text-[10px] font-black text-neon-green" title="Your total XP across all activities">
                                                 {totalResistanceScore.toLocaleString()} GLR
                                             </span>
                                         </div>
@@ -234,7 +243,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                                                     <motion.div
                                                                         className="h-full bg-neon-blue"
                                                                         animate={{
-                                                                            width: `${((record?.xp || 0) / (record?.level ? (record.level >= 5 ? 1000 : [100, 250, 500, 1000][record.level - 1]) : 100)) * 100}%`
+                                                                            width: `${Math.min(100, ((record?.xp || 0) / (record?.level ? (record.level >= 5 ? 2000 : [100, 250, 500, 1000][record.level - 1]) : 100)) * 100)}%`
                                                                         }}
                                                                     />
                                                                 </div>
@@ -322,9 +331,9 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                     </AnimatePresence>
 
                     {/* PvP Terminal Instance (Used for Matchmaking OR Spectating) */}
-                    {spectateMatchId && (
+                    {spectateMatchId && streamers.length > 0 && (
                         <PvPTerminal
-                            streamer={streamers[0]} // Fallback streamer for assets
+                            streamer={streamers[0]}
                             matchId={spectateMatchId}
                             isOpen={true}
                             onClose={() => setSpectateMatchId(null)}
