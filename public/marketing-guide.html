@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Protect The Streamers — Marketing & Growth Playbook</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+  :root {
+    --neon-blue: #00f3ff;
+    --neon-pink: #ff00ff;
+    --neon-green: #00ff9f;
+    --neon-red: #ff003c;
+    --neon-yellow: #f3ff00;
+    --neon-orange: #ff8c00;
+    --dark: #050505;
+    --border: rgba(0,243,255,0.12);
+    --text: #e8e8e8;
+    --muted: #777;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @media print {
+    body { background: #fff; color: #111; }
+    .cover { background: #050505 !important; }
+    .no-print { display: none; }
+    h1, h2, h3, h4 { color: #111 !important; text-shadow: none !important; }
+    .card, .step-card, .platform-card { border-color: #ddd !important; background: #f9f9f9 !important; }
+    .page-break { page-break-before: always; }
+    .section-tag { color: #333 !important; }
+  }
+
+  /* COVER */
+  .cover {
+    background: linear-gradient(135deg, #050505 0%, #0a0a16 50%, #050505 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(255,0,60,0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,0,60,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .cover-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.5em;
+    color: var(--neon-red);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .cover h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: #fff;
+    position: relative;
+    margin-bottom: 8px;
+  }
+
+  .cover h1 span { color: var(--neon-green); }
+
+  .cover-sub {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(14px, 2.5vw, 22px);
+    font-weight: 400;
+    color: var(--neon-blue);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    position: relative;
+  }
+
+  .cover-desc {
+    max-width: 600px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.04em;
+    line-height: 1.9;
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  .cover-pillars {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+  }
+
+  .pillar {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 14px 20px;
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .pillar-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+  .pillar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* LAYOUT */
+  .container { max-width: 920px; margin: 0 auto; padding: 60px 40px; }
+
+  @media (max-width: 600px) { .container { padding: 40px 20px; } }
+
+  /* TYPOGRAPHY */
+  .section-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--neon-blue);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #fff;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--neon-blue);
+    margin: 36px 0 14px;
+  }
+
+  h4 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--neon-green);
+    margin: 20px 0 8px;
+  }
+
+  p { margin-bottom: 14px; color: rgba(255,255,255,0.72); }
+
+  ul, ol { padding-left: 20px; margin-bottom: 16px; }
+  li { margin-bottom: 7px; color: rgba(255,255,255,0.72); }
+  li strong { color: #fff; }
+
+  hr.divider { border: none; border-top: 1px solid var(--border); margin: 52px 0; }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--neon-green);
+  }
+
+  /* CARDS */
+  .card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    border-radius: 2px;
+  }
+
+  .card-blue  { border-left: 3px solid var(--neon-blue); }
+  .card-green { border-left: 3px solid var(--neon-green); }
+  .card-red   { border-left: 3px solid var(--neon-red); }
+  .card-pink  { border-left: 3px solid var(--neon-pink); }
+  .card-orange{ border-left: 3px solid var(--neon-orange); }
+  .card-yellow{ border-left: 3px solid var(--neon-yellow); }
+
+  /* STEP CARDS */
+  .step-card {
+    display: flex;
+    gap: 20px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin-bottom: 14px;
+    border-radius: 2px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    font-family: 'Oswald', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--neon-blue);
+    min-width: 40px;
+    line-height: 1;
+    padding-top: 2px;
+  }
+
+  .step-content { flex: 1; }
+  .step-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .step-desc { font-size: 13px; color: rgba(255,255,255,0.65); margin: 0; }
+
+  /* PLATFORM CARDS */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .platform-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    padding: 20px;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .platform-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .platform-card.twitter::before  { background: #1d9bf0; }
+  .platform-card.tiktok::before   { background: linear-gradient(90deg, #ff0050, #00f2ea); }
+  .platform-card.instagram::before{ background: linear-gradient(90deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+  .platform-card.youtube::before  { background: #ff0000; }
+  .platform-card.discord::before  { background: #5865f2; }
+  .platform-card.reddit::before   { background: #ff4500; }
+  .platform-card.twitch::before   { background: #9146ff; }
+
+  .platform-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+  .platform-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .platform-priority {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .platform-stats {
+    display: flex;
+    gap: 12px;
+    margin: 12px 0;
+    flex-wrap: wrap;
+  }
+
+  .pstat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .pstat span { color: #fff; font-weight: 700; }
+
+  /* TIMELINE */
+  .timeline { margin: 24px 0; }
+
+  .tl-item {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 0;
+    position: relative;
+  }
+
+  .tl-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 32px;
+  }
+
+  .tl-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--neon-blue);
+    border: 2px solid var(--neon-blue);
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .tl-line {
+    width: 1px;
+    flex: 1;
+    background: var(--border);
+    min-height: 32px;
+  }
+
+  .tl-content {
+    padding-bottom: 28px;
+    flex: 1;
+  }
+
+  .tl-week {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--neon-blue);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .tl-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  /* BUDGET TABLE */
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+  thead tr { background: rgba(0,243,255,0.06); }
+
+  th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--neon-blue);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.72);
+    vertical-align: top;
+  }
+
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    padding: 2px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+
+  .badge-blue   { background: rgba(0,243,255,0.15); color: var(--neon-blue); }
+  .badge-green  { background: rgba(0,255,159,0.15); color: var(--neon-green); }
+  .badge-red    { background: rgba(255,0,60,0.15); color: var(--neon-red); }
+  .badge-orange { background: rgba(255,140,0,0.15); color: var(--neon-orange); }
+  .badge-pink   { background: rgba(255,0,255,0.15); color: var(--neon-pink); }
+  .badge-yellow { background: rgba(243,255,0,0.15); color: var(--neon-yellow); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+  .highlight-box {
+    background: rgba(0,243,255,0.04);
+    border: 1px solid rgba(0,243,255,0.2);
+    padding: 20px 24px;
+    margin: 20px 0;
+    border-radius: 2px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  .kpi-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    padding: 16px;
+    text-align: center;
+    border-radius: 2px;
+  }
+
+  .kpi-num {
+    font-family: 'Oswald', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--neon-green);
+    display: block;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .kpi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .content-example {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-left: 3px solid var(--neon-pink);
+    padding: 14px 18px;
+    margin: 10px 0;
+    font-size: 12px;
+    font-style: italic;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.6;
+  }
+
+  .doc-footer {
+    text-align: center;
+    padding: 40px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-eyebrow">⚡ CLASSIFIED — RESISTANCE GROWTH OPERATIONS ⚡</div>
+  <h1>MARKETING & <span>GROWTH</span> PLAYBOOK</h1>
+  <div class="cover-sub">Protect The Streamers — Full Launch Strategy</div>
+  <p class="cover-desc">
+    A step-by-step social media marketing guide, content strategy, ad campaign structure,
+    and growth playbook for launching Protect The Streamers to the public.
+  </p>
+  <div class="cover-pillars">
+    <div class="pillar"><span class="pillar-icon">📱</span><span class="pillar-label">Social Media</span></div>
+    <div class="pillar"><span class="pillar-icon">🎯</span><span class="pillar-label">Ad Campaigns</span></div>
+    <div class="pillar"><span class="pillar-icon">🤝</span><span class="pillar-label">Influencers</span></div>
+    <div class="pillar"><span class="pillar-icon">🌐</span><span class="pillar-label">Community</span></div>
+    <div class="pillar"><span class="pillar-icon">📊</span><span class="pillar-label">Analytics</span></div>
+    <div class="pillar"><span class="pillar-icon">💰</span><span class="pillar-label">Budget</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<div class="container">
+
+  <!-- SECTION 1: OVERVIEW -->
+  <span class="section-tag">// 01 — MISSION_OVERVIEW</span>
+  <h2>Marketing Mission Overview</h2>
+
+  <p>
+    Protect The Streamers sits at the intersection of <strong>streaming culture</strong>, <strong>Web3 gaming</strong>,
+    and <strong>creator fandom</strong> — three of the fastest-growing markets in digital entertainment.
+    The marketing strategy capitalizes on all three simultaneously with a unified narrative:
+    <em>"Fight for your favorite streamer. Own a piece of the resistance."</em>
+  </p>
+
+  <div class="two-col">
+    <div class="card card-blue">
+      <h4>Primary Audience</h4>
+      <ul>
+        <li>Ages 16–34 — fans of the 20 featured streamers</li>
+        <li>Existing Solana / crypto-curious gamers</li>
+        <li>NFT collectors looking for real utility</li>
+        <li>Competitive gamers (PvP community)</li>
+      </ul>
+    </div>
+    <div class="card card-blue">
+      <h4>Core Message</h4>
+      <ul>
+        <li>"Mint your streamer. Battle for the resistance."</li>
+        <li>"Your favorite creator — now a weapon."</li>
+        <li>"Fight. Earn. Govern. Protect The Streamers."</li>
+        <li>"The corporate suppression ends with you."</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-box"><span class="kpi-num">10K</span><span class="kpi-label">Month 1 Target Wallets</span></div>
+    <div class="kpi-box"><span class="kpi-num">50K</span><span class="kpi-num" style="font-size:14px;color:var(--neon-blue);">→</span><span class="kpi-num">100K</span><span class="kpi-label">Discord Members Goal</span></div>
+    <div class="kpi-box"><span class="kpi-num">$50K</span><span class="kpi-label">Month 1 Revenue Target</span></div>
+    <div class="kpi-box"><span class="kpi-num">5M</span><span class="kpi-label">Impressions / Month</span></div>
+    <div class="kpi-box"><span class="kpi-num">20</span><span class="kpi-label">Influencer Collabs</span></div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- SECTION 2: BRAND IDENTITY -->
+  <span class="section-tag">// 02 — BRAND_IDENTITY</span>
+  <h2>Brand Identity & Voice</h2>
+
+  <p>
+    Every piece of content — from a tweet to a paid ad — must feel like it came from the same
+    Resistance transmission. Consistent visual language and tone are the foundation of trust.
+  </p>
+
+  <h3>Visual Identity Rules</h3>
+  <div class="two-col">
+    <div class="card">
+      <h4>Always Use</h4>
+      <ul>
+        <li>Colors: <strong>#00f3ff</strong> (neon blue), <strong>#ff003c</strong> (red), <strong>#00ff9f</strong> (green)</li>
+        <li>Fonts: Oswald (headers) + Inter (body)</li>
+        <li>Dark backgrounds — never white or pastel</li>
+        <li>Grid overlays, scanlines, glitch effects on graphics</li>
+        <li>ALL CAPS for titles and CTAs</li>
+        <li>Terminal-style text (monospace) for stats</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Never Use</h4>
+      <ul>
+        <li>Generic NFT "moon" or "ape" language</li>
+        <li>Price speculation as the primary hook</li>
+        <li>Cluttered thumbnails with more than 3 elements</li>
+        <li>Lowercase-only casual tone in captions</li>
+        <li>Generic stock footage</li>
+        <li>Competitor comparisons</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Tone of Voice</h3>
+  <div class="card card-pink">
+    <p><strong>Think:</strong> A hacker collective that also runs a gaming tournament. Serious mission, but electrifying energy. Cinematic urgency. You are recruiting soldiers for the resistance — not selling a product.</p>
+    <p style="margin-bottom:0;"><strong>Examples of good copy:</strong></p>
+  </div>
+  <div class="content-example">"The Corporate Authority silenced them. You're their last signal. Mint your Defense Card. The resistance needs you — NOW."</div>
+  <div class="content-example">"Kai Cenat. 98 Influence. 99 Charisma. The most dangerous card in the resistance. Is he in your deck?"</div>
+  <div class="content-example">"Your faction. Your NFT. Your war. protectthestreamers.xyz — Join the resistance before the blackout."</div>
+
+  <hr class="divider" />
+
+  <!-- SECTION 3: PLATFORM STRATEGY -->
+  <div class="page-break"></div>
+  <span class="section-tag">// 03 — PLATFORM_STRATEGY</span>
+  <h2>Platform-by-Platform Strategy</h2>
+
+  <div class="platform-grid">
+
+    <!-- TWITTER/X -->
+    <div class="platform-card twitter">
+      <span class="platform-icon">𝕏</span>
+      <div class="platform-name">Twitter / X</div>
+      <div class="platform-priority" style="color:#1d9bf0;">PRIORITY 1 — DAILY</div>
+      <div class="platform-stats">
+        <div class="pstat">Posts: <span>3–5/day</span></div>
+        <div class="pstat">Goal: <span>50K followers</span></div>
+      </div>
+      <ul style="font-size:12px;">
+        <li>This is your <strong>command center</strong> — all announcements go here first</li>
+        <li>Post streamer card stats daily ("TODAY'S OPERATIVE" drops)</li>
+        <li>Thread-style lore drops every Monday</li>
+        <li>Engage CT (Crypto Twitter) and Gaming Twitter separately</li>
+        <li>Quote-tweet every streamer-related viral moment with a PTS angle</li>
+        <li>Pin tweet = trailer + mint link at all times</li>
+        <li>Use #ProtectTheStreamers #PTS #Solana #GameFi on every post</li>
+      </ul>
+    </div>
+
+    <!-- TIKTOK -->
+    <div class="platform-card tiktok">
+      <span class="platform-icon">🎵</span>
+      <div class="platform-name">TikTok</div>
+      <div class="platform-priority" style="color:#ff0050;">PRIORITY 1 — DAILY</div>
+      <div class="platform-stats">
+        <div class="pstat">Posts: <span>2–3/day</span></div>
+        <div class="pstat">Goal: <span>100K followers</span></div>
+      </div>
+      <ul style="font-size:12px;">
+        <li><strong>Highest ROI platform</strong> for your exact audience (16–28)</li>
+        <li>Video 1: "I ranked all 20 streamers by their stats 🔥" — stats reveal</li>
+        <li>Video 2: Battle replays with commentary over trending audio</li>
+        <li>Video 3: "POV you just minted Kai Cenat" reaction-style clips</li>
+        <li>Stitch viral streamer moments: "this is exactly why [streamer] has 99 chaos"</li>
+        <li>Use Duet feature on any video featuring the 20 streamers</li>
+        <li>Post at 6pm–9pm EST — peak Gen Z hours</li>
+      </ul>
+    </div>
+
+    <!-- INSTAGRAM -->
+    <div class="platform-card instagram">
+      <span class="platform-icon">📸</span>
+      <div class="platform-name">Instagram</div>
+      <div class="platform-priority" style="color:#e6683c;">PRIORITY 2 — 5X/WEEK</div>
+      <div class="platform-stats">
+        <div class="pstat">Posts: <span>1 feed + 3 stories/day</span></div>
+        <div class="pstat">Goal: <span>30K followers</span></div>
+      </div>
+      <ul style="font-size:12px;">
+        <li>Feed = high-quality card art, battle screenshots, cinematic stills</li>
+        <li>Reels = repurposed TikTok content (same video, different audience)</li>
+        <li>Stories = polls ("Which faction are you?"), countdowns to drops</li>
+        <li>Carousel posts: "All 20 streamer cards ranked by stat — swipe to see"</li>
+        <li>Collaborate via Instagram Collab posts with creator accounts</li>
+        <li>Story highlight reels: ROSTER / BATTLES / LORE / HOW_TO_PLAY</li>
+      </ul>
+    </div>
+
+    <!-- YOUTUBE -->
+    <div class="platform-card youtube">
+      <span class="platform-icon">▶</span>
+      <div class="platform-name">YouTube</div>
+      <div class="platform-priority" style="color:#ff0000;">PRIORITY 2 — 2X/WEEK</div>
+      <div class="platform-stats">
+        <div class="pstat">Videos: <span>2/week</span></div>
+        <div class="pstat">Goal: <span>25K subscribers</span></div>
+      </div>
+      <ul style="font-size:12px;">
+        <li>Long-form: "Complete Beginners Guide to Protect The Streamers"</li>
+        <li>Series: "Every Streamer Card RANKED" — one per week</li>
+        <li>PvP battle highlights with commentary</li>
+        <li>YouTube Shorts = 30-second vertical clips (same TikTok content)</li>
+        <li>Collab with crypto gaming YouTubers for reviews</li>
+        <li>Optimize titles for SEO: "Best Solana NFT Game 2026"</li>
+      </ul>
+    </div>
+
+    <!-- DISCORD -->
+    <div class="platform-card discord">
+      <span class="platform-icon">💬</span>
+      <div class="platform-name">Discord</div>
+      <div class="platform-priority" style="color:#5865f2;">PRIORITY 1 — 24/7</div>
+      <div class="platform-stats">
+        <div class="pstat">Goal: <span>100K members</span></div>
+        <div class="pstat">Active: <span>5K daily</span></div>
+      </div>
+      <ul style="font-size:12px;">
+        <li><strong>Your community HQ</strong> — deepest engagement lives here</li>
+        <li>Channels: #announcements, #battle-results, #card-showcase, #pvp-matchmaking, #black-market-deals, #faction-red, #faction-blue, #lore-archive</li>
+        <li>Daily automated "SIGNAL OF THE DAY" bot post featuring a streamer stat</li>
+        <li>Weekly tournaments with $PTS prize pools</li>
+        <li>Exclusive early access roles for early joiners</li>
+        <li>Partner with Solana gaming Discord servers for cross-promotion</li>
+      </ul>
+    </div>
+
+    <!-- TWITCH -->
+    <div class="platform-card twitch">
+      <span class="platform-icon">🟣</span>
+      <div class="platform-name">Twitch</div>
+      <div class="platform-priority" style="color:#9146ff;">PRIORITY 3 — 3X/WEEK</div>
+      <div class="platform-stats">
+        <div class="pstat">Streams: <span>3/week</span></div>
+        <div class="pstat">Goal: <span>10K followers</span></div>
+      </div>
+      <ul style="font-size:12px;">
+        <li>Live PvP tournament streams — real $PTS on the line</li>
+        <li>Community PvP nights — viewers play live on stream</li>
+        <li>Minting live on stream = great content + social proof</li>
+        <li>Raid other Solana gaming streamers to cross-pollinate communities</li>
+        <li>Use Twitch drops tied to Discord role rewards</li>
+      </ul>
+    </div>
+
+    <!-- REDDIT -->
+    <div class="platform-card reddit">
+      <span class="platform-icon">🤖</span>
+      <div class="platform-name">Reddit</div>
+      <div class="platform-priority" style="color:#ff4500;">PRIORITY 3 — 3X/WEEK</div>
+      <div class="platform-stats">
+        <div class="pstat">Posts: <span>3/week</span></div>
+        <div class="pstat">Subs: <span>r/SolanaNFTs, r/GameFi</span></div>
+      </div>
+      <ul style="font-size:12px;">
+        <li>Target subreddits: r/SolanaNFTs, r/NFTGaming, r/CryptoGaming, r/Twitch, r/LivestreamFail</li>
+        <li>Post genuine gameplay content — Reddit hates hard sells</li>
+        <li>AMA (Ask Me Anything) threads with the dev team</li>
+        <li>Battle recap posts: "We had the most insane PvP match last night"</li>
+        <li>Whitepaper summary post in r/SolanaNFTs</li>
+      </ul>
+    </div>
+
+    <!-- TELEGRAM -->
+    <div class="platform-card" style="border-top: 2px solid #229ed9;">
+      <span class="platform-icon">✈️</span>
+      <div class="platform-name">Telegram</div>
+      <div class="platform-priority" style="color:#229ed9;">PRIORITY 2 — DAILY</div>
+      <div class="platform-stats">
+        <div class="pstat">Goal: <span>20K members</span></div>
+      </div>
+      <ul style="font-size:12px;">
+        <li>Crypto-native audience — essential for Web3 growth</li>
+        <li>Mirror all Twitter announcements to Telegram channel</li>
+        <li>Alpha drops (early info) go to Telegram first — creates urgency</li>
+        <li>Bot that auto-posts new mint events in real time</li>
+        <li>Cross-promote in Solana ecosystem Telegram groups</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <hr class="divider" />
+
+  <!-- SECTION 4: CONTENT CALENDAR -->
+  <span class="section-tag">// 04 — CONTENT_CALENDAR</span>
+  <h2>Weekly Content Calendar</h2>
+
+  <p>Consistency beats intensity. Post every single day on Twitter and TikTok regardless of performance. The algorithm rewards consistency above all else.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Day</th><th>Twitter / X</th><th>TikTok</th><th>Instagram</th><th>Discord</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Monday</strong></td>
+          <td>Lore thread drop — 10-tweet narrative story</td>
+          <td>"Story of [Streamer]" lore video</td>
+          <td>Cinematic card art post</td>
+          <td>Weekly mission challenge announced</td>
+        </tr>
+        <tr>
+          <td><strong>Tuesday</strong></td>
+          <td>OPERATIVE_OF_THE_DAY — card stats reveal</td>
+          <td>Stat breakdown video — "Is [streamer] worth minting?"</td>
+          <td>Stats carousel post</td>
+          <td>Tuesday PvP community night</td>
+        </tr>
+        <tr>
+          <td><strong>Wednesday</strong></td>
+          <td>PvP highlight clip + GLR leaderboard update</td>
+          <td>Battle replay with commentary</td>
+          <td>Battle screenshot Reel</td>
+          <td>Announce weekly leaderboard leaders</td>
+        </tr>
+        <tr>
+          <td><strong>Thursday</strong></td>
+          <td>Black Market item spotlight — price + effect</td>
+          <td>"Best items to buy in the Black Market"</td>
+          <td>Item graphic + story poll</td>
+          <td>Black Market "deal of the week" exclusive</td>
+        </tr>
+        <tr>
+          <td><strong>Friday</strong></td>
+          <td>Community spotlight — top player profile</td>
+          <td>"I challenged the #1 player" PvP video</td>
+          <td>Player feature story</td>
+          <td>Friday tournament — $PTS prize pool</td>
+        </tr>
+        <tr>
+          <td><strong>Saturday</strong></td>
+          <td>Meme content — use streamer viral moments</td>
+          <td>Trending audio + PTS card overlay</td>
+          <td>Meme reel + story Q&amp;A</td>
+          <td>Casual community hangout stream</td>
+        </tr>
+        <tr>
+          <td><strong>Sunday</strong></td>
+          <td>Week recap + next week teaser</td>
+          <td>"What's coming this week in PTS"</td>
+          <td>Weekly recap carousel</td>
+          <td>Weekly results + next week announcements</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- SECTION 5: INFLUENCER STRATEGY -->
+  <div class="page-break"></div>
+  <span class="section-tag">// 05 — INFLUENCER_STRATEGY</span>
+  <h2>Influencer & Creator Strategy</h2>
+
+  <p>
+    Influencer marketing is your highest-leverage channel. One post from a mid-size streamer
+    (100K–1M followers) in your niche can outperform $10,000 in paid ads. Structure it in tiers.
+  </p>
+
+  <h3>Tier 1 — Macro Influencers (1M+ followers)</h3>
+  <div class="card card-orange">
+    <p><strong>Goal:</strong> Mass awareness, viral moment, credibility signal</p>
+    <p><strong>Approach:</strong> These creators likely have large existing fan overlap with your 20 streamers. Reach out via agency or DM. Offer paid sponsorship ($2,000–$10,000 per post) plus a free card mint of their closest featured streamer.</p>
+    <p style="margin-bottom:0;"><strong>Target creators:</strong> Gaming streamers, NFT-adjacent YouTubers, Solana ecosystem influencers, crypto Twitter personalities with gaming audiences</p>
+  </div>
+
+  <h3>Tier 2 — Mid-Tier Creators (50K–1M followers)</h3>
+  <div class="card card-yellow">
+    <p><strong>Goal:</strong> Consistent reach, community building, authentic endorsements</p>
+    <p><strong>Approach:</strong> Your best ROI tier. These creators have highly engaged niche audiences. Offer: Revenue share on mints they drive (tracked via referral codes) + free card NFTs + $PTS airdrop for their community.</p>
+    <p style="margin-bottom:0;"><strong>Target creators:</strong> Solana gaming streamers on Twitch/YouTube, NFT community managers, GameFi reviewers, fan accounts of the 20 featured streamers</p>
+  </div>
+
+  <h3>Tier 3 — Micro Influencers (5K–50K followers)</h3>
+  <div class="card card-green">
+    <p><strong>Goal:</strong> Organic-feeling social proof, community seeding</p>
+    <p><strong>Approach:</strong> Identify 50+ micro-influencers and offer: free card mint + $PTS airdrop + an exclusive "Resistance Agent" Discord role in exchange for a genuine review post. No scripts — authenticity is the product.</p>
+    <p style="margin-bottom:0;"><strong>Target creators:</strong> Crypto gaming TikTokers, NFT collectors who document their portfolios, gaming review bloggers</p>
+  </div>
+
+  <h3>The Fan Account Strategy</h3>
+  <div class="card card-pink">
+    <p>
+      The 20 streamers in PTS each have massive fan bases with active fan accounts (some with 100K+ followers).
+      Reach out to the top 5 fan accounts for each streamer. Offer them:
+    </p>
+    <ul>
+      <li>Free mint of their streamer's card</li>
+      <li>Exclusive "Faction Ambassador" Discord role</li>
+      <li>Early access to new features</li>
+      <li>$PTS airdrop for their community</li>
+    </ul>
+    <p style="margin-bottom:0;">In return, ask for ONE post introducing their followers to PTS. At scale, this reaches millions of existing fans who already love the featured creators.</p>
+  </div>
+
+  <h3>Step-by-Step Influencer Outreach Template</h3>
+  <div class="step-card">
+    <div class="step-num">01</div>
+    <div class="step-content">
+      <div class="step-title">Build Your Target List</div>
+      <div class="step-desc">Use Twitter/TikTok search for "[streamer name] fan", "NFT gaming", "Solana game". Build a spreadsheet: handle, follower count, engagement rate, tier, contact info. Target 100+ creators minimum.</div>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="step-num">02</div>
+    <div class="step-content">
+      <div class="step-title">Warm Up Before Outreach</div>
+      <div class="step-desc">Follow them. Like and reply to 3 of their posts over 3 days before DMing. Cold DMs from accounts with no prior interaction have very low response rates.</div>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="step-num">03</div>
+    <div class="step-content">
+      <div class="step-title">Send Personalized DM</div>
+      <div class="step-desc">Lead with a genuine compliment about their content. Mention the specific streamer card in PTS that matches their audience (e.g., "Since you cover Kai Cenat..."). Keep it under 4 sentences. Include one link max.</div>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="step-num">04</div>
+    <div class="step-content">
+      <div class="step-title">Send a Media Kit</div>
+      <div class="step-desc">Prepare a 5-slide PDF: what PTS is, who the audience is, what you're offering (free mint + compensation), what you're asking for (one post, story, or video), and the mint link. Make it dead simple.</div>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="step-num">05</div>
+    <div class="step-content">
+      <div class="step-title">Provide Content Assets</div>
+      <div class="step-desc">Never make the creator do design work. Provide: card art, video clips, caption templates, hashtags. The easier you make it, the better the post quality.</div>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="step-num">06</div>
+    <div class="step-content">
+      <div class="step-title">Track & Amplify</div>
+      <div class="step-desc">Retweet and engage with every piece of influencer content within the first 30 minutes. This boosts their post's algorithm performance AND shows you're a good partner — securing future posts.</div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- SECTION 6: AD CAMPAIGNS -->
+  <span class="section-tag">// 06 — AD_CAMPAIGNS</span>
+  <h2>Paid Ad Campaign Structure</h2>
+
+  <p>
+    Run paid ads on three platforms simultaneously: <strong>Twitter/X Ads</strong>, <strong>TikTok Ads</strong>,
+    and <strong>Meta (Instagram/Facebook) Ads</strong>. Each platform targets a different angle of your audience.
+  </p>
+
+  <h3>Campaign Architecture</h3>
+  <div class="highlight-box">
+    <p style="font-family:'JetBrains Mono',monospace; font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:0; line-height:2;">
+      CAMPAIGN LEVEL: Objective (Awareness / Traffic / Conversions)<br />
+      └── AD SET LEVEL: Audience targeting + budget + schedule<br />
+      &nbsp;&nbsp;&nbsp;&nbsp;└── AD LEVEL: Creative (video/image) + copy + CTA<br />
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Run 3–5 ad variations per ad set — let the algorithm pick the winner)
+    </p>
+  </div>
+
+  <h3>Campaign 1 — Awareness (Top of Funnel)</h3>
+  <div class="card card-blue">
+    <h4>Goal: Introduce PTS to cold audiences</h4>
+    <p><strong>Platform:</strong> TikTok Ads + Instagram Reels Ads</p>
+    <p><strong>Budget:</strong> $500–$1,500/month</p>
+    <p><strong>Audience:</strong> Interests: Gaming, Twitch, Streaming, Kai Cenat / IShowSpeed fans, Solana, NFT, Crypto</p>
+    <p><strong>Creative:</strong> 15–30 second video showing a battle in action. No voiceover — use text overlays and trending audio. End with: "PROTECT THE STREAMERS — Mint Now — protectthestreamers.xyz"</p>
+    <p style="margin-bottom:0;"><strong>KPIs:</strong> CPM under $10, Video View Rate over 25%, Click-Through Rate over 1.5%</p>
+  </div>
+
+  <h3>Campaign 2 — Consideration (Middle of Funnel)</h3>
+  <div class="card card-green">
+    <h4>Goal: Drive website visits and wallet connections</h4>
+    <p><strong>Platform:</strong> Twitter/X Ads + Google Display Ads</p>
+    <p><strong>Budget:</strong> $500–$1,000/month</p>
+    <p><strong>Audience:</strong> Retarget: Users who watched 50%+ of awareness videos. Lookalike: Solana NFT buyers, GameFi Twitter followers</p>
+    <p><strong>Creative:</strong> Static card art with stats overlay. Copy: "Kai Cenat. 98 Influence. 99 Charisma. The most powerful card in the Resistance. Mint yours — 0.01 SOL." Link to roster section.</p>
+    <p style="margin-bottom:0;"><strong>KPIs:</strong> CPC under $0.50, Landing Page CTR over 3%, Time on Site over 90 seconds</p>
+  </div>
+
+  <h3>Campaign 3 — Conversion (Bottom of Funnel)</h3>
+  <div class="card card-orange">
+    <h4>Goal: Drive mint completions and first purchases</h4>
+    <p><strong>Platform:</strong> Twitter/X Ads (Crypto audience) + Telegram Ads</p>
+    <p><strong>Budget:</strong> $500–$1,000/month</p>
+    <p><strong>Audience:</strong> Retarget: Website visitors who did NOT mint. Interest: Solana, Phantom Wallet, Magic Eden, Metaplex</p>
+    <p><strong>Creative:</strong> Urgency-based. "20 creator cards. 0.01 SOL each. The Resistance is building — are you in?" Include social proof: "X wallets have joined the resistance." Direct link to mint page.</p>
+    <p style="margin-bottom:0;"><strong>KPIs:</strong> CPA (cost per mint) under $5, Conversion Rate over 5%</p>
+  </div>
+
+  <h3>Campaign 4 — Community Growth (Discord)</h3>
+  <div class="card card-pink">
+    <h4>Goal: Grow Discord to 100K active members</h4>
+    <p><strong>Platform:</strong> Discord Partner Ads + Twitter Ads</p>
+    <p><strong>Budget:</strong> $300–$600/month</p>
+    <p><strong>Creative:</strong> "Join 50,000 Resistance Operatives. Exclusive $PTS airdrops, PvP tournaments, early access. Free to join." → Discord invite link</p>
+    <p style="margin-bottom:0;"><strong>KPIs:</strong> Cost per Discord join under $0.30, 7-day retention over 40%</p>
+  </div>
+
+  <h3>Ad Creative Specifications</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Platform</th><th>Format</th><th>Size</th><th>Duration</th><th>Best Practice</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>TikTok</td><td>TopView / In-Feed Video</td><td>9:16 vertical</td><td>15–30s</td><td>Hook in first 2s, captions on screen, trending audio</td></tr>
+        <tr><td>Instagram</td><td>Reels Ad</td><td>9:16 vertical</td><td>15–30s</td><td>No border, full bleed, text overlay CTA</td></tr>
+        <tr><td>Instagram</td><td>Feed Image Ad</td><td>1:1 square</td><td>Static</td><td>Card art + stat overlay, minimal text</td></tr>
+        <tr><td>Twitter/X</td><td>Promoted Tweet</td><td>16:9 or 1:1</td><td>Static or video</td><td>Lead with the number (0.01 SOL), visual first</td></tr>
+        <tr><td>YouTube</td><td>TrueView In-Stream</td><td>16:9</td><td>15s non-skip or 30s skip</td><td>Brand in first 5s (unskippable), story-driven</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- SECTION 7: LAUNCH CAMPAIGN -->
+  <div class="page-break"></div>
+  <span class="section-tag">// 07 — LAUNCH_CAMPAIGN</span>
+  <h2>Official Launch Campaign — Week-by-Week</h2>
+
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-week">Week —2 (Pre-Launch)</div>
+        <div class="tl-title">BUILD THE SIGNAL</div>
+        <ul style="font-size:13px;">
+          <li>Launch all social profiles simultaneously — Twitter, TikTok, Instagram, Discord, Telegram</li>
+          <li>Post teaser content: blurred card art, countdown timers, cryptic lore messages</li>
+          <li>Announce Discord with "FREE $PTS airdrop for first 1,000 members"</li>
+          <li>Begin outreach to Tier 2 and Tier 3 influencers — send media kits</li>
+          <li>Run teaser Twitter/TikTok ads: "Something is coming. The resistance begins [DATE]."</li>
+          <li>Post whitepaper on all channels — establishes legitimacy</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-week">Week —1 (Pre-Launch)</div>
+        <div class="tl-title">RESISTANCE GROWS</div>
+        <ul style="font-size:13px;">
+          <li>Reveal 5 streamer cards per day — one big card reveal video per day on TikTok</li>
+          <li>Activate Tier 3 micro-influencers — first wave of posts go live</li>
+          <li>Twitter thread: "Here's every card, every stat, every power — the full resistance lineup"</li>
+          <li>Discord milestone: unlock "EARLY_OPERATIVE" NFT badge role for pre-launch members</li>
+          <li>Begin running awareness ad campaigns (Campaign 1)</li>
+          <li>Post countdown content daily: "3 days until the resistance launches"</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot" style="background:var(--neon-red);border-color:var(--neon-red);"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-week">Day 0 — LAUNCH DAY</div>
+        <div class="tl-title">🚨 THE RESISTANCE IS LIVE 🚨</div>
+        <ul style="font-size:13px;">
+          <li><strong>9am EST:</strong> Launch tweet with trailer video — ask community to RT, pin immediately</li>
+          <li><strong>9am EST:</strong> All influencer posts go live simultaneously (coordinate timing)</li>
+          <li><strong>10am EST:</strong> TikTok launch video — "We're live. The resistance has officially begun."</li>
+          <li><strong>12pm EST:</strong> Live stream on Twitch — first public mint on stream, first PvP battle</li>
+          <li><strong>All day:</strong> Monitor Discord, reply to every single comment on every platform</li>
+          <li><strong>6pm EST:</strong> "X wallets have joined in the first 8 hours" progress update post</li>
+          <li><strong>9pm EST:</strong> End-of-day recap + tomorrow's first daily mission challenge</li>
+          <li>Turn on all paid ad campaigns at full budget</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-week">Week +1 (Post-Launch)</div>
+        <div class="tl-title">SUSTAIN THE MOMENTUM</div>
+        <ul style="font-size:13px;">
+          <li>Post daily milestone updates: wallets minted, battles fought, PTS earned</li>
+          <li>Activate Tier 2 influencer wave — bigger posts go live this week</li>
+          <li>First weekly PvP tournament — stream it live, award $PTS prizes</li>
+          <li>Reddit AMA post in r/SolanaNFTs and r/NFTGaming</li>
+          <li>Analyze which ad creatives are performing — cut losers, double down on winners</li>
+          <li>"Community spotlight" — feature top 3 players of the week on all channels</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-week">Week +2 to +4 (Growth Phase)</div>
+        <div class="tl-title">EXPAND THE RESISTANCE</div>
+        <ul style="font-size:13px;">
+          <li>Activate Tier 1 macro influencer campaigns</li>
+          <li>Launch first limited-time event: "FACTION WAR WEEK" — faction with most battles wins PTS prize pool</li>
+          <li>Press outreach: submit to CoinDesk, The Block, Decrypt, Cointelegraph for coverage</li>
+          <li>Apply to Solana ecosystem grant programs and accelerators</li>
+          <li>Telegram and Discord cross-promotions with other Solana gaming projects</li>
+          <li>Optimize ad campaigns based on week 1–2 data</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot" style="border-color:var(--muted);background:transparent;"></div></div>
+      <div class="tl-content">
+        <div class="tl-week">Month 2+ (Retention & Scale)</div>
+        <div class="tl-title">LONG-TERM GROWTH ENGINE</div>
+        <ul style="font-size:13px;">
+          <li>Monthly new content drop: new lore chapters, new items, seasonal events</li>
+          <li>Establish ongoing influencer ambassador program with monthly retainers</li>
+          <li>Launch referral program: "Recruit an operative — earn 500 $PTS"</li>
+          <li>Submit to NFT/GameFi award programs for visibility</li>
+          <li>Begin building toward Phase 4: World Boss Raids as next major content moment</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="divider" />
+
+  <!-- SECTION 8: BUDGET -->
+  <span class="section-tag">// 08 — BUDGET_ALLOCATION</span>
+  <h2>Budget Allocation</h2>
+
+  <p>Three budget tiers based on available capital. All tiers follow the same strategy — only the scale changes.</p>
+
+  <h3>Tier 1 — Bootstrap ($500–$1,500/month)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Channel</th><th>Budget</th><th>Priority</th></tr></thead>
+      <tbody>
+        <tr><td>TikTok Ads (awareness)</td><td>$200/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>Twitter/X Ads (conversions)</td><td>$200/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>Micro-Influencer outreach (gifting)</td><td>$100/mo in free mints</td><td><span class="badge badge-orange">Medium</span></td></tr>
+        <tr><td>Content creation tools</td><td>$100/mo</td><td><span class="badge badge-green">Essential</span></td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>~$500/mo</strong></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Tier 2 — Growth ($2,000–$5,000/month)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Channel</th><th>Budget</th><th>Priority</th></tr></thead>
+      <tbody>
+        <tr><td>TikTok Ads</td><td>$800/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>Meta (Instagram/Facebook) Ads</td><td>$600/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>Twitter/X Ads</td><td>$400/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>Tier 2 Influencer Sponsorships (2–3/mo)</td><td>$1,500/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>Content creator (video editor)</td><td>$500/mo</td><td><span class="badge badge-orange">Medium</span></td></tr>
+        <tr><td>Community management</td><td>$200/mo</td><td><span class="badge badge-orange">Medium</span></td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>~$4,000/mo</strong></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Tier 3 — Scale ($10,000+/month)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Channel</th><th>Budget</th><th>Priority</th></tr></thead>
+      <tbody>
+        <tr><td>TikTok Ads (TopView + In-Feed)</td><td>$2,000/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>Meta Ads</td><td>$2,000/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>Twitter/X Ads</td><td>$1,000/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>YouTube Ads</td><td>$1,000/mo</td><td><span class="badge badge-orange">Medium</span></td></tr>
+        <tr><td>Tier 1 Macro Influencer (1 per month)</td><td>$5,000/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>Tier 2 Influencers (5–10/mo)</td><td>$3,000/mo</td><td><span class="badge badge-red">High</span></td></tr>
+        <tr><td>PR agency / press outreach</td><td>$2,000/mo</td><td><span class="badge badge-orange">Medium</span></td></tr>
+        <tr><td>Content team (editor + designer)</td><td>$2,000/mo</td><td><span class="badge badge-orange">Medium</span></td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>~$18,000/mo</strong></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- SECTION 9: KPIs & ANALYTICS -->
+  <span class="section-tag">// 09 — KPIS_ANALYTICS</span>
+  <h2>KPIs & Analytics Tracking</h2>
+
+  <p>
+    You cannot improve what you do not measure. Track these metrics weekly and make data-driven
+    decisions on content and ad spend every 7 days without exception.
+  </p>
+
+  <h3>Primary KPIs (Check Weekly)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Metric</th><th>Target (Month 1)</th><th>Where to Track</th></tr></thead>
+      <tbody>
+        <tr><td>Total wallets connected</td><td>5,000+</td><td>Supabase users table</td></tr>
+        <tr><td>NFT cards minted</td><td>2,000+</td><td>mint_attempts table + Solscan</td></tr>
+        <tr><td>Revenue (SOL + USDC + PTS)</td><td>$10,000+</td><td>Treasury wallet on Solscan</td></tr>
+        <tr><td>Discord members</td><td>10,000+</td><td>Discord Server Insights</td></tr>
+        <tr><td>Twitter/X followers</td><td>5,000+</td><td>Twitter Analytics</td></tr>
+        <tr><td>TikTok followers</td><td>10,000+</td><td>TikTok Creator Center</td></tr>
+        <tr><td>Website unique visitors</td><td>20,000+</td><td>Netlify Analytics / Plausible</td></tr>
+        <tr><td>Daily Active Players (PvP battles)</td><td>500+/day</td><td>pvp_matches table</td></tr>
+        <tr><td>Black Market transactions</td><td>1,000+</td><td>shop_purchases table</td></tr>
+        <tr><td>Ad ROAS (Return on Ad Spend)</td><td>3:1 minimum</td><td>Platform ad dashboards</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Analytics Tools to Install</h3>
+  <ul>
+    <li><strong>Plausible Analytics</strong> — Privacy-first website analytics (add script to layout.tsx)</li>
+    <li><strong>Twitter Analytics</strong> — Built-in, check weekly for top posts and follower demographics</li>
+    <li><strong>TikTok Creator Center</strong> — Video performance, audience insights</li>
+    <li><strong>Meta Business Suite</strong> — Instagram + Facebook ad analytics</li>
+    <li><strong>Supabase Dashboard</strong> — Real-time user, battle, and purchase data</li>
+    <li><strong>Solscan</strong> — Treasury wallet inflows, mint transaction counts</li>
+    <li><strong>Discord Server Insights</strong> — Member growth, message activity, retention</li>
+  </ul>
+
+  <hr class="divider" />
+
+  <!-- SECTION 10: VIRAL TACTICS -->
+  <span class="section-tag">// 10 — VIRAL_TACTICS</span>
+  <h2>Viral Growth Tactics</h2>
+
+  <div class="step-card">
+    <div class="step-num">🔥</div>
+    <div class="step-content">
+      <div class="step-title">The Card Reveal Strategy</div>
+      <div class="step-desc">Never reveal all 20 cards at once. Drip one card reveal per day for 20 days before launch. Each reveal is a piece of content. Fans of each creator will share the reveal of their favorite — guaranteed organic reach.</div>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-num">⚔️</div>
+    <div class="step-content">
+      <div class="step-title">The Faction War Event</div>
+      <div class="step-desc">Run a 7-day "FACTION WAR" event where Team Blue vs Team Red compete for total PvP victories. The winning faction earns a $PTS prize pool drop to all members. This creates urgency, loyalty, and social sharing simultaneously.</div>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-num">🎴</div>
+    <div class="step-content">
+      <div class="step-title">The Rarest Card Drop</div>
+      <div class="step-desc">Announce that one card (e.g., "IShowSpeed MAX CHAOS EDITION") will be available for 24 hours only. FOMO drives more minting in 24 hours than a week of regular posting. Document the chaos on TikTok in real time.</div>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-num">🏆</div>
+    <div class="step-content">
+      <div class="step-title">The Public Leaderboard</div>
+      <div class="step-desc">Tweet the top 10 GLR leaderboard every Friday with handles. Tagged players share the post to their audiences. Top-ranked players become micro-influencers by default. Add a weekly cash/PTS prize for the #1 ranked player.</div>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-num">📲</div>
+    <div class="step-content">
+      <div class="step-title">The Referral Program</div>
+      <div class="step-desc">Build a referral link system: each player gets a unique link. Anyone who mints via their link earns them 500 $PTS. This turns your entire playerbase into a sales force with no ad spend required.</div>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-num">🎙️</div>
+    <div class="step-content">
+      <div class="step-title">The Creator Callout</div>
+      <div class="step-desc">Tweet directly at the 20 featured streamers: "Hey @KaiCenat — your digital self just got minted as a 99 Charisma Defense Card in the Resistance. Your fans are protecting you. Check it out 👀" — even 1 RT from any of them is millions of impressions.</div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- CLOSING -->
+  <span class="section-tag">// 11 — FINAL_TRANSMISSION</span>
+  <h2>Final Transmission</h2>
+
+  <div class="highlight-box">
+    <p>
+      The product is built. The code is clean. The treasury is live. The 20 cards are ready.
+      All that remains is the signal — and that signal starts with <em>you</em> posting every single day
+      with the energy of someone who knows exactly what they've built.
+    </p>
+    <p>
+      You have something most crypto projects never have: a real game, real utility, and real stakes.
+      Lead with that. Let the game speak. Amplify the community. The resistance grows one operative at a time.
+    </p>
+    <p style="margin-bottom:0; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--neon-blue);">
+      SIGNAL STATUS: STABLE // THE RESISTANCE IS LIVE // PROTECT THE STREAMERS
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:24px;">
+    <p><strong>Website:</strong> <span class="mono">protectthestreamers.xyz</span></p>
+    <p><strong>Treasury:</strong> <span class="mono">5E1cfq49jjMYTKdKhjfF9CSH3STCMUGR7VbzJYny2Zhq</span></p>
+    <p><strong>Whitepaper:</strong> <span class="mono">protectthestreamers.xyz/whitepaper.html</span></p>
+    <p style="margin-bottom:0;"><strong>Version:</strong> <span class="mono">RESISTANCE_NETWORK_v4.2 — MARKETING_OPS_v1.0</span></p>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  PROTECT THE STREAMERS — MARKETING & GROWTH PLAYBOOK v1.0 &nbsp;|&nbsp;
+  © 2026 THE_RESISTANCE &nbsp;|&nbsp;
+  FIGHT. EARN. GOVERN.
+</div>
+
+<!-- PRINT BUTTON -->
+<div class="no-print" style="position:fixed;bottom:24px;right:24px;z-index:9999;">
+  <button onclick="window.print()" style="background:#00ff9f;color:#000;border:none;padding:12px 24px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;border-radius:2px;">
+    ↓ SAVE AS PDF
+  </button>
+</div>
+
+</body>
+</html>

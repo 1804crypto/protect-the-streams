@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { CONFIG } from '@/data/config';
 import { CollectionHub } from '@/components/UI/CollectionHub';
@@ -194,6 +195,12 @@ export default function Home() {
                         >
                             [CODEX]
                         </button>
+                        <Link
+                            href="/whitepaper"
+                            className="px-4 py-2 border border-white/20 text-[10px] font-bold tracking-widest hover:bg-white/5 transition-all hidden md:block text-white/60 hover:text-white"
+                        >
+                            [WHITEPAPER]
+                        </Link>
 
                         <button
                             onClick={toggleMute}
@@ -223,6 +230,7 @@ export default function Home() {
                         { label: 'LORE', icon: '📜', color: 'text-neon-orange', borderColor: 'border-neon-orange/30', action: () => { playClick(); modal.openModal('archive'); } },
                         { label: 'JOIN FACTION', icon: '⚔️', color: 'text-neon-purple', borderColor: 'border-neon-purple/30', action: () => { playClick(); modal.openModal('faction'); } },
                         { label: 'CODEX', icon: '📖', color: 'text-neon-blue', borderColor: 'border-neon-blue/30', action: () => { playClick(); modal.openModal('glossary'); } },
+                        { label: 'WHITEPAPER', icon: '📄', color: 'text-white/70', borderColor: 'border-white/20', action: () => { window.location.href = '/whitepaper'; } },
                     ]}
                 />
 
