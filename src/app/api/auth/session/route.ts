@@ -27,10 +27,12 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ authenticated: false });
         }
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             authenticated: true,
             user: user
         });
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        return response;
 
     } catch (error) {
         console.error("Session API Error:", error);

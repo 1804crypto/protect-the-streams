@@ -42,6 +42,23 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     // FREEZE FIX: Prevent init from re-running on dependency changes
     const hasInitializedRef = useRef<string | null>(null);
 
+    // Memory leak guard: track mount state and timers
+    const mountedRef = useRef(true);
+    const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+    const safeTimeout = useCallback((fn: () => void, ms: number) => {
+        const id = setTimeout(() => { if (mountedRef.current) fn(); }, ms);
+        timersRef.current.push(id);
+        return id;
+    }, []);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            mountedRef.current = false;
+            timersRef.current.forEach(clearTimeout);
+        };
+    }, []);
+
     // 3. Socket Event Handlers
 
     // 3. Socket Event Handlers
@@ -57,24 +74,11 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
         // Item Usage
         if (type === 'ITEM_USE') {
-            const { itemName, itemEffect, itemValue } = payload;
+            const { itemName } = payload;
             addLog(`OPPONENT used ${itemName}!`);
-
-            // Apply effect to Opponent State visibly
-            if (itemEffect === 'heal') {
-                const _healAmt = itemValue || 0; // Ideally payload has actual value
-                // We might need to sync HP if payload doesn't have it, but let's trust payload or sync
-                // For 10/10, let's assume we just want to show the log, 
-                // BUT we should update opponent HP if we can.
-                // However, without exact math (e.g. maxHp caps), it's risky.
-                // Better: Expect a SYNC shortly? Or just optimistic add.
-                setOpponent((prev: PvPPlayerState | null) => {
-                    if (!prev) return prev;
-                    // If we knew value... let's assume itemValue is passed correctly
-                    // For RESTORE_CHIP (full heal), value might be large.
-                    return { ...prev, hp: Math.min(prev.maxHp, prev.hp + (itemValue || 0)) };
-                });
-            }
+            // Do NOT apply HP changes from the broadcast payload — itemValue is untrusted
+            // client data. The opponent will broadcast a SYNC immediately after, which
+            // carries the canonical HP value from the server. We wait for that.
             return;
         }
 
@@ -274,7 +278,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
     // 7. Watchdog for Stuck State
     useEffect(() => {
         if (battleStatus === 'SYNCING') {
-            const timer = setTimeout(() => {
+            const timer = safeTimeout(() => {
                 if (battleStatusRef.current !== 'ACTIVE' && battleStatusRef.current !== 'FINISHED') {
                     Logger.warn('PvPBattle', 'Watchdog: Forcing ACTIVE');
                     setBattleStatus('ACTIVE');
@@ -284,13 +288,13 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             return () => clearTimeout(timer);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps -- battleStatusRef is a ref, intentionally excluded
-    }, [battleStatus, setBattleStatus, setIsTurn]);
+    }, [battleStatus, setBattleStatus, setIsTurn, safeTimeout]);
 
     // 7b. Turn Safety Watchdog — aligned with server-side 60s timeout (check_turn_timeout RPC)
     // Client waits 65s (60s server + 5s grace) before forcing turn to avoid NOT_YOUR_TURN errors
     useEffect(() => {
         if (battleStatus === 'ACTIVE' && !isTurn && !isComplete) {
-            const timer = setTimeout(() => {
+            const timer = safeTimeout(() => {
                 if (!isTurnRef.current && !isCompleteRef.current) {
                     Logger.warn('PvPBattle', 'Turn Safety: Forcing turn after 65s wait (server timeout: 60s)');
                     addLog('SIGNAL_RECOVERY: Opponent turn timed out. Forcing your turn.');
@@ -299,7 +303,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             }, 65000);
             return () => clearTimeout(timer);
         }
-    }, [battleStatus, isTurn, isComplete, setIsTurn, addLog, isTurnRef, isCompleteRef]);
+    }, [battleStatus, isTurn, isComplete, setIsTurn, addLog, isTurnRef, isCompleteRef, safeTimeout]);
 
     // 8. Bot Response Logic (Simulation) — FREEZE FIX: uses ref check to prevent stale closure issues
     useEffect(() => {
@@ -314,7 +318,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
 
         // Correcting bot logic to respond to ITEM_USE too
         if (matchId.startsWith('bot_match_') && lastAction?.senderId === playerId && !isComplete && !isTurn) {
-            const timer = setTimeout(() => {
+            const timer = safeTimeout(() => {
                 if (isCompleteRef.current || isTurnRef.current) return;
 
                 const botDamage = Math.floor(Math.random() * 20 + 10);
@@ -333,7 +337,7 @@ export const usePvPBattle = (matchId: string, opponentId: string | null, myStrea
             }, 1500);
             return () => clearTimeout(timer);
         }
-    }, [matchId, lastAction, playerId, isComplete, isTurn, setPlayer, setIsComplete, setWinnerId, setBattleStatus, addLog, setIsTurn, isCompleteRef, isTurnRef]);
+    }, [matchId, lastAction, playerId, isComplete, isTurn, setPlayer, setIsComplete, setWinnerId, setBattleStatus, addLog, setIsTurn, isCompleteRef, isTurnRef, safeTimeout]);
 
     // 9. Match Result Recording
     useEffect(() => {

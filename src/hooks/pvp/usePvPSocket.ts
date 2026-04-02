@@ -28,9 +28,17 @@ export const usePvPSocket = ({
 
     const channelRef = useRef<any>(null);
     const isSpectatorRef = useRef(isSpectator);
+    const onActionRef = useRef(onAction);
+    const onSyncRef = useRef(onSync);
+    const onOpponentConnectRef = useRef(onOpponentConnect);
+    const onOpponentDisconnectRef = useRef(onOpponentDisconnect);
 
-    // Keep spectator ref fresh for callbacks
+    // Keep all refs fresh — no reconnect needed when callbacks change
     useEffect(() => { isSpectatorRef.current = isSpectator; }, [isSpectator]);
+    useEffect(() => { onActionRef.current = onAction; }, [onAction]);
+    useEffect(() => { onSyncRef.current = onSync; }, [onSync]);
+    useEffect(() => { onOpponentConnectRef.current = onOpponentConnect; }, [onOpponentConnect]);
+    useEffect(() => { onOpponentDisconnectRef.current = onOpponentDisconnect; }, [onOpponentDisconnect]);
 
     // Connect to Channel
     useEffect(() => {
@@ -48,7 +56,7 @@ export const usePvPSocket = ({
         channel
             .on('broadcast', { event: 'ACTION' }, ({ payload }) => {
                 try {
-                    onAction(payload);
+                    onActionRef.current(payload);
                 } catch (e) {
                     Logger.error('PvPSocket', 'Error handling ACTION', e);
                 }
@@ -56,7 +64,7 @@ export const usePvPSocket = ({
             .on('broadcast', { event: 'SYNC' }, ({ payload }) => {
                 try {
                     if (payload.senderId !== playerId) {
-                        onSync(payload);
+                        onSyncRef.current(payload);
                     }
                 } catch (e) {
                     Logger.error('PvPSocket', 'Error handling SYNC', e);
@@ -66,14 +74,14 @@ export const usePvPSocket = ({
                 const joined = (newPresences as unknown as MatchmakingPresence[]).find((p) => p.playerId !== playerId);
                 if (joined) {
                     Logger.info('PvPSocket', 'Opponent Connected', joined.playerId);
-                    onOpponentConnect();
+                    onOpponentConnectRef.current();
                 }
             })
             .on('presence', { event: 'leave' }, ({ leftPresences }) => {
                 const left = (leftPresences as unknown as MatchmakingPresence[]).find((p) => p.playerId !== playerId);
                 if (left) {
                     Logger.warn('PvPSocket', 'Opponent Disconnected', left.playerId);
-                    onOpponentDisconnect();
+                    onOpponentDisconnectRef.current();
                 }
             })
             .subscribe((status) => {

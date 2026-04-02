@@ -207,6 +207,12 @@ h6 {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
+/* Offsets a fixed-position element's bottom edge above the iPhone notch/home indicator.
+   Use this on elements with `fixed bottom-*` that need to clear the safe area. */
+@utility safe-bottom {
+  bottom: max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)));
+}
+
 @utility text-mobile-hero {
   font-size: clamp(2.5rem, 10vw, 6rem);
   line-height: 1;

@@ -72,31 +72,23 @@ describe('computePtsReward', () => {
 });
 
 describe('computeRewardItems', () => {
-    it('returns 3 items for S rank', () => {
+    it('returns 3 deterministic items for S rank', () => {
         const items = computeRewardItems('S');
-        expect(items).toHaveLength(3);
-        items.forEach(item => {
-            expect(['HYPER_RESTORE', 'FULL_PP_RESTORE', 'ATTACK_MATRIX']).toContain(item);
-        });
+        expect(items).toEqual(['HYPER_RESTORE', 'FULL_PP_RESTORE', 'ATTACK_MATRIX']);
     });
 
-    it('returns 2 items for A rank', () => {
+    it('returns 2 deterministic items for A rank', () => {
         const items = computeRewardItems('A');
-        expect(items).toHaveLength(2);
-        items.forEach(item => {
-            expect(['RESTORE_CHIP', 'PP_RECHARGE', 'DEFENSE_MATRIX']).toContain(item);
-        });
+        expect(items).toEqual(['RESTORE_CHIP', 'DEFENSE_MATRIX']);
     });
 
     it('returns 1 item for B rank', () => {
         const items = computeRewardItems('B');
-        expect(items).toHaveLength(1);
-        expect(['RESTORE_CHIP', 'PP_RECHARGE']).toContain(items[0]);
+        expect(items).toEqual(['RESTORE_CHIP']);
     });
 
     it('returns 1 item for F rank', () => {
         const items = computeRewardItems('F');
-        expect(items).toHaveLength(1);
-        expect(items[0]).toBe('RESTORE_CHIP');
+        expect(items).toEqual(['RESTORE_CHIP']);
     });
 });

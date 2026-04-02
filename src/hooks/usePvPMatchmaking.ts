@@ -108,20 +108,26 @@ export const usePvPMatchmaking = (streamerId: string, enabled: boolean, wager: n
                                 console.error("Match Initialization Failed:", errMsg);
                                 toast.error('UPLINK_FAILURE', errMsg);
 
-                                // Attempt wager refund if match init failed after deduction
+                                // Attempt wager refund with up to 3 retries + exponential backoff
                                 if (finalWager > 0) {
-                                    supabase.rpc('refund_pvp_wager', {
-                                        p_player_id: playerId,
-                                        p_opponent_id: opponent.playerId,
-                                        p_amount: finalWager
-                                    }).then(({ error: refundErr }) => {
+                                    const attemptRefund = async (attempt: number) => {
+                                        const { error: refundErr } = await supabase.rpc('refund_pvp_wager', {
+                                            p_player_id: playerId,
+                                            p_opponent_id: opponent.playerId,
+                                            p_amount: finalWager
+                                        });
                                         if (refundErr) {
-                                            console.error("Wager refund failed:", refundErr);
-                                            toast.error('REFUND_FAILURE', 'Wager refund failed. Contact support.');
+                                            console.error(`Wager refund attempt ${attempt} failed:`, refundErr);
+                                            if (attempt < 3) {
+                                                setTimeout(() => attemptRefund(attempt + 1), 1000 * attempt);
+                                            } else {
+                                                toast.error('REFUND_FAILURE', 'Wager refund failed after retries. Contact support with your match ID.');
+                                            }
                                         } else {
                                             toast.success('WAGER_REFUNDED', 'Your wager has been returned.');
                                         }
-                                    });
+                                    };
+                                    attemptRefund(1);
                                 }
 
                                 isMatchingRef.current = false;

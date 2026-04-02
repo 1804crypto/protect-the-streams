@@ -77,7 +77,7 @@ export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, imageUrl, 
                 <div className={`absolute inset-0 z-10 pointer-events-none opacity-0 group-hover:opacity-30 transition-opacity duration-500 bg-[linear-gradient(105deg,transparent_20%,rgba(0,243,255,0.4)_25%,rgba(255,0,255,0.4)_35%,transparent_40%,transparent_50%,rgba(0,243,255,0.4)_55%,rgba(0,255,159,0.4)_65%,transparent_80%)] bg-[length:200%_200%] animate-[shimmer_3s_linear_infinite] ${secured ? 'opacity-20' : ''}`} />
 
                 {/* Character Image Section */}
-                <div className="relative h-[280px] w-full bg-resistance-dark overflow-hidden flex items-center justify-center">
+                <div className="relative h-[220px] sm:h-[280px] w-full bg-resistance-dark overflow-hidden flex items-center justify-center">
                     {(imageUrl || streamer.image) ? (
                         <Image
                             src={imageUrl || streamer.image}
@@ -138,7 +138,7 @@ export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, imageUrl, 
                         {Object.entries(streamer.stats).map(([label, value]) => (
                             <div key={label} className="flex flex-col">
                                 <div className="flex justify-between items-end mb-1">
-                                    <span className="text-[9px] text-white/40 font-mono uppercase tracking-tighter">{label}</span>
+                                    <span className="text-[9px] text-white/50 font-mono uppercase tracking-tighter">{label}</span>
                                     <span className="text-[10px] text-white font-mono font-bold">{value}%</span>
                                 </div>
                                 <div className="h-1 w-full bg-white/5 overflow-hidden">
@@ -154,7 +154,7 @@ export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, imageUrl, 
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
-                        <span className="text-[8px] text-white/20 font-mono italic uppercase">
+                        <span className="text-[8px] text-white/40 font-mono italic uppercase">
                             {secured ? 'SIGNAL_LOCKED' : 'ENCRYPTION: VERIFIED'}
                         </span>
                         <div className="flex gap-1">

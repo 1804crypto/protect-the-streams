@@ -43,7 +43,9 @@ export async function POST(req: NextRequest) {
         } catch {
             return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
         }
-        const { missionId, hpRemaining, maxHp, turnsUsed, isBoss, duration, idempotencyKey } = body;
+        const { missionId, hpRemaining, maxHp, turnsUsed, duration, idempotencyKey } = body;
+        // Determine isBoss server-side from the missionId prefix — never trust client value
+        const isBoss = typeof missionId === 'string' && missionId.startsWith('boss_');
 
         if (!missionId || typeof missionId !== 'string') {
             return NextResponse.json({ error: 'Missing missionId' }, { status: 400 });
@@ -61,7 +63,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ ...existing.result, cached: true });
             }
         }
-        if (!VALID_STREAMER_IDS.has(missionId)) {
+        if (!VALID_STREAMER_IDS.has(missionId) && !missionId.startsWith('boss_')) {
             return NextResponse.json({ error: 'Invalid mission target' }, { status: 400 });
         }
 

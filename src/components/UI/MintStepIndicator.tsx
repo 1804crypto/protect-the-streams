@@ -24,7 +24,7 @@ const STEPS = [
         key: 'broadcast',
         label: 'Broadcasting',
         sublabel: 'SOLANA L1',
-        match: (s: string) => s.includes('Broadcasting') || s.includes('Confirming'),
+        match: (s: string) => s.includes('Broadcasting') || s.includes('Confirming') || s.includes('Verifying'),
     },
     {
         key: 'confirm',
@@ -66,7 +66,7 @@ export const MintStepIndicator: React.FC<MintStepIndicatorProps> = ({ status }) 
                                         ? 'bg-neon-green border-neon-green text-black shadow-[0_0_10px_rgba(0,255,159,0.6)]'
                                         : isActive
                                             ? 'bg-neon-blue/20 border-neon-blue text-neon-blue shadow-[0_0_12px_rgba(0,243,255,0.5)] animate-pulse'
-                                            : 'bg-transparent border-white/15 text-white/20'
+                                            : 'bg-transparent border-white/15 text-white/40'
                                         }`}
                                 >
                                     {isDone ? '✓' : (i + 1)}
@@ -105,7 +105,7 @@ export const MintStepIndicator: React.FC<MintStepIndicatorProps> = ({ status }) 
                     const isActive = i === activeStep;
                     return (
                         <div key={step.key} className="flex flex-col items-center w-1/4">
-                            <span className={`text-[7px] font-black uppercase tracking-widest transition-colors ${isDone ? 'text-neon-green' : isActive ? 'text-neon-blue' : 'text-white/20'
+                            <span className={`text-[7px] font-black uppercase tracking-widest transition-colors ${isDone ? 'text-neon-green' : isActive ? 'text-neon-blue' : 'text-white/40'
                                 }`}>
                                 {step.label}
                             </span>

@@ -19,7 +19,7 @@ export const MobileFAB: React.FC<MobileFABProps> = ({
     playClick,
 }) => {
     return (
-        <div className="md:hidden fixed bottom-6 right-4 z-50 flex flex-col gap-3 safe-padding-bottom" role="toolbar" aria-label="Quick actions">
+        <div className="md:hidden fixed right-4 z-50 flex flex-col gap-3 safe-bottom" role="toolbar" aria-label="Quick actions">
             <button
                 onClick={() => { playClick(); onHowToPlay(); }}
                 className="w-14 h-14 rounded-full bg-neon-green shadow-[0_0_20px_rgba(0,255,159,0.5)] flex items-center justify-center"

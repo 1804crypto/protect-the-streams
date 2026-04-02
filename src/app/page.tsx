@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { CONFIG } from '@/data/config';
 import { CollectionHub } from '@/components/UI/CollectionHub';
@@ -12,6 +12,7 @@ import { useGameDataStore } from '@/hooks/useGameDataStore';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
 import { useCheckUplinkStatus } from '@/hooks/useCheckUplinkStatus';
 import { useModalStore } from '@/hooks/useModalStore';
+import { useDeepLink } from '@/hooks/useDeepLink';
 
 const Scene = dynamic(() => import('@/components/Three/Scene'), {
     ssr: false,
@@ -52,10 +53,26 @@ export default function Home() {
     const { isMuted, toggleMute, playHover, playClick, playSuccess, forceUnmute } = useAudioSystem();
     const { streamers, fetchGameData, isInitialized, isLoading: _isDataLoading } = useGameDataStore();
     const [mounted, setMounted] = useState(false);
+    const [terminalLoading, setTerminalLoading] = useState<'mission' | 'pvp' | null>(null);
 
     // Consolidated modal state (replaces 9 separate useState calls)
     const modal = useModalStore();
+    useDeepLink();
     const { activeMissionStreamer, activePvPStreamer, activeJourneyStreamer } = modal;
+
+    const openMissionTerminal = useCallback((streamer: typeof activeMissionStreamer) => {
+        if (!streamer) return;
+        setTerminalLoading('mission');
+        modal.setMissionStreamer(streamer);
+        setTimeout(() => setTerminalLoading(null), 150);
+    }, [modal]);
+
+    const openPvPTerminal = useCallback((streamer: typeof activePvPStreamer) => {
+        if (!streamer) return;
+        setTerminalLoading('pvp');
+        modal.setPvPStreamer(streamer);
+        setTimeout(() => setTerminalLoading(null), 150);
+    }, [modal]);
     const anyModalOpen = modal.anyOpen();
     const closeAllPanels = modal.closeAll;
 
@@ -133,7 +150,7 @@ export default function Home() {
                         <span className="font-display text-2xl font-black tracking-tighter">PTS_RESISTANCE</span>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
                         <button
                             onClick={() => { playClick(); forceUnmute(); modal.openModal('tutorial'); }}
                             className="px-4 py-2 border border-neon-green/40 text-[10px] font-bold tracking-widest hover:bg-neon-green/10 transition-all hidden md:block text-neon-green"
@@ -300,7 +317,7 @@ export default function Home() {
                                 <h2 className="text-3xl font-black uppercase tracking-tighter">Strategic Sector Map</h2>
                             </div>
                             <div className="text-right hidden md:block">
-                                <p className="text-[8px] text-white/30 font-mono uppercase tracking-widest">Signal Coverage</p>
+                                <p className="text-[8px] text-white/50 font-mono uppercase tracking-widest">Signal Coverage</p>
                                 <p className="text-sm font-black text-neon-green">STABLE</p>
                             </div>
                         </div>
@@ -309,7 +326,7 @@ export default function Home() {
                             <ResistanceMap onSectorClick={(s) => {
                                 // BUG 20 FIX: Look up full streamer data instead of blind cast
                                 const fullStreamer = streamers.find(st => st.id === s.id);
-                                if (fullStreamer) modal.setMissionStreamer(fullStreamer);
+                                if (fullStreamer) openMissionTerminal(fullStreamer);
                             }} />
                         ) : (
                             <div className="w-full h-[400px] border border-white/10 bg-white/[0.02] backdrop-blur-sm flex flex-col items-center justify-center text-center p-8 relative overflow-hidden group rounded-lg">
@@ -326,7 +343,7 @@ export default function Home() {
                                     <p className="text-white/50 text-sm max-w-md mx-auto leading-relaxed mb-2">
                                         Own at least one Streamer NFT to unlock the Strategic Sector Map, start missions, and fight for the Resistance.
                                     </p>
-                                    <p className="text-white/30 text-xs font-mono tracking-wider mb-6">
+                                    <p className="text-white/50 text-xs font-mono tracking-wider mb-6">
                                         Joining a faction also grants access.
                                     </p>
                                     <a
@@ -352,8 +369,8 @@ export default function Home() {
                     mint={mint}
                     playHover={playHover}
                     playClick={playClick}
-                    onPvP={(streamer) => modal.setPvPStreamer(streamer)}
-                    onMission={(streamer) => modal.setMissionStreamer(streamer)}
+                    onPvP={(streamer) => openPvPTerminal(streamer)}
+                    onMission={(streamer) => openMissionTerminal(streamer)}
                 />
 
                 {/* Footer / Status Bar */}
@@ -367,6 +384,27 @@ export default function Home() {
                         <span className="text-resistance-accent hidden sm:inline">THREAT_LEVEL: OMEGA</span>
                     </div>
                 </footer>
+
+                {/* Terminal Loading Spinner */}
+                <AnimatePresence>
+                    {terminalLoading && (
+                        <motion.div
+                            key="terminal-loader"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.1 }}
+                            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+                        >
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="w-10 h-10 border-2 border-neon-blue/30 border-t-neon-blue rounded-full animate-spin" />
+                                <p className="text-[10px] font-mono text-neon-blue tracking-[0.3em] uppercase animate-pulse">
+                                    {terminalLoading === 'mission' ? 'LOADING_MISSION_TERMINAL' : 'LOADING_PVP_TERMINAL'}
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Mission Terminal Instance */}
                 {activeMissionStreamer && (
@@ -413,6 +451,7 @@ export default function Home() {
                 {/* Tutorial Modal */}
                 <TutorialModal isOpen={modal.activeModal === 'tutorial'} onClose={() => {
                     localStorage.setItem('pts_tutorial_complete', 'true');
+                    window.dispatchEvent(new CustomEvent('pts:tutorial_complete'));
                     closeAllPanels();
                     // After tutorial closes, scroll to roster so onboarding spotlight can find targets
                     setTimeout(() => {

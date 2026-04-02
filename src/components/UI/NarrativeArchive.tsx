@@ -71,7 +71,7 @@ export const NarrativeArchive: React.FC<NarrativeArchiveProps> = ({ isOpen, onCl
                                             ? 'bg-neon-blue/10 border-neon-blue text-white'
                                             : isUnlocked
                                                 ? 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:border-white/20'
-                                                : 'bg-black/40 border-white/5 text-white/20 cursor-not-allowed'
+                                                : 'bg-black/40 border-white/5 text-white/40 cursor-not-allowed'
                                             }`}
                                         aria-label={`View narrative for ${s.name} ${!isUnlocked ? '(Locked)' : ''}`}
                                         disabled={!isUnlocked}

@@ -16,7 +16,7 @@ export const TerminalLogs: React.FC<TerminalLogsProps> = ({ logs }) => {
                         key={log + i}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1 - (i * 0.15), x: 0 }}
-                        className={`flex items-start gap-2 ${i === 0 ? 'text-neon-blue font-bold' : 'text-white/30'}`}
+                        className={`flex items-start gap-2 ${i === 0 ? 'text-neon-blue font-bold' : 'text-white/50'}`}
                     >
                         <span className="opacity-40">{`[${i.toString().padStart(4, '0')}]`}</span>
                         <span className="flex-1">{log}</span>

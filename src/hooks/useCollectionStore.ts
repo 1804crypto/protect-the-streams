@@ -31,6 +31,7 @@ interface CollectionState {
     isFactionMinted: boolean;
     activeMissionStart: number | null;
     lastMissionComplete: number | null; // Anti-Cheat: Track cooldown
+    missionInFlight: boolean; // Guard against double-fire
     journeyProgress: Record<string, number>; // Map streamerId -> current node index
     wins: number;
     losses: number;
@@ -71,7 +72,8 @@ const syncStateToCloud = async (
         streamerNatures?: Record<string, NatureType>,
         completedMissions?: MissionRecord[],
         faction?: string,
-        isFactionMinted?: boolean
+        isFactionMinted?: boolean,
+        journeyProgress?: Record<string, number>
     }
 ) => {
     // HARDENED: Sync only persists state — no reward fields (XP, PTS, wins, losses, rank).
@@ -84,6 +86,7 @@ const syncStateToCloud = async (
     if (additionalParams?.completedMissions !== undefined) payload.completedMissions = additionalParams.completedMissions;
     if (additionalParams?.faction !== undefined) payload.faction = additionalParams.faction;
     if (additionalParams?.isFactionMinted !== undefined) payload.isFactionMinted = additionalParams.isFactionMinted;
+    if (additionalParams?.journeyProgress !== undefined) payload.journeyProgress = additionalParams.journeyProgress;
 
     for (let attempt = 0; attempt <= MAX_SYNC_RETRIES; attempt++) {
         try {
@@ -203,6 +206,7 @@ export const useCollectionStore = create<CollectionState>()(
             isFactionMinted: false,
             activeMissionStart: null,
             lastMissionComplete: null,
+            missionInFlight: false,
             journeyProgress: {},
             wins: 0,
             losses: 0,
@@ -350,7 +354,14 @@ export const useCollectionStore = create<CollectionState>()(
             markMissionComplete: (_id: string, rank = 'B', xpGained = 50, battleResult?: {
                 hpRemaining: number; maxHp: number; turnsUsed: number; isBoss: boolean; duration: number;
             }) => {
-                const { completedMissions, activeMissionStart, isAuthenticated: isAuth } = get();
+                const { completedMissions, activeMissionStart, isAuthenticated: isAuth, missionInFlight } = get();
+
+                // Guard: prevent double-fire while a request is in-flight
+                if (missionInFlight) {
+                    console.warn("MISSION_COMPLETE_DEBOUNCE: Request already in flight.");
+                    return;
+                }
+                set({ missionInFlight: true });
 
                 // Calculate Duration
                 const now = Date.now();
@@ -359,7 +370,7 @@ export const useCollectionStore = create<CollectionState>()(
                 // Anti-Cheat: Minimum mission duration (5 seconds)
                 if (duration < 5000 && rank !== 'F') {
                     console.error("MISSION_GLITCH_DETECTED: Signal terminated. Anomalous activity found.");
-                    set({ activeMissionStart: null });
+                    set({ activeMissionStart: null, missionInFlight: false });
                     return;
                 }
 
@@ -392,32 +403,37 @@ export const useCollectionStore = create<CollectionState>()(
                                     inventory: data.newInventory,
                                     completedMissions: data.completedMissions,
                                     wins: data.newWins !== undefined ? data.newWins : state.wins,
-                                    losses: data.newLosses !== undefined ? data.newLosses : state.losses
+                                    losses: data.newLosses !== undefined ? data.newLosses : state.losses,
+                                    missionInFlight: false
                                 }));
                             } else if (res.status === 429 && data.dailyLimit) {
-                                // Daily limit — don't fallback to local (would bypass anti-farm)
+                                set({ missionInFlight: false });
                                 const { toast: t } = await import('@/hooks/useToastStore');
                                 t.error("DAILY_LIMIT", data.error || "Daily mission limit reached.");
                             } else {
                                 console.error("Server mission complete failed:", data.error);
-                                // Fallback: apply local computation
+                                set({ missionInFlight: false });
                                 applyLocalMissionRewards(_id, rank, xpGained, completedMissions, get, set);
                             }
                         })
                         .catch(err => {
                             console.error("Mission complete request failed:", err);
+                            set({ missionInFlight: false });
                             applyLocalMissionRewards(_id, rank, xpGained, completedMissions, get, set);
                         });
                     return;
                 }
 
                 // GUEST PATH: Local computation (no server call)
+                set({ missionInFlight: false });
                 applyLocalMissionRewards(_id, rank, xpGained, completedMissions, get, set);
             },
 
             advanceJourney: (_streamerId: string) => {
                 const { journeyProgress, inventory, isAuthenticated } = get();
                 const currentProgress = journeyProgress[_streamerId] || 0;
+                // Guard: 4 nodes total (indices 0-3); prevent farming rewards beyond the last node
+                if (currentProgress >= 4) return;
                 const newProgress = { ...journeyProgress, [_streamerId]: currentProgress + 1 };
 
                 // Add flat reward for advancing journey (300 XP + 50 $PTS)
@@ -428,10 +444,8 @@ export const useCollectionStore = create<CollectionState>()(
                 }));
 
                 if (isAuthenticated) {
-                    // For now, sync just the delta stats + inventory. 
-                    // In a full implementation we'd probably add journeyProgress to the DB schema.
-                    // Journey XP applied locally; sync persists inventory state only
-                    syncStateToCloud(inventory, set);
+                    // Sync inventory + journey progress to cloud
+                    syncStateToCloud(inventory, set, { journeyProgress: newProgress });
                 }
             },
 
@@ -459,17 +473,23 @@ export const useCollectionStore = create<CollectionState>()(
             },
 
             addWin: () => {
-                // Local UI update only — server-authoritative wins come from
-                // /api/mission/complete and /api/pvp/forfeit
-                const { wins } = get();
+                // Optimistic local update, then reconcile with server
+                const { wins, isAuthenticated } = get();
                 set({ wins: wins + 1 });
+                // Reconcile with authoritative server state
+                if (isAuthenticated) {
+                    get().refreshStats();
+                }
             },
 
             addLoss: () => {
-                // Local UI update only — server-authoritative losses come from
-                // /api/mission/complete and /api/pvp/forfeit
-                const { losses } = get();
+                // Optimistic local update, then reconcile with server
+                const { losses, isAuthenticated } = get();
                 set({ losses: losses + 1 });
+                // Reconcile with authoritative server state
+                if (isAuthenticated) {
+                    get().refreshStats();
+                }
             },
 
             refreshStats: async () => {
@@ -493,7 +513,7 @@ export const useCollectionStore = create<CollectionState>()(
             name: 'pts_storage',
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => Object.fromEntries(
-                Object.entries(state).filter(([key]) => key !== 'isAuthenticated')
+                Object.entries(state).filter(([key]) => !['isAuthenticated', 'missionInFlight'].includes(key))
             ),
         }
     )

@@ -59,15 +59,32 @@ export const OnboardingOverlay: React.FC = () => {
     const [isActive, setIsActive] = useState(false);
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
-    // Only show once — check localStorage
+    // Only show once — check localStorage. Also listen for the tutorial being completed
+    // during this session (storage event fires when another call sets the key).
     useEffect(() => {
-        const hasCompleted = localStorage.getItem('pts_onboarding_complete');
-        const hasTutorial = localStorage.getItem('pts_tutorial_complete');
-        // Show onboarding after tutorial is dismissed, and only once
-        if (hasTutorial && !hasCompleted) {
-            const timer = setTimeout(() => setIsActive(true), 1500);
-            return () => clearTimeout(timer);
-        }
+        let timer: ReturnType<typeof setTimeout> | null = null;
+
+        const tryActivate = () => {
+            if (timer) return; // already scheduled
+            const hasCompleted = localStorage.getItem('pts_onboarding_complete');
+            const hasTutorial = localStorage.getItem('pts_tutorial_complete');
+            if (hasTutorial && !hasCompleted) {
+                timer = setTimeout(() => setIsActive(true), 1500);
+            }
+        };
+
+        tryActivate(); // Check on mount (handles second-visit case)
+
+        // Handle tutorial completion during this session. localStorage.setItem does NOT
+        // fire the 'storage' event on the same tab, so we use a custom event dispatched
+        // by the tutorial close handler instead.
+        const handleTutorialDone = () => tryActivate();
+        window.addEventListener('pts:tutorial_complete', handleTutorialDone);
+
+        return () => {
+            window.removeEventListener('pts:tutorial_complete', handleTutorialDone);
+            if (timer) clearTimeout(timer);
+        };
     }, []);
 
     const updateTargetRect = useCallback(() => {
@@ -124,26 +141,27 @@ export const OnboardingOverlay: React.FC = () => {
         if (!targetRect) return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
 
         const padding = 16;
+        const maxWidth = Math.min(360, window.innerWidth - 32);
         switch (step.position) {
             case 'bottom':
                 return {
                     top: targetRect.bottom + padding,
-                    left: Math.max(16, Math.min(targetRect.left, window.innerWidth - 380)),
+                    left: Math.max(16, Math.min(targetRect.left, window.innerWidth - maxWidth - 16)),
                 };
             case 'top':
                 return {
                     bottom: window.innerHeight - targetRect.top + padding,
-                    left: Math.max(16, Math.min(targetRect.left, window.innerWidth - 380)),
+                    left: Math.max(16, Math.min(targetRect.left, window.innerWidth - maxWidth - 16)),
                 };
             case 'right':
                 return {
                     top: targetRect.top,
-                    left: targetRect.right + padding,
+                    left: Math.min(targetRect.right + padding, window.innerWidth - maxWidth - 16),
                 };
             case 'left':
                 return {
                     top: targetRect.top,
-                    right: window.innerWidth - targetRect.left + padding,
+                    right: Math.max(16, window.innerWidth - targetRect.left + padding),
                 };
         }
     };
@@ -157,7 +175,7 @@ export const OnboardingOverlay: React.FC = () => {
                 className="fixed inset-0 z-[400] pointer-events-none"
             >
                 {/* Dimmed overlay with cutout */}
-                <div className="absolute inset-0 bg-black/70 pointer-events-auto" onClick={handleDismiss} />
+                <div className="absolute inset-0 bg-black/70 pointer-events-auto" onClick={handleDismiss} role="presentation" />
 
                 {/* Spotlight on target */}
                 {targetRect && (
@@ -186,7 +204,7 @@ export const OnboardingOverlay: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute z-[402] w-[360px] bg-[#0a0a12] border border-white/10 rounded-lg p-5 pointer-events-auto"
+                    className="absolute z-[402] w-[calc(100vw-2rem)] max-w-[360px] bg-[#0a0a12] border border-white/10 rounded-lg p-5 pointer-events-auto"
                     style={getTooltipStyle()}
                 >
                     {/* Step indicator */}
@@ -196,7 +214,7 @@ export const OnboardingOverlay: React.FC = () => {
                         </span>
                         <button
                             onClick={handleDismiss}
-                            className="text-white/30 hover:text-white text-xs transition-colors"
+                            className="text-white/50 hover:text-white text-xs transition-colors"
                             aria-label="Skip onboarding"
                         >
                             SKIP

@@ -31,23 +31,14 @@ export function computePtsReward(rank: MissionRank): number {
     return rewardMap[rank];
 }
 
-/** Deterministic reward items (server picks from fixed pool) */
+/** Deterministic reward items — fixed pool per rank, no randomness. */
 export function computeRewardItems(rank: MissionRank): string[] {
     const MISSION_REWARDS: Record<MissionRank, string[]> = {
         S: ['HYPER_RESTORE', 'FULL_PP_RESTORE', 'ATTACK_MATRIX'],
-        A: ['RESTORE_CHIP', 'PP_RECHARGE', 'DEFENSE_MATRIX'],
-        B: ['RESTORE_CHIP', 'PP_RECHARGE'],
+        A: ['RESTORE_CHIP', 'DEFENSE_MATRIX'],
+        B: ['RESTORE_CHIP'],
         F: ['RESTORE_CHIP'],
     };
 
-    const possibleRewards = MISSION_REWARDS[rank];
-    const numRewards = rank === 'S' ? 3 : rank === 'A' ? 2 : 1;
-    const rewards: string[] = [];
-
-    for (let i = 0; i < numRewards; i++) {
-        const randomItem = possibleRewards[Math.floor(Math.random() * possibleRewards.length)];
-        rewards.push(randomItem);
-    }
-
-    return rewards;
+    return MISSION_REWARDS[rank];
 }

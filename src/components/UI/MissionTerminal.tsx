@@ -297,7 +297,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
             const baseXP = isBoss ? 150 : 50;
             const rankMult = rank === 'S' ? 1.5 : rank === 'A' ? 1.2 : 1;
             const totalXP = Math.floor(baseXP * rankMult);
-            const rewards = rank === 'S' ? ['stim_pack', 'neural_booster'] : rank === 'A' ? ['stim_pack'] : [];
+            const rewards = rank === 'S' ? ['HYPER_RESTORE', 'FULL_PP_RESTORE', 'ATTACK_MATRIX'] : rank === 'A' ? ['RESTORE_CHIP', 'DEFENSE_MATRIX'] : rank === 'B' ? ['RESTORE_CHIP'] : [];
 
             // Wrap in setTimeout to avoid synchronous setState inside effect
             setTimeout(() => {
@@ -383,7 +383,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                     </div>
 
                     {/* Expansive Battle Console */}
-                    <div className="ds-terminal relative flex flex-col lg:flex-row gap-2 md:gap-4 p-1 md:p-2 lg:p-6 w-full max-w-[1240px] items-stretch h-full lg:h-[800px] overflow-y-auto lg:overflow-visible">
+                    <div className="ds-terminal relative flex flex-col lg:flex-row gap-2 md:gap-4 p-1 md:p-2 lg:p-6 w-full max-w-[1240px] items-stretch h-full lg:h-[800px] overflow-y-auto pb-20 lg:pb-0 lg:overflow-visible">
 
                         {/* Top Screen / Sector 7 Arena */}
                         <BattleArena
@@ -452,7 +452,7 @@ export const MissionTerminal: React.FC<MissionTerminalProps> = ({ streamer, isOp
                                         ))}
                                     </div>
                                     <div className="mt-3 pt-2 border-t border-white/5 flex justify-between items-center">
-                                        <span className="text-[8px] text-white/20 font-mono">SECTOR_THREAT:</span>
+                                        <span className="text-[8px] text-white/40 font-mono">SECTOR_THREAT:</span>
                                         <span className={`text-[9px] font-black ${missionContext.threatLevel === 'EXTREME' ? 'text-red-500 animate-pulse' :
                                             missionContext.threatLevel === 'HIGH' ? 'text-orange-500' :
                                                 missionContext.threatLevel === 'MEDIUM' ? 'text-yellow-500' : 'text-neon-green'

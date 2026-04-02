@@ -3,6 +3,7 @@ import { BattleItem } from './items';
 export interface StoreItem extends BattleItem {
     pricePts: number;
     priceSol: number;
+    priceUsdc: number; // USDC price (e.g. 0.50 = $0.50 USDC); used by server for on-chain verification
     stock?: number; // Optional: limited stock per mission/session
 }
 
@@ -19,6 +20,7 @@ export const blackMarketItems: Record<string, StoreItem> = {
         category: 'consumable',
         pricePts: 100,
         priceSol: 0.001,
+        priceUsdc: 0.10,
     },
     GIGACHAD_GLITCH: {
         id: 'GIGACHAD_GLITCH',
@@ -31,6 +33,7 @@ export const blackMarketItems: Record<string, StoreItem> = {
         category: 'consumable',
         pricePts: 500,
         priceSol: 0.005,
+        priceUsdc: 0.50,
     },
     Z_QUANTUM_BURST: {
         id: 'Z_QUANTUM_BURST',
@@ -43,19 +46,21 @@ export const blackMarketItems: Record<string, StoreItem> = {
         category: 'consumable',
         pricePts: 1500,
         priceSol: 0.015,
+        priceUsdc: 1.50,
     },
     VIRAL_INJECTOR: {
         id: 'VIRAL_INJECTOR',
         name: 'Viral Injector',
-        description: 'Poisons the enemy: 5% max HP damage per turn for 3 turns.',
+        description: 'Injects viral payload: +50% attack damage for 3 turns.',
         effect: 'boostAttack',
-        value: 0.05,
+        value: 1.5,
         rarity: 'rare',
         icon: '💀',
         category: 'consumable',
         lore: 'A weaponized data packet. Corrupts the target\'s core processes.',
         pricePts: 800,
         priceSol: 0.008,
+        priceUsdc: 0.80,
     },
 
     // --- Tactical Augments (Permanent / Long-Duration Boosts) ---
@@ -70,6 +75,7 @@ export const blackMarketItems: Record<string, StoreItem> = {
         category: 'augment',
         pricePts: 800,
         priceSol: 0.008,
+        priceUsdc: 0.80,
     },
     KINETIC_BOOSTER: {
         id: 'KINETIC_BOOSTER',
@@ -82,6 +88,7 @@ export const blackMarketItems: Record<string, StoreItem> = {
         category: 'augment',
         pricePts: 1000,
         priceSol: 0.01,
+        priceUsdc: 1.00,
     },
 
     // --- Emergency / Utility ---
@@ -96,6 +103,7 @@ export const blackMarketItems: Record<string, StoreItem> = {
         category: 'consumable',
         pricePts: 1400,
         priceSol: 0.014,
+        priceUsdc: 1.40,
     },
     RESISTANCE_CRATE: {
         id: 'RESISTANCE_CRATE',
@@ -108,6 +116,7 @@ export const blackMarketItems: Record<string, StoreItem> = {
         category: 'consumable',
         pricePts: 300,
         priceSol: 0.003,
+        priceUsdc: 0.30,
     },
 
     // --- Equipment (DB-first, NFT-ready) ---
@@ -125,6 +134,7 @@ export const blackMarketItems: Record<string, StoreItem> = {
         lore: 'Salvaged from a fallen Cipher Unit. The fabric bends light around the wearer.',
         pricePts: 700,
         priceSol: 0.007,
+        priceUsdc: 0.70,
     },
     NEURAL_AMPLIFIER: {
         id: 'NEURAL_AMPLIFIER',
@@ -140,6 +150,7 @@ export const blackMarketItems: Record<string, StoreItem> = {
         lore: 'Prototype cortex link. Amplifies neural bandwidth for faster signal lock.',
         pricePts: 850,
         priceSol: 0.0085,
+        priceUsdc: 0.85,
     },
     TITAN_CHASSIS: {
         id: 'TITAN_CHASSIS',
@@ -155,6 +166,7 @@ export const blackMarketItems: Record<string, StoreItem> = {
         lore: 'Reinforced plating from the Authority\'s decommissioned war frames.',
         pricePts: 1100,
         priceSol: 0.011,
+        priceUsdc: 1.10,
     },
     QUANTUM_CORE: {
         id: 'QUANTUM_CORE',
@@ -170,5 +182,6 @@ export const blackMarketItems: Record<string, StoreItem> = {
         lore: 'Unstable energy matrix. Channels raw quantum flux into focused destruction.',
         pricePts: 1400,
         priceSol: 0.014,
+        priceUsdc: 1.40,
     },
 };

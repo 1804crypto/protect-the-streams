@@ -135,7 +135,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="text-[7px] md:text-[9px] font-black text-white/30 uppercase tracking-[0.3em] border-b border-white/5">
+                                    <tr className="text-[7px] md:text-[9px] font-black text-white/50 uppercase tracking-[0.3em] border-b border-white/5">
                                         <th className="pb-2 md:pb-4 px-2 md:px-4 font-black">Rank</th>
                                         <th className="pb-2 md:pb-4 px-2 md:px-4 font-black">Operative_ID</th>
                                         <th className="pb-2 md:pb-4 px-2 md:px-4 font-black text-center">Affiliation</th>
@@ -170,13 +170,13 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                             {entry.username || 'UNIDENTIFIED_OPERATIVE'}
                                                         </span>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-[7px] text-white/20 uppercase tracking-tighter font-mono">SIG: {entry.id.substring(0, 8)}</span>
+                                                            <span className="text-[7px] text-white/40 uppercase tracking-tighter font-mono">SIG: {entry.id.substring(0, 8)}</span>
                                                             <span className="text-[7px] text-neon-green font-bold">[LVL.{entry.level || 1}]</span>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="py-3 md:py-5 px-2 md:px-4 text-center">
-                                                    <div className={`px-2 py-0.5 inline-block text-[8px] font-black border rounded-sm ${entry.faction === 'RED' ? 'bg-red-500/10 border-red-500 text-red-500' : entry.faction === 'PURPLE' ? 'bg-purple-900/20 border-purple-500 text-purple-400' : 'bg-white/5 border-white/10 text-white/30'}`}>
+                                                    <div className={`px-2 py-0.5 inline-block text-[8px] font-black border rounded-sm ${entry.faction === 'RED' ? 'bg-red-500/10 border-red-500 text-red-500' : entry.faction === 'PURPLE' ? 'bg-purple-900/20 border-purple-500 text-purple-400' : 'bg-white/5 border-white/10 text-white/50'}`}>
                                                         {entry.faction === 'NONE' ? 'NO_AFFILIATION' : `FACTION_${entry.faction}`}
                                                     </div>
                                                 </td>
@@ -202,7 +202,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                                                 transition={{ delay: i * 0.1 }}
                                                 className="border-b border-white/[0.03]"
                                             >
-                                                <td className="py-4 px-2 md:px-4 font-black text-white/20">
+                                                <td className="py-4 px-2 md:px-4 font-black text-white/40">
                                                     {(i + 1).toString().padStart(2, '0')}
                                                 </td>
                                                 <td className="py-4 px-2 md:px-4">
@@ -262,7 +262,7 @@ export const Leaderboard: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                             </motion.div>
                         )}
                     </div>
-                    <p className="text-[8px] text-white/20 font-mono uppercase tracking-[0.2em]">
+                    <p className="text-[8px] text-white/40 font-mono uppercase tracking-[0.2em]">
                         Last_Sync: {new Date().toLocaleTimeString()}
                     </p>
                 </div>

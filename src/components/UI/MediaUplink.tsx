@@ -59,7 +59,7 @@ export const MediaUplink: React.FC = () => {
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
                         <span className="text-[8px] font-mono text-white/40 uppercase">Audio_Isolation_Protocol</span>
-                        <div className={`px-1.5 py-0.5 rounded-sm text-[8px] font-bold ${isDivertMode ? 'bg-neon-purple text-white shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'bg-white/5 text-white/30'}`}>
+                        <div className={`px-1.5 py-0.5 rounded-sm text-[8px] font-bold ${isDivertMode ? 'bg-neon-purple text-white shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'bg-white/5 text-white/50'}`}>
                             {isDivertMode ? 'ACTIVE' : 'STANDBY'}
                         </div>
                     </div>
@@ -75,7 +75,7 @@ export const MediaUplink: React.FC = () => {
                         {isDivertMode ? '[ STOP_ISOLATION ]' : '[ SYNC_BROADCAST_SIGNAL ]'}
                     </button>
 
-                    <p className="text-[7px] font-mono text-white/20 italic leading-tight">
+                    <p className="text-[7px] font-mono text-white/40 italic leading-tight">
                         {"// Isolating external frequencies will dampen the internal Resistance drone while maintaining tactical field SFX."}
                     </p>
                 </div>

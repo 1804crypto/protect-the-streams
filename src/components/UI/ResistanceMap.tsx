@@ -391,7 +391,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: { id: string 
                     <div className="absolute inset-0 border border-white/5 animate-spin-slow pointer-events-none" />
                 </motion.div>
                 <div className="mt-6 text-[8px] md:text-[9px] font-black tracking-[0.5em] bg-black/95 px-4 py-2 border border-resistance-accent/50 text-center shadow-2xl">
-                    <span className={isHQUnlocked ? 'text-resistance-accent animate-pulse' : 'text-white/20'}>
+                    <span className={isHQUnlocked ? 'text-resistance-accent animate-pulse' : 'text-white/40'}>
                         [ SECTOR_00: CORPORATE_HQ ]
                     </span>
                     <br />
@@ -468,7 +468,7 @@ export const ResistanceMap: React.FC<{ onSectorClick?: (_streamer: { id: string 
                             className="h-full bg-gradient-to-r from-neon-blue to-neon-green shadow-[0_0:15px_rgba(57,255,20,0.4)]"
                         />
                     </div>
-                    <div className="text-[6px] text-white/20 mt-2 font-mono uppercase tracking-tighter text-right">
+                    <div className="text-[6px] text-white/40 mt-2 font-mono uppercase tracking-tighter text-right">
                         {completedMissions.length} of {streamers.length} Nodes Secured
                     </div>
                 </div>

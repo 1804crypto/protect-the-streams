@@ -187,7 +187,7 @@ export const FactionSelection: React.FC<FactionSelectionProps> = ({ isOpen, onCl
                             <div className="mt-12 text-center">
                                 <button
                                     onClick={onClose}
-                                    className="text-white/20 hover:text-white transition-colors text-[10px] uppercase font-mono tracking-widest"
+                                    className="text-white/40 hover:text-white transition-colors text-[10px] uppercase font-mono tracking-widest"
                                 >
                                     [ REMAIN_NEUTRAL_FOR_NOW ]
                                 </button>

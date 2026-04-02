@@ -80,14 +80,27 @@ export async function POST(req: NextRequest) {
             last_update: new Date().toISOString()
         };
 
-        const { error: updateError } = await supabase
+        const { data: updateResult, error: updateError } = await supabase
             .from('pvp_matches')
             .update(updates)
-            .eq('id', matchId);
+            .eq('id', matchId)
+            .eq('status', 'ACTIVE')
+            .select('id')
+            .maybeSingle();
 
         if (updateError) {
             Logger.error('API_Forfeit', "Forfeit update failed", updateError);
             return NextResponse.json({ error: 'Failed to finalize match' }, { status: 500 });
+        }
+
+        // If 0 rows updated another request already finalized the match — return current winner
+        if (!updateResult) {
+            const { data: finalMatch } = await supabase
+                .from('pvp_matches')
+                .select('winner_id')
+                .eq('id', matchId)
+                .single();
+            return NextResponse.json({ error: 'Match already finished', winnerId: finalMatch?.winner_id }, { status: 409 });
         }
 
         // Return wager to winner (double payout) if wagers exist

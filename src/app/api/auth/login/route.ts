@@ -59,12 +59,12 @@ export async function POST(req: NextRequest) {
 
                 if (!verified) {
                     console.error("Signature verification failed for", publicKey);
-                    return NextResponse.json({ error: 'Invalid signature verification' }, { status: 401 });
+                    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
                 }
             }
         } catch (err) {
             console.error("Signature verification error details:", err);
-            return NextResponse.json({ error: 'Signature processing failed' }, { status: 400 });
+            return NextResponse.json({ error: 'Authentication failed' }, { status: 400 });
         }
 
         // 3. User Lookup / Creation
@@ -134,7 +134,8 @@ export async function POST(req: NextRequest) {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 60 * 60 * 24 // 1 day
+            maxAge: 60 * 60 * 24, // 1 day
+            path: '/'
         });
 
         return response;

@@ -74,6 +74,25 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
     const [quantities, setQuantities] = useState<Record<string, number>>({});
     const [confirmModal, setConfirmModal] = useState<ConfirmState | null>(null);
     const [solBalance, setSolBalance] = useState<number | null>(null);
+    const [solUsd, setSolUsd] = useState<number | null>(null);
+
+    // Fetch live SOL/USD rate from price oracle on mount (refreshes every 60s)
+    useEffect(() => {
+        let cancelled = false;
+        const fetchRate = async () => {
+            try {
+                const res = await fetch('/api/prices');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!cancelled && typeof data.solUsd === 'number' && data.solUsd > 0) {
+                    setSolUsd(data.solUsd);
+                }
+            } catch { /* network error — silently skip */ }
+        };
+        fetchRate();
+        const interval = setInterval(fetchRate, 60_000);
+        return () => { cancelled = true; clearInterval(interval); };
+    }, []);
 
     // Fetch SOL balance when wallet is connected
     React.useEffect(() => {
@@ -115,7 +134,12 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
 
     const getPrice = (item: StoreItem, qty: number) => {
         if (currency === 'PTS') return `${(item.pricePts * qty).toLocaleString()} PTS`;
-        return `${(item.priceSol * qty).toFixed(4)} SOL`;
+        const sol = (item.priceSol * qty).toFixed(4);
+        if (solUsd !== null) {
+            const usd = (item.priceSol * qty * solUsd).toFixed(2);
+            return `${sol} SOL (~$${usd})`;
+        }
+        return `${sol} SOL`;
     };
 
     const canAfford = (item: StoreItem, qty: number) => {
@@ -179,7 +203,7 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                             </button>
                         </div>
 
-                        {/* Balances */}
+                        {/* Balances + Live Rate */}
                         <div className="flex items-center gap-4 text-xs font-mono">
                             <span className="text-purple-300">
                                 PTS: <span className="text-cyan-400 font-bold">{ptsBalance.toLocaleString()}</span>
@@ -187,6 +211,12 @@ export const BlackMarket = ({ onClose }: { onClose: () => void }) => {
                             {publicKey && solBalance !== null && (
                                 <span className="text-purple-300">
                                     SOL: <span className="text-cyan-400 font-bold">{solBalance.toFixed(4)}</span>
+                                </span>
+                            )}
+                            {solUsd !== null && (
+                                <span className="text-purple-400/60 text-[9px] flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                    1 SOL ≈ ${solUsd.toFixed(2)}
                                 </span>
                             )}
                         </div>

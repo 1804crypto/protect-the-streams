@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     openGraph: {
         title: "PROTECT THE STREAMS | Resistance OS",
         description: "Bypassing Corporate Blackouts. Secure your influence on Solana.",
-        url: "https://endearing-syrniki-7788ed.netlify.app",
+        url: "https://protectthestreamers.xyz",
         siteName: "Protect The Streams",
         images: [
             {
@@ -65,7 +65,7 @@ export default function RootLayout({
                         </ErrorBoundary>
                     </div>
                 </SolanaProvider>
-                <div className="fixed bottom-0 right-0 p-1 text-[10px] text-white/20 pointer-events-none z-[9999]">
+                <div className="fixed bottom-0 right-0 p-1 text-[10px] text-white/40 pointer-events-none z-[9999]" aria-hidden="true">
                     v_2026_02_13_0800_FINAL_V4.2_BATTLE_STABLE
                 </div>
             </body>

@@ -81,7 +81,7 @@ export const CommandDeck: React.FC<CommandDeckProps> = ({
                             className="h-full bg-neon-pink shadow-[0_0_20px_#ff00ff]"
                         />
                     </div>
-                    <div className="text-[8px] font-mono text-white/30 tracking-wider mt-1">
+                    <div className="text-[8px] font-mono text-white/50 tracking-wider mt-1">
                         {charge < 100
                             ? 'Charges +20% per attack. Reach 100% to unleash ultimate.'
                             : 'FULLY CHARGED — Activate your ultimate move!'}

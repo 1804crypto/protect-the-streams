@@ -12,7 +12,8 @@ import { NextRequest, NextResponse } from 'next/server';
 const ALLOWED_ORIGINS = new Set([
     'https://protectthestreamers.xyz',
     'https://www.protectthestreamers.xyz',
-    // Add staging/preview domains as needed
+    // Additional allowed origins from env (e.g., staging, preview deployments)
+    ...(process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean) || []),
 ]);
 
 // Always allow localhost in development
@@ -30,13 +31,15 @@ function isAllowedOrigin(origin: string | null, host: string | null): boolean {
         return false;
     }
 
-    // Allow localhost/dev
-    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+    // Allow localhost/dev — only in non-production environments
+    if (process.env.NODE_ENV !== 'production' &&
+        (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
         return true;
     }
 
-    // Allow Netlify deploy previews — restricted to our team's subdomain only
-    if (origin.endsWith('endearing-syrniki-7788ed.netlify.app')) return true;
+    // Allow Netlify deploy previews — restricted to configured subdomain via env
+    const netlifySubdomain = process.env.NETLIFY_SITE_SUBDOMAIN;
+    if (netlifySubdomain && origin.endsWith(`${netlifySubdomain}.netlify.app`)) return true;
 
     return false;
 }

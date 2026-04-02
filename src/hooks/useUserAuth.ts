@@ -10,7 +10,7 @@ export const useUserAuth = () => {
     const [userId, setUserId] = useState<string | null>(null);
     const { syncFromCloud, isAuthenticated, setAuthenticated } = useCollectionStore();
 
-    // Wallet Switch Detection
+    // Wallet Switch Detection — call logout API so the cookie is also cleared server-side
     const prevWalletRef = useRef<string | null>(null);
     useEffect(() => {
         const currentWallet = publicKey?.toBase58() || null;
@@ -18,17 +18,28 @@ export const useUserAuth = () => {
             console.warn("Wallet switched or disconnected. Resetting auth state.");
             setAuthenticated(false);
             setUserId(null);
+            // Invalidate the server-side session cookie so the old JWT cannot be replayed
+            fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
         }
         prevWalletRef.current = currentWallet;
     }, [publicKey, setAuthenticated]);
 
-    // Auto-check session on mount
+    // Auto-check session on mount — validate that the session wallet matches current wallet
     useEffect(() => {
         const checkSession = async () => {
             try {
                 const res = await fetch('/api/auth/session');
                 const data = await res.json();
                 if (data.authenticated && data.user) {
+                    // Guard: ensure session belongs to the currently connected wallet
+                    const sessionWallet = data.user.wallet_address as string | undefined;
+                    const connectedWallet = publicKey?.toBase58();
+                    if (connectedWallet && sessionWallet && sessionWallet !== connectedWallet) {
+                        console.warn("Session wallet mismatch — clearing stale session.");
+                        fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+                        setAuthenticated(false);
+                        return;
+                    }
                     syncFromCloud(data.user);
                     setAuthenticated(true);
                     setUserId(data.user.id);
@@ -42,7 +53,8 @@ export const useUserAuth = () => {
             }
         };
         checkSession();
-    }, [syncFromCloud, setAuthenticated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [syncFromCloud, setAuthenticated]); // publicKey intentionally omitted — session check runs once on mount
 
     const login = useCallback(async () => {
         if (!publicKey) {

@@ -397,10 +397,10 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
                                     </span>
                                 )}
                             </div>
-                            <div className="text-[8px] font-mono text-white/30 uppercase mt-0.5 tracking-[0.2em]">{streamer.archetype}</div>
+                            <div className="text-[8px] font-mono text-white/50 uppercase mt-0.5 tracking-[0.2em]">{streamer.archetype}</div>
                         </div>
                         <div className="text-right">
-                            <span className={`text-[8px] font-mono block ${player.hp / player.maxHp < 0.2 ? 'text-resistance-accent font-black animate-pulse' : 'text-white/30'}`}>
+                            <span className={`text-[8px] font-mono block ${player.hp / player.maxHp < 0.2 ? 'text-resistance-accent font-black animate-pulse' : 'text-white/50'}`}>
                                 {player.hp / player.maxHp < 0.2 ? 'INTEGRITY_COMPROMISED' : 'INTEGRITY_SYNC'}
                             </span>
                             <span className={`text-[14px] font-mono font-black ${player.hp / player.maxHp < 0.2 ? 'text-resistance-accent' : 'text-white'}`}>{player.hp} / {player.maxHp}</span>

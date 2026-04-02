@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Streamer } from '@/data/streamers';
 import { useCollectionStore } from '@/hooks/useCollectionStore';
@@ -37,6 +37,8 @@ export const StreamerJourney: React.FC<StreamerJourneyProps> = ({ streamer, isOp
     const [activeEncounterNode, setActiveEncounterNode] = useState<number | null>(null);
     const [encounterLogs, setEncounterLogs] = useState<string[]>([]);
     const [encounterPhase, setEncounterPhase] = useState<'idle' | 'simulating' | 'success'>('idle');
+    const isOpenRef = useRef(isOpen);
+    useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
 
     // The current unlocked level for this streamer (0 = first node, 4 = completed all)
     const currentProgress = journeyProgress[streamer.id] || 0;
@@ -71,7 +73,7 @@ export const StreamerJourney: React.FC<StreamerJourneyProps> = ({ streamer, isOp
 
         for (let i = 0; i < logs.length; i++) {
             await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
-            if (!isOpen) return; // Abort if closed
+            if (!isOpenRef.current) return; // Abort if closed (ref avoids stale closure)
             setEncounterLogs(prev => [...prev, logs[i]]);
             playHover(); // Use hover sound for tick tick
         }
@@ -231,7 +233,7 @@ export const StreamerJourney: React.FC<StreamerJourneyProps> = ({ streamer, isOp
                                                                 ? 'bg-neon-green/10 border-neon-green text-neon-green shadow-[0_0_20px_rgba(0,255,159,0.3)]'
                                                                 : isCurrent
                                                                     ? 'bg-neon-blue/20 border-neon-blue text-white shadow-[0_0_30px_rgba(0,243,255,0.6)] cursor-pointer hover:bg-neon-blue hover:text-black animate-pulse'
-                                                                    : 'bg-black/80 border-white/10 text-white/20 cursor-not-allowed'
+                                                                    : 'bg-black/80 border-white/10 text-white/40 cursor-not-allowed'
                                                             }`}
                                                     >
                                                         {isCompleted ? '✓' : isCurrent ? '!' : '🔒'}

@@ -38,7 +38,7 @@ export const MapEventOverlay: React.FC<MapEventOverlayProps> = ({ event, onClose
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[300] flex items-center justify-center p-6"
             >
-                <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={onClose} />
+                <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={onClose} role="presentation" />
 
                 <motion.div
                     initial={{ scale: 0.9, y: 20 }}

@@ -55,7 +55,8 @@ export async function POST(req: NextRequest) {
             streamerNatures,
             completedMissions,
             faction,
-            isFactionMinted
+            isFactionMinted,
+            journeyProgress
         } = body;
 
         // 3. Fetch user from DB
@@ -93,6 +94,9 @@ export async function POST(req: NextRequest) {
             updates.faction = faction;
         }
         if (isFactionMinted !== undefined) updates.is_faction_minted = isFactionMinted;
+        if (journeyProgress !== undefined && typeof journeyProgress === 'object') {
+            updates.journey_progress = journeyProgress;
+        }
 
         // 5. Optimistic lock: only update if updated_at hasn't changed since we read it
         let updateQuery = supabase

@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
             .eq('idempotency_key', idempotencyKey)
             .eq('user_wallet', wallet)
             .eq('status', 'BUILT')
-            .select('idempotency_key, status')
+            .select('idempotency_key, status, streamer_id')
             .single();
 
         if (error || !data) {
@@ -52,6 +52,26 @@ export async function POST(req: NextRequest) {
                 warning: 'No pending mint found for this key',
                 detail: error?.message
             }, { status: 404 });
+        }
+
+        // Persist secured_id to the user's record so session restore reflects ownership
+        const streamerId = (data as Record<string, unknown>).streamer_id as string | undefined;
+        if (streamerId) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('secured_ids')
+                .eq('wallet_address', wallet)
+                .single();
+
+            if (userData) {
+                const currentIds = (userData as { secured_ids: string[] | null }).secured_ids || [];
+                if (!currentIds.includes(streamerId)) {
+                    await supabase
+                        .from('users')
+                        .update({ secured_ids: [...currentIds, streamerId] } as Record<string, unknown>)
+                        .eq('wallet_address', wallet);
+                }
+            }
         }
 
         console.log('[MINT CONFIRM] Mint confirmed:', data.idempotency_key);

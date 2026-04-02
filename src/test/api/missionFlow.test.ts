@@ -126,9 +126,10 @@ describe('Mission Complete — Critical Flow Integration', () => {
 
     it('rejects boss fights completed in < 3 turns', async () => {
         mockVerifySession.mockResolvedValue({ userId: 'user-1' });
+        // Use a boss_ prefixed missionId so server computes isBoss=true server-side
         const res = await POST(makeRequest({
-            missionId: 'kaicenat',
-            hpRemaining: 80, maxHp: 100, turnsUsed: 1, isBoss: true, duration: 60000
+            missionId: 'boss_spark',
+            hpRemaining: 80, maxHp: 100, turnsUsed: 1, duration: 60000
         }));
         expect(res.status).toBe(400);
         expect((await res.json()).error).toBe('Implausible turn count for boss battle');

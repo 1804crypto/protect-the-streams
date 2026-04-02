@@ -34,7 +34,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ items, isHidden }) => {
             {/* Hamburger FAB */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`fixed bottom-6 right-4 w-14 h-14 rounded-full flex items-center justify-center font-black text-xl z-[52] transition-all safe-padding-bottom focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${
+                className={`fixed right-4 w-14 h-14 rounded-full flex items-center justify-center font-black text-xl z-[52] transition-all safe-bottom focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${
                     isOpen
                         ? 'bg-white/20 border-2 border-white/40 shadow-[0_0_20px_rgba(255,255,255,0.3)]'
                         : 'bg-neon-blue shadow-[0_0_20px_rgba(0,243,255,0.5)] border-2 border-neon-blue/60'
@@ -69,7 +69,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ items, isHidden }) => {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                            className="fixed top-0 right-0 bottom-0 w-72 bg-[#0a0a0f]/95 backdrop-blur-xl border-l border-white/10 z-[52] flex flex-col"
+                            className="fixed top-0 right-0 bottom-0 w-[min(18rem,85vw)] bg-[#0a0a0f]/95 backdrop-blur-xl border-l border-white/10 z-[52] flex flex-col"
                         >
                             {/* Header */}
                             <div className="p-6 border-b border-white/5">
@@ -77,7 +77,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ items, isHidden }) => {
                                     <div className="w-6 h-6 bg-resistance-accent animate-pulse" />
                                     <span className="font-display text-lg font-black tracking-tighter">PTS_MENU</span>
                                 </div>
-                                <p className="text-[8px] font-mono text-white/30 tracking-widest mt-1 uppercase">OPERATIONS_PANEL</p>
+                                <p className="text-[8px] font-mono text-white/50 tracking-widest mt-1 uppercase">OPERATIONS_PANEL</p>
                             </div>
 
                             {/* Menu Items */}
@@ -104,7 +104,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ items, isHidden }) => {
 
                             {/* Footer */}
                             <div className="p-4 border-t border-white/5">
-                                <p className="text-[8px] font-mono text-white/20 tracking-widest uppercase text-center">
+                                <p className="text-[8px] font-mono text-white/40 tracking-widest uppercase text-center">
                                     RESISTANCE_NETWORK_v4.2
                                 </p>
                             </div>

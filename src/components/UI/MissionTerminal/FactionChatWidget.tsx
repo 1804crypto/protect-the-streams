@@ -47,7 +47,7 @@ export const FactionChatWidget: React.FC<FactionChatWidgetProps> = ({ factionId,
                 <div className="absolute inset-0 pointer-events-none bg-[url('/grid.png')] opacity-5" />
 
                 {messages.length === 0 && (
-                    <div className="text-white/20 text-center mt-10">Waiting for signal...</div>
+                    <div className="text-white/40 text-center mt-10">Waiting for signal...</div>
                 )}
 
                 <AnimatePresence>
@@ -69,7 +69,7 @@ export const FactionChatWidget: React.FC<FactionChatWidgetProps> = ({ factionId,
                                 }>
                                     {msg.sender_name}
                                 </span>
-                                <span className="text-white/20">
+                                <span className="text-white/40">
                                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
@@ -90,7 +90,7 @@ export const FactionChatWidget: React.FC<FactionChatWidgetProps> = ({ factionId,
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
                         placeholder="TRANSMIT MESSAGE..."
-                        className="flex-1 bg-white/5 border border-white/10 text-white px-2 py-1 text-[10px] focus:outline-none focus:border-neon-blue transition-colors placeholder:text-white/20"
+                        className="flex-1 bg-white/5 border border-white/10 text-white px-2 py-1 text-[10px] focus:outline-none focus:border-neon-blue transition-colors placeholder:text-white/40"
                     />
                     <button
                         type="submit"

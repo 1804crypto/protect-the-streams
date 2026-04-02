@@ -39,7 +39,7 @@ const CYCLE_DESC: { attacker: MoveType; defender: MoveType; flavor: string }[] =
 function CellValue({ value }: { value: number }) {
     if (value === 1.5) return <span className="text-neon-green font-black text-[11px]">1.5x</span>;
     if (value === 0.5) return <span className="text-resistance-accent font-black text-[11px]">0.5x</span>;
-    return <span className="text-white/30 text-[10px]">1x</span>;
+    return <span className="text-white/50 text-[10px]">1x</span>;
 }
 
 export const TypeChartModal: React.FC<TypeChartModalProps> = ({ isOpen, onClose }) => {
@@ -88,10 +88,10 @@ export const TypeChartModal: React.FC<TypeChartModalProps> = ({ isOpen, onClose 
                                 {TYPES.map((t, i) => (
                                     <React.Fragment key={t}>
                                         <span className={`text-[11px] font-black tracking-wider ${TYPE_COLORS[t]}`}>{t}</span>
-                                        {i < TYPES.length - 1 && <span className="text-white/30 text-[10px]">→</span>}
+                                        {i < TYPES.length - 1 && <span className="text-white/50 text-[10px]">→</span>}
                                     </React.Fragment>
                                 ))}
-                                <span className="text-white/30 text-[10px]">→</span>
+                                <span className="text-white/50 text-[10px]">→</span>
                                 <span className={`text-[11px] font-black tracking-wider ${TYPE_COLORS.CHAOS}`}>CHAOS</span>
                             </div>
                         </div>
@@ -101,7 +101,7 @@ export const TypeChartModal: React.FC<TypeChartModalProps> = ({ isOpen, onClose 
                             <table className="w-full border-collapse text-center">
                                 <thead>
                                     <tr>
-                                        <th className="p-2 text-[8px] font-mono text-white/30 uppercase">ATK ↓ / DEF →</th>
+                                        <th className="p-2 text-[8px] font-mono text-white/50 uppercase">ATK ↓ / DEF →</th>
                                         {TYPES.map(t => (
                                             <th key={t} className={`p-2 text-[9px] font-black tracking-wider ${TYPE_COLORS[t]}`}>{t.slice(0, 4)}</th>
                                         ))}
@@ -130,7 +130,7 @@ export const TypeChartModal: React.FC<TypeChartModalProps> = ({ isOpen, onClose 
                                     <span className={`text-[10px] font-black ${TYPE_COLORS[attacker]}`}>{attacker}</span>
                                     <span className="text-neon-green text-[10px] font-mono">→ 1.5x →</span>
                                     <span className={`text-[10px] font-black ${TYPE_COLORS[defender]}`}>{defender}</span>
-                                    <span className="text-[8px] text-white/30 font-mono ml-auto italic">{flavor}</span>
+                                    <span className="text-[8px] text-white/50 font-mono ml-auto italic">{flavor}</span>
                                 </div>
                             ))}
                         </div>

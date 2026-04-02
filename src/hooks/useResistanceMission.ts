@@ -140,6 +140,15 @@ export const useResistanceMission = (streamer: Streamer) => {
     const lastActionTimeRef = useRef<number>(0);
     const [missionStartTime] = useState<number>(Date.now());
 
+    // Memory leak guard: track mount state and timers
+    const mountedRef = useRef(true);
+    const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+    const safeTimeout = useCallback((fn: () => void, ms: number) => {
+        const id = setTimeout(() => { if (mountedRef.current) fn(); }, ms);
+        timersRef.current.push(id);
+        return id;
+    }, []);
+
     // FREEZE FIX: Use ref-based rate limiter for stable function reference
     const isRateLimited = useCallback(() => {
         const now = Date.now();
@@ -163,7 +172,11 @@ export const useResistanceMission = (streamer: Streamer) => {
 
     // Cleanup on unmount
     useEffect(() => {
-        return () => resetGlobalEffects();
+        return () => {
+            mountedRef.current = false;
+            timersRef.current.forEach(clearTimeout);
+            resetGlobalEffects();
+        };
     }, [resetGlobalEffects]);
 
     // Boost state
@@ -193,17 +206,17 @@ export const useResistanceMission = (streamer: Streamer) => {
     const triggerShake = useCallback(() => {
         setIsShaking(true);
         triggerGlobalImpact(1.0);
-        setTimeout(() => setIsShaking(false), 500);
-    }, [triggerGlobalImpact]);
+        safeTimeout(() => setIsShaking(false), 500);
+    }, [triggerGlobalImpact, safeTimeout]);
 
     const triggerGlitch = useCallback((intensity: number = 1) => {
         setGlitchIntensity(intensity);
         triggerGlobalGlitch(intensity);
-        setTimeout(() => {
+        safeTimeout(() => {
             setGlitchIntensity(0);
             triggerGlobalGlitch(0);
         }, 400);
-    }, [triggerGlobalGlitch]);
+    }, [triggerGlobalGlitch, safeTimeout]);
 
     const handleEnemyTurn = useCallback(() => {
         if (isComplete) return;
@@ -265,7 +278,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         }
         if (enemyDamage > 0) {
             setIsTakingDamage(true);
-            setTimeout(() => setIsTakingDamage(false), 500);
+            safeTimeout(() => setIsTakingDamage(false), 500);
         }
         if (enemyDamage > 10) triggerShake();
         if (enemyDamage > 10) setCharge(prevCharge => Math.min(100, prevCharge + Math.floor(5 * (1 + equipBonusRef.current.chargeRateBonus))));
@@ -273,7 +286,7 @@ export const useResistanceMission = (streamer: Streamer) => {
 
         setLastDamageAmount(enemyDamage);
         setLastDamageDealer('enemy');
-        setTimeout(() => setLastDamageAmount(null), 1000);
+        safeTimeout(() => setLastDamageAmount(null), 1000);
 
         setPlayer(prev => ({ ...prev, hp: newHp }));
 
@@ -284,31 +297,31 @@ export const useResistanceMission = (streamer: Streamer) => {
         // Decrement boost counters
         setAttackBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
         setDefenseBoost(prev => prev.turnsLeft > 0 ? { ...prev, turnsLeft: prev.turnsLeft - 1 } : prev);
-    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, player, difficultyMultiplier, streamer.id, markMissionComplete, addLog, triggerShake, triggerGlitch, hasMarkedComplete]);
+    }, [isComplete, isBoss, enemy.moves, enemy.name, threatLevel, player, difficultyMultiplier, streamer.id, markMissionComplete, addLog, triggerShake, triggerGlitch, hasMarkedComplete, safeTimeout]);
 
 
 
     // Centralized Enemy Turn Trigger
     useEffect(() => {
         if (!isTurn && !isComplete && enemy.hp > 0) {
-            const timer = setTimeout(() => {
+            const timer = safeTimeout(() => {
                 handleEnemyTurn();
             }, 1500);
             return () => clearTimeout(timer);
         }
-    }, [isTurn, isComplete, enemy.hp, handleEnemyTurn]);
+    }, [isTurn, isComplete, enemy.hp, handleEnemyTurn, safeTimeout]);
 
     // Safety Watchdog: If turn is lost for > 5s, force reset
     useEffect(() => {
         if (!isTurn && !isComplete) {
-            const safetyTimer = setTimeout(() => {
+            const safetyTimer = safeTimeout(() => {
                 console.warn("Watchdog: Forcing Turn Reset");
                 addLog("SYSTEM_OVERRIDE: Manual Override Engaged.");
                 setIsTurn(true);
             }, 5000);
             return () => clearTimeout(safetyTimer);
         }
-    }, [isTurn, isComplete, addLog]);
+    }, [isTurn, isComplete, addLog, safeTimeout]);
 
     const calculateRank = useCallback((): 'S' | 'A' | 'B' | 'F' => {
         if (result === 'FAILURE') return 'F';
@@ -356,7 +369,7 @@ export const useResistanceMission = (streamer: Streamer) => {
         if (effectivenessMsg) {
             addLog(effectivenessMsg);
             setEffectivenessFlash(effectiveness >= SUPER_EFFECTIVE ? 'super' : 'weak');
-            setTimeout(() => setEffectivenessFlash(null), 500);
+            safeTimeout(() => setEffectivenessFlash(null), 500);
         }
 
         // Damage Calculation
@@ -387,7 +400,7 @@ export const useResistanceMission = (streamer: Streamer) => {
 
             setLastDamageAmount(damage);
             setLastDamageDealer('player');
-            setTimeout(() => setLastDamageAmount(null), 1000);
+            safeTimeout(() => setLastDamageAmount(null), 1000);
 
             // Boss Phase Check
             if (isBoss && bossEntity.phases) {
@@ -397,7 +410,7 @@ export const useResistanceMission = (streamer: Streamer) => {
                     const phase = bossEntity.phases[nextPhaseIndex];
                     setCurrentBossPhase(nextPhaseIndex + 1);
                     setShowPhaseBanner(true);
-                    setTimeout(() => setShowPhaseBanner(false), 3000);
+                    safeTimeout(() => setShowPhaseBanner(false), 3000);
                     addLog(`>>> ${phase.name} <<<`);
                     addLog(`[SYSTEM]: ${phase.msg}`);
                     triggerGlitch(1.5);
@@ -412,7 +425,7 @@ export const useResistanceMission = (streamer: Streamer) => {
                     addLog(`FINAL_UPLINK_SECURED: Sector ${streamer.name.toUpperCase()} liberated.`);
                 } else {
                     // Progress to next stage (handled via timeout to allow animations)
-                    setTimeout(() => {
+                    safeTimeout(() => {
                         const isNextBoss = stage + 1 >= 3;
                         setStage(s => s + 1);
                         setEnemy({
@@ -433,7 +446,7 @@ export const useResistanceMission = (streamer: Streamer) => {
 
             if (damage > 0) {
                 setIsEnemyTakingDamage(true);
-                setTimeout(() => setIsEnemyTakingDamage(false), 500);
+                safeTimeout(() => setIsEnemyTakingDamage(false), 500);
             }
 
             setEnemy(prev => ({ ...prev, hp: nextHp }));
@@ -451,7 +464,7 @@ export const useResistanceMission = (streamer: Streamer) => {
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, attackBoost, movePP, currentBossPhase, streamer.name, addLog, triggerGlitch, triggerShake]);
+    }, [player, enemy, isTurn, isComplete, stage, isBoss, bossEntity, threatLevel, attackBoost, movePP, currentBossPhase, streamer.name, addLog, triggerGlitch, triggerShake, safeTimeout]);
 
     const executeUltimate = useCallback(() => {
         if (charge < 100 || !isTurn || isComplete || isRateLimited()) return;
@@ -469,7 +482,7 @@ export const useResistanceMission = (streamer: Streamer) => {
 
         setLastDamageAmount(damage);
         setLastDamageDealer('player');
-        setTimeout(() => setLastDamageAmount(null), 1000);
+        safeTimeout(() => setLastDamageAmount(null), 1000);
 
         if (newHp === 0) {
             if (isBoss) {
@@ -477,7 +490,7 @@ export const useResistanceMission = (streamer: Streamer) => {
                 setResult('SUCCESS');
                 addLog(`CRITICAL_DELETION: Sector ${streamer.name.toUpperCase()} liberated.`);
             } else {
-                setTimeout(() => {
+                safeTimeout(() => {
                     const isNextBoss = stage + 1 >= 3;
                     setStage(s => s + 1);
                     setEnemy({
@@ -498,7 +511,7 @@ export const useResistanceMission = (streamer: Streamer) => {
 
         addLog(`Catastrophic damage inflicted: ${damage}.`);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel, enemy.hp, addLog, triggerGlitch]);
+    }, [charge, isTurn, isComplete, player.name, streamer, stage, isBoss, bossEntity, threatLevel, enemy.hp, addLog, triggerGlitch, safeTimeout]);
 
     const executeUseItem = useCallback((itemId: string) => {
         if (!isTurn || isComplete || isRateLimited()) return false;
@@ -583,8 +596,8 @@ export const useResistanceMission = (streamer: Streamer) => {
             const rank = calculateRank();
             const xp = calculateXP(rank);
 
-            // Wrap in setTimeout to avoid React 'setState in effect' warning
-            setTimeout(() => {
+            // Wrap in safeTimeout to avoid React 'setState in effect' warning
+            safeTimeout(() => {
                 setHasMarkedComplete(true);
                 markMissionComplete(streamer.id, rank, xp, {
                     hpRemaining: player.hp,

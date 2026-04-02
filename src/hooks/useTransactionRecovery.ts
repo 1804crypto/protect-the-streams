@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { useCollectionStore } from './useCollectionStore';
 import { toast } from '@/hooks/useToastStore';
@@ -16,10 +16,6 @@ export const useTransactionRecovery = () => {
 
         let pendingTxs = JSON.parse(pendingTxsString);
         if (pendingTxs.length === 0) return;
-
-        if (pendingTxs.length === 0) return;
-
-        // console.log(`[Heartbeat] Checking ${pendingTxs.length} pending transactions...`);
 
         const updatedPending = [...pendingTxs];
         let hasChanges = false;
@@ -39,7 +35,6 @@ export const useTransactionRecovery = () => {
                         if (index > -1) updatedPending.splice(index, 1);
                         hasChanges = true;
                     } else if (confirmationStatus === 'confirmed' || confirmationStatus === 'finalized') {
-                        // console.log(`[Recovery] Transaction confirmed! Granting item: ${tx.itemId}`);
                         toast.success('Purchase Verified!', `Received item: ${tx.itemId}`);
 
                         // Grant the item
@@ -57,7 +52,6 @@ export const useTransactionRecovery = () => {
                     // If tx is very old (e.g., > 30 mins) and still not found, remove it
                     const age = Date.now() - tx.timestamp;
                     if (age > 1800000) { // 30 mins
-                        // console.warn(`[Recovery] Transaction ${tx.signature} timed out.`);
                         const index = updatedPending.findIndex(p => p.signature === tx.signature);
                         if (index > -1) updatedPending.splice(index, 1);
                         hasChanges = true;
@@ -65,7 +59,6 @@ export const useTransactionRecovery = () => {
                 }
             } catch (error) {
                 console.error(`[Recovery] Error checking status for ${tx.signature}:`, error);
-                // toast.error('Recovery Error', 'Failed to check transaction status.');
             }
         }
 
@@ -74,14 +67,19 @@ export const useTransactionRecovery = () => {
         }
     }, [connection, addItem, updateResistanceScore]);
 
+    // Use a ref to always call the latest version of recoverTransactions
+    // without restarting the interval
+    const recoverRef = useRef(recoverTransactions);
+    useEffect(() => { recoverRef.current = recoverTransactions; }, [recoverTransactions]);
+
     useEffect(() => {
         // Run once on mount
-        recoverTransactions();
+        recoverRef.current();
 
-        // Then run every 60 seconds
-        const interval = setInterval(recoverTransactions, 60000);
+        // Single stable interval — never piles up
+        const interval = setInterval(() => recoverRef.current(), 60000);
         return () => clearInterval(interval);
-    }, [recoverTransactions]);
+    }, []); // Empty deps: interval starts once, never restarts
 
     return { recoverTransactions };
 };

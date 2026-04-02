@@ -20,7 +20,7 @@ export const MapSection: React.FC<MapSectionProps> = ({ hasAccess, streamers, on
                         <h2 className="text-3xl font-black uppercase tracking-tighter">Strategic Sector Map</h2>
                     </div>
                     <div className="text-right hidden md:block">
-                        <p className="text-[8px] text-white/30 font-mono uppercase tracking-widest">Signal Coverage</p>
+                        <p className="text-[8px] text-white/50 font-mono uppercase tracking-widest">Signal Coverage</p>
                         <p className="text-sm font-black text-neon-green">STABLE</p>
                     </div>
                 </div>

@@ -154,7 +154,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-[8px] text-white/30 font-mono uppercase">Faction_Affiliation:</span>
+                                            <span className="text-[8px] text-white/50 font-mono uppercase">Faction_Affiliation:</span>
                                             <span className={`text-[10px] font-black tracking-widest ${userFaction === 'RED' ? 'text-red-500 shadow-[0_0_10px_#ff003c]' :
                                                 userFaction === 'PURPLE' ? 'text-purple-500 shadow-[0_0_10px_#a855f7]' :
                                                     'text-white/40 italic'
@@ -163,7 +163,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                             </span>
                                         </div>
                                         <div className="flex flex-col gap-1 md:text-right">
-                                            <span className="text-[8px] text-white/30 font-mono uppercase" title="Earned from missions, PvP wins, and journey progress">Global_Liberation_Rating:</span>
+                                            <span className="text-[8px] text-white/50 font-mono uppercase" title="Earned from missions, PvP wins, and journey progress">Global_Liberation_Rating:</span>
                                             <span className="text-[10px] font-black text-neon-green" title="Your total XP across all activities">
                                                 {totalResistanceScore.toLocaleString()} GLR
                                             </span>
@@ -178,7 +178,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[8px] text-white/60 font-black uppercase tracking-tighter">Status: Active_Operative</span>
-                                            <span className="text-[6px] text-white/20 font-mono">ID: {authId?.slice(0, 12)}</span>
+                                            <span className="text-[6px] text-white/40 font-mono">ID: {authId?.slice(0, 12)}</span>
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
@@ -259,7 +259,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
                                                     <div className="mt-3 flex gap-2">
                                                         {Object.entries(asset.stats).slice(0, 2).map(([k, v]) => (
                                                             <div key={k} className="flex gap-2 items-center">
-                                                                <span className="text-[7px] text-white/20 uppercase">{k}</span>
+                                                                <span className="text-[7px] text-white/40 uppercase">{k}</span>
                                                                 <span className="text-[8px] text-white font-mono">{v}</span>
                                                             </div>
                                                         ))}
@@ -298,7 +298,7 @@ export const CollectionHub: React.FC<CollectionHubProps> = ({ isOpen, onClose })
 
                             {/* Footer */}
                             <div className="p-8 bg-black/40 border-t border-white/5">
-                                <p className="text-[8px] text-white/20 font-mono tracking-widest text-center">
+                                <p className="text-[8px] text-white/40 font-mono tracking-widest text-center">
                                     TERMINAL_SESSION_SECURE // AUTH_ID: {authId || '-------'}
                                 </p>
                             </div>

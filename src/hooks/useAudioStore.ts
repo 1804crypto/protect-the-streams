@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AudioState {
     isMuted: boolean;
@@ -9,11 +10,19 @@ interface AudioState {
     toggleDivertMode: () => void;
 }
 
-export const useAudioStore = create<AudioState>((set) => ({
-    isMuted: false,
-    isDivertMode: false,
-    setIsMuted: (muted) => set({ isMuted: muted }),
-    setIsDivertMode: (divert) => set({ isDivertMode: divert }),
-    toggleMute: () => set((state) => ({ isMuted: !state.isMuted })),
-    toggleDivertMode: () => set((state) => ({ isDivertMode: !state.isDivertMode })),
-}));
+export const useAudioStore = create<AudioState>()(
+    persist(
+        (set) => ({
+            isMuted: false,
+            isDivertMode: false,
+            setIsMuted: (muted) => set({ isMuted: muted }),
+            setIsDivertMode: (divert) => set({ isDivertMode: divert }),
+            toggleMute: () => set((state) => ({ isMuted: !state.isMuted })),
+            toggleDivertMode: () => set((state) => ({ isDivertMode: !state.isDivertMode })),
+        }),
+        {
+            name: 'pts-audio-prefs',
+            partialize: (state) => ({ isMuted: state.isMuted, isDivertMode: state.isDivertMode }),
+        }
+    )
+);

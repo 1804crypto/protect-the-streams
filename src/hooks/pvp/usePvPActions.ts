@@ -124,6 +124,8 @@ export const usePvPActions = ({
                 }
                 addLog(`${streamerName.toUpperCase()} used ${item.name}: ${data.description}`);
 
+                setLastAction({ type: 'ITEM_USE', senderId: playerId, timestamp: Date.now() });
+
                 sendAction({
                     type: 'ITEM_USE',
                     senderId: playerId,
@@ -225,6 +227,15 @@ export const usePvPActions = ({
                 addLog(`CRITICAL_DELETION: PvP Objective Achieved. +${result.glr_change} GLR`);
                 if (wagerAmount > 0) addLog(`WAGER_SECURED: ${wagerAmount} $PTS claimed.`);
             }
+
+            setLastAction({
+                type: 'MOVE',
+                moveName: move.name,
+                moveType: move.type,
+                damage: result.damage,
+                senderId: playerId,
+                timestamp: Date.now()
+            });
 
             sendAction({
                 type: 'MOVE',

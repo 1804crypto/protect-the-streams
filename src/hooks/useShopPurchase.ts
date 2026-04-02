@@ -80,27 +80,51 @@ export const useShopPurchase = () => {
 
         setIsProcessing(true);
         setTxStatus('PROCESSING');
-        const purchaseId = generatePurchaseId();
+
+        // Recover a pending purchase (txSignature already sent but server call failed)
+        const recoveryKey = `pts_sol_purchase_${itemId}`;
+        const existingRecovery = sessionStorage.getItem(recoveryKey);
+        let purchaseId: string;
+        let signature: string | null = null;
+
+        if (existingRecovery) {
+            try {
+                const rec = JSON.parse(existingRecovery) as { purchaseId: string; signature: string };
+                purchaseId = rec.purchaseId;
+                signature = rec.signature;
+            } catch {
+                sessionStorage.removeItem(recoveryKey);
+                purchaseId = generatePurchaseId();
+            }
+        } else {
+            purchaseId = generatePurchaseId();
+        }
 
         try {
-            // 1. Build and send SOL transfer to treasury
-            const totalSol = priceSolPerUnit * quantity;
-            const lamports = Math.round(totalSol * LAMPORTS_PER_SOL);
+            // 1. Build and send SOL transfer — skip if we already have a confirmed signature
+            if (!signature) {
+                const totalSol = priceSolPerUnit * quantity;
+                const lamports = Math.round(totalSol * LAMPORTS_PER_SOL);
 
-            const tx = new Transaction().add(
-                SystemProgram.transfer({
-                    fromPubkey: publicKey,
-                    toPubkey: TREASURY,
-                    lamports,
-                })
-            );
+                const tx = new Transaction().add(
+                    SystemProgram.transfer({
+                        fromPubkey: publicKey,
+                        toPubkey: TREASURY,
+                        lamports,
+                    })
+                );
 
-            const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-            tx.recentBlockhash = blockhash;
-            tx.feePayer = publicKey;
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+                tx.recentBlockhash = blockhash;
+                tx.feePayer = publicKey;
 
-            const signature = await sendTransaction(tx, connection);
-            await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+                const rawSig = await sendTransaction(tx, connection);
+                await connection.confirmTransaction({ signature: rawSig, blockhash, lastValidBlockHeight }, 'confirmed');
+                signature = rawSig;
+
+                // Persist before server call so a retry can skip the SOL tx
+                sessionStorage.setItem(recoveryKey, JSON.stringify({ purchaseId, signature }));
+            }
 
             // 2. Submit to server for verification + inventory update
             const res = await fetch('/api/shop/purchase', {
@@ -117,7 +141,9 @@ export const useShopPurchase = () => {
 
             const data: ShopPurchaseResponse = await res.json();
 
-            if (data.success) {
+            if (data.success || res.status === 409) {
+                // 409 = already completed — idempotent success
+                sessionStorage.removeItem(recoveryKey);
                 useCollectionStore.setState({
                     inventory: data.newInventory,
                     ptsBalance: data.newPtsBalance,
@@ -134,8 +160,9 @@ export const useShopPurchase = () => {
             setTxStatus('ERROR');
             const _msg = err instanceof Error ? err.message : 'Transaction failed';
 
-            // Check for user rejection
+            // Check for user rejection — clear recovery since no tx was sent
             if (err instanceof Error && err.message.includes('User rejected')) {
+                sessionStorage.removeItem(recoveryKey);
                 toast.warning('Transaction Cancelled', 'You rejected the transaction.');
             } else {
                 toast.error('SOL Purchase Failed', _msg);

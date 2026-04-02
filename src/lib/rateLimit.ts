@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * In-memory sliding window rate limiter for serverless API routes.
+ * Hybrid rate limiter for serverless API routes.
  *
- * Tracks request counts per IP within a configurable window.
- * Uses a Map with periodic cleanup to avoid memory leaks.
+ * Layer 1 (this file): In-memory sliding window per-instance.
+ * - Fast, zero-latency check. Catches obvious abuse on a single instance.
+ * - Resets when the serverless instance cold-starts.
  *
- * Note: In a multi-instance deployment (e.g., Netlify Functions),
- * each instance has its own window. This provides per-instance
- * protection — for global rate limiting, use Redis/Upstash.
+ * Layer 2 (DB-backed): Critical endpoints (/api/player/sync, /api/mission/complete)
+ * additionally check `updated_at` timestamps in Supabase for cross-instance
+ * enforcement. See those route handlers for the DB-level rate checks.
+ *
+ * For global distributed rate limiting, migrate to Redis/Upstash.
  */
 
 interface RateLimitEntry {
@@ -43,11 +46,16 @@ export interface RateLimitConfig {
 }
 
 function getClientIp(req: NextRequest): string {
-    return (
-        req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-        req.headers.get('x-real-ip') ||
-        'unknown'
-    );
+    // Use the first IP in X-Forwarded-For (set by reverse proxy/CDN).
+    // On Netlify/Vercel, this header is set by the platform and cannot be spoofed
+    // by the client since the platform always prepends the real client IP.
+    const xff = req.headers.get('x-forwarded-for');
+    if (xff) {
+        const ip = xff.split(',')[0]?.trim();
+        // Basic validation: must look like an IP (v4 or v6)
+        if (ip && (ip.includes('.') || ip.includes(':'))) return ip;
+    }
+    return req.headers.get('x-real-ip') || 'unknown';
 }
 
 /**

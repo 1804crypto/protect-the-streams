@@ -208,7 +208,7 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                         <div className="text-center">
                             <h2 className="text-2xl font-black italic text-white uppercase tracking-tighter mb-2 animate-glitch">SCANNING_FREQUENCIES...</h2>
                             <p className="text-neon-blue font-mono text-[10px] tracking-[0.3em] animate-pulse">LOCATING_RIVAL_OPERATIVE</p>
-                            <button onClick={() => setIsSearching(false)} className="mt-8 text-[8px] text-white/20 hover:text-white uppercase tracking-widest border-b border-white/10">Abort_Uplink</button>
+                            <button onClick={() => setIsSearching(false)} className="mt-8 text-[8px] text-white/40 hover:text-white uppercase tracking-widest border-b border-white/10">Abort_Uplink</button>
                         </div>
                     </div>
                 )}
@@ -420,20 +420,20 @@ export const PvPTerminal: React.FC<PvPTerminalProps> = ({ streamer, matchId: _ma
                             <div className="flex-1 bg-black/60 border border-white/5 p-4 font-mono text-[10px] mb-6 overflow-y-auto min-h-[200px] relative">
                                 {activeTab === 'LOGS' ? (
                                     logs.map((log, i) => (
-                                        <div key={i} className={`mb-1 ${i === 0 ? 'text-neon-blue' : 'text-white/30'}`}>
+                                        <div key={i} className={`mb-1 ${i === 0 ? 'text-neon-blue' : 'text-white/50'}`}>
                                             {`> ${log}`}
                                         </div>
                                     ))
                                 ) : (
                                     <div className="flex flex-col h-full">
                                         <div className="flex-1 overflow-y-auto space-y-2 mb-2">
-                                            {chatLogs.length === 0 && <div className="text-white/20 italic text-center mt-10">NO_TRANSMISSIONS</div>}
+                                            {chatLogs.length === 0 && <div className="text-white/40 italic text-center mt-10">NO_TRANSMISSIONS</div>}
                                             {chatLogs.map((msg, i) => (
                                                 <div key={i} className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}>
                                                     <span className={`px-2 py-1 rounded max-w-[80%] break-words ${msg.sender === 'me' ? 'bg-neon-blue/20 text-neon-blue' : 'bg-resistance-accent/20 text-resistance-accent'}`}>
                                                         {msg.message}
                                                     </span>
-                                                    <span className="text-[8px] text-white/20 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                                                    <span className="text-[8px] text-white/40 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</span>
                                                 </div>
                                             ))}
                                         </div>

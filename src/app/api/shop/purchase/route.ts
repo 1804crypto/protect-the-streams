@@ -251,7 +251,7 @@ export async function POST(req: NextRequest) {
                 const preTreasury = preTokenBalances.find(b => b.owner === treasuryStr);
 
                 const received = Number(postTreasury?.uiTokenAmount?.uiAmount || 0) - Number(preTreasury?.uiTokenAmount?.uiAmount || 0);
-                const expectedUsdc = (storeItem.priceSol / 0.01) * qty; // Convert SOL price to approximate USDC
+                const expectedUsdc = storeItem.priceUsdc * qty; // Use canonical USDC price from store data
 
                 if (received < expectedUsdc * 0.95) {
                     return NextResponse.json({ error: 'Insufficient USDC payment' }, { status: 400 });
@@ -264,6 +264,18 @@ export async function POST(req: NextRequest) {
 
         // 7. Compute new inventory
         const currentInventory = (user.inventory || {}) as Record<string, number>;
+
+        // Reject if purchase would exceed MAX_ITEM_QUANTITY (99) — don't silently truncate
+        if (itemId !== 'RESISTANCE_CRATE') {
+            const currentQty = currentInventory[itemId] || 0;
+            if (currentQty + qty > MAX_ITEM_QUANTITY) {
+                return NextResponse.json({
+                    error: `Cannot exceed max inventory limit (${MAX_ITEM_QUANTITY}). You have ${currentQty}, buying ${qty} would exceed the cap.`,
+                    currentQuantity: currentQty,
+                    maxQuantity: MAX_ITEM_QUANTITY,
+                }, { status: 400 });
+            }
+        }
         const newInventory = { ...currentInventory };
 
         if (itemId === 'RESISTANCE_CRATE') {

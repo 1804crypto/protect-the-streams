@@ -44,6 +44,9 @@ export const OperatorComms: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 100 }}
                 className="fixed bottom-32 right-8 z-[9999] flex flex-col items-end gap-0 max-w-md pointer-events-none"
+                role="log"
+                aria-label="Operator communications"
+                aria-live="polite"
             >
                 {/* Sophia Identity HUD */}
                 <motion.div
@@ -54,7 +57,7 @@ export const OperatorComms: React.FC = () => {
                     <span className="text-[10px] font-black tracking-[0.4em] text-neon-purple uppercase bg-black/80 px-2 py-0.5 border border-neon-purple/30">
                         SOPHIA
                     </span>
-                    <span className="text-[7px] font-mono text-white/30 tracking-widest mt-0.5">
+                    <span className="text-[7px] font-mono text-white/50 tracking-widest mt-0.5">
                         STREAMER_ADVOCATE // GRASSROOTS_OPS
                     </span>
                     <div className="flex gap-1 mt-1">
@@ -89,7 +92,8 @@ export const OperatorComms: React.FC = () => {
                             <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-neon-purple rounded-tl" />
                             <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-neon-purple rounded-br" />
 
-                            <p className="text-white font-mono text-[11px] lg:text-xs leading-relaxed tracking-wide">
+                            {/* Caption text — visible for deaf/HoH users alongside TTS */}
+                            <p className="text-white font-mono text-[11px] lg:text-xs leading-relaxed tracking-wide" aria-label={`Sophia says: ${currentDialogue.text}`}>
                                 {currentDialogue.text}
                             </p>
 
@@ -102,6 +106,7 @@ export const OperatorComms: React.FC = () => {
                                 <button
                                     onClick={() => { forceUnmute(); playClick(); nextDialogue(); }}
                                     className="px-4 py-1.5 bg-neon-purple text-white font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-black transition-all cursor-pointer rounded-sm"
+                                    aria-label="Dismiss operator message"
                                 >
                                     Got it
                                 </button>

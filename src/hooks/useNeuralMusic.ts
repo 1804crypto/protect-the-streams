@@ -168,11 +168,11 @@ export const useNeuralMusic = (
     }, [isActive, isLoaded, startPlayback, stopPlayback]);
 
 
+    // Destructure params into stable primitives to avoid object reference in dependency arrays
+    const { neuralSync, enemyCount, currentHp, maxHp } = params;
+
     // 3. Intensity Handshake
     const calculateSonicIntensity = useCallback(() => {
-        if (!params) return 0;
-        const { neuralSync, enemyCount, currentHp, maxHp } = params;
-
         // Normalize Neural Sync (0-100 -> 0.0-1.0)
         let syncFactor = Math.min(1, Math.max(0, neuralSync / 100));
 
@@ -187,7 +187,7 @@ export const useNeuralMusic = (
 
         // Cap at 1.0 unless Overdrive
         return Math.min(1.0, Math.max(0.0, totalIntensity));
-    }, [params, difficultyMultiplier]);
+    }, [neuralSync, enemyCount, currentHp, maxHp, difficultyMultiplier]);
 
     // 4. Cross-Fade Protocol
     const updateMixing = useCallback((newIntensity: number) => {
@@ -240,7 +240,7 @@ export const useNeuralMusic = (
             setIntensity(newIntensity);
             updateMixing(newIntensity);
         }
-    }, [calculateSonicIntensity, updateMixing, isActive, isLoaded, params]); // Depend on params changing
+    }, [calculateSonicIntensity, updateMixing, isActive, isLoaded, neuralSync, enemyCount, currentHp, maxHp]);
 
     return {
         intensity,

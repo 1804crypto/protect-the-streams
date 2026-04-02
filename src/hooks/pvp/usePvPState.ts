@@ -51,12 +51,14 @@ export const usePvPState = (
     const isTurnRef = useRef(isTurn);
     const isCompleteRef = useRef(isComplete);
 
-    // Keep Refs Synced
-    useEffect(() => { playerRef.current = player; }, [player]);
-    useEffect(() => { opponentRef.current = opponent; }, [opponent]);
-    useEffect(() => { battleStatusRef.current = battleStatus; }, [battleStatus]);
-    useEffect(() => { isTurnRef.current = isTurn; }, [isTurn]);
-    useEffect(() => { isCompleteRef.current = isComplete; }, [isComplete]);
+    // Keep all refs synced atomically in a single effect to prevent race conditions
+    useEffect(() => {
+        playerRef.current = player;
+        opponentRef.current = opponent;
+        battleStatusRef.current = battleStatus;
+        isTurnRef.current = isTurn;
+        isCompleteRef.current = isComplete;
+    }, [player, opponent, battleStatus, isTurn, isComplete]);
 
     // --- Visual Sync ---
     const setIntegrity = useVisualEffects(state => state.setIntegrity);

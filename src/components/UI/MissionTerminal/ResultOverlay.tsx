@@ -40,9 +40,10 @@ export const ResultOverlay: React.FC<ResultOverlayProps> = ({
             const isFirstWin = !localStorage.getItem('pts_first_win_toast');
             if (isFirstWin) {
                 localStorage.setItem('pts_first_win_toast', 'true');
-                setTimeout(() => {
+                const t = setTimeout(() => {
                     toast.success('FIRST VICTORY!', 'You earned PTS tokens. Visit the Black Market to spend them on gear and healing items.');
                 }, 2500);
+                return () => clearTimeout(t);
             }
         }
     }, [result, resultStep]);
@@ -77,7 +78,7 @@ export const ResultOverlay: React.FC<ResultOverlayProps> = ({
                                 rank === 'A' ? 'CORE_BREACHER' :
                                     rank === 'B' ? 'SIGNAL_RUNNER' : 'LINK_ESTABLISHED'}
                         </motion.div>
-                        <div className="text-white/20 text-[8px] font-mono tracking-widest mt-1">PERFORMANCE_GRADE_VERIFIED</div>
+                        <div className="text-white/40 text-[8px] font-mono tracking-widest mt-1">PERFORMANCE_GRADE_VERIFIED</div>
                     </motion.div>
 
                     {/* Step 2: XP & Level (Appears after delay) */}
@@ -101,16 +102,16 @@ export const ResultOverlay: React.FC<ResultOverlayProps> = ({
                                 <div className="relative h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
                                     <motion.div
                                         initial={{ width: `${xpProgress}%` }}
-                                        animate={{ width: `${Math.min(100, xpProgress + (earnedXP / nextXPThreshold * 100))}%` }}
+                                        animate={{ width: `${Math.min(100, nextXPThreshold > 0 ? xpProgress + (earnedXP / nextXPThreshold * 100) : 100)}%` }}
                                         transition={{ duration: 2, ease: "circOut" }}
-                                        className="h-full bg-neon-blue shadow-[0_0:15px_rgba(0,243,255,0.6)]"
+                                        className="h-full bg-neon-blue shadow-[0_0_15px_rgba(0,243,255,0.6)]"
                                     />
                                 </div>
-                                <div className="flex justify-between text-[8px] font-mono text-white/20 uppercase tracking-tighter">
+                                <div className="flex justify-between text-[8px] font-mono text-white/40 uppercase tracking-tighter">
                                     <span>{currentXP} XP</span>
-                                    <span>{nextXPThreshold} XP</span>
+                                    <span>{nextXPThreshold > 0 ? `${nextXPThreshold} XP` : 'MAX'}</span>
                                 </div>
-                                {xpProgress + (earnedXP / nextXPThreshold * 100) >= 100 && (
+                                {nextXPThreshold > 0 && xpProgress + (earnedXP / nextXPThreshold * 100) >= 100 && (
                                     <motion.div
                                         animate={{ scale: [1, 1.2, 1] }}
                                         transition={{ repeat: Infinity }}
@@ -211,7 +212,7 @@ export const ResultOverlay: React.FC<ResultOverlayProps> = ({
                     >
                         <div className="text-white/60 text-[10px] font-mono uppercase tracking-widest">Consolation_Data_Fragments</div>
                         <div className="text-2xl font-black text-white">+10 <span className="text-[10px] text-resistance-accent font-mono">NEURAL_XP</span></div>
-                        <p className="text-[10px] text-white/30 font-mono italic">Even in failure, the rebellion learns. Signal fragments analyzed.</p>
+                        <p className="text-[10px] text-white/50 font-mono italic">Even in failure, the rebellion learns. Signal fragments analyzed.</p>
                     </motion.div>
 
                     <button

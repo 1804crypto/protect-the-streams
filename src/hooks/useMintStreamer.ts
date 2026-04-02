@@ -94,6 +94,11 @@ export const useMintStreamer = () => {
 
                     // Non-retryable server errors
                     if (response.status === 409) {
+                        if (data.error === 'PENDING_CONFIRMATION') {
+                            // Transaction already broadcast, just awaiting on-chain confirmation.
+                            // The idempotency key is still valid — do NOT clear it.
+                            throw Object.assign(new Error('PENDING_CONFIRMATION: Previous transaction is still in-flight. Please wait a moment and try again.'), { retryable: false });
+                        }
                         // Already minted — not an error we should retry
                         throw Object.assign(new Error(msg), { retryable: false });
                     }
@@ -157,10 +162,10 @@ export const useMintStreamer = () => {
 
                 const confirmed = await pollForConfirmation(umi, validSignature, blockhash, lastValidBlockHeight, CONFIRMATION_POLL_TIMEOUT_MS, CONFIRMATION_POLL_INTERVAL_MS);
 
-                if (confirmed === 'blockhash_expired') {
-                    // Blockhash expired before confirmation — outer loop will re-fetch a fresh tx
-                    console.warn(`⏰ [MINT] ${attemptLabel} Blockhash expired. Requesting fresh transaction...`);
-                    setStatus(`Blockhash expired. Refreshing transaction... ${attemptLabel}`);
+                if (confirmed === 'blockhash_expired' || confirmed === 'timeout') {
+                    // Blockhash expired or confirmation timed out — outer loop will re-fetch a fresh tx
+                    console.warn(`⏰ [MINT] ${attemptLabel} ${confirmed === 'timeout' ? 'Confirmation timed out' : 'Blockhash expired'}. Requesting fresh transaction...`);
+                    setStatus(`Signal lost. Refreshing transaction... ${attemptLabel}`);
                     lastError = new Error('TransactionExpiredBlockheightExceededError: blockhash expired');
                     await sleep(1000);
                     continue; // → outer loop
@@ -213,6 +218,15 @@ export const useMintStreamer = () => {
                 if (errMsg.includes("already minted") || errMsg.includes("ALREADY_COMPLETED")) {
                     clearIdempotencyKey(streamerId);
                     setError({ code: "DUPLICATE_SIGNAL", message: "This asset has already been secured. No duplicate minting needed." });
+                    setStatus(null);
+                    setMintingStreamerId(null);
+                    setLoading(false);
+                    return;
+                }
+
+                // Previous tx still in-flight — don't clear idempotency key, advise user to wait
+                if (errMsg.includes("PENDING_CONFIRMATION")) {
+                    setError({ code: "TX_IN_FLIGHT", message: "A transaction is already in progress. Please wait 30–60 seconds for network confirmation, then try again." });
                     setStatus(null);
                     setMintingStreamerId(null);
                     setLoading(false);

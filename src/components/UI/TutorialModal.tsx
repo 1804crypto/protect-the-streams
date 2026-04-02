@@ -153,7 +153,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                                 <div className="flex items-center gap-3">
                                     <span className="text-3xl" aria-hidden="true">{step.icon}</span>
                                     <div>
-                                        <p className="text-[8px] font-mono text-white/30 tracking-[0.3em] uppercase">
+                                        <p className="text-[8px] font-mono text-white/50 tracking-[0.3em] uppercase">
                                             TUTORIAL_SEQUENCE
                                         </p>
                                         <p className="text-[10px] font-mono text-neon-blue">
@@ -239,7 +239,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                             </div>
 
                             {/* Tutorial is auto-dismissed permanently on close */}
-                            <p className="text-center text-[9px] text-white/20 font-mono uppercase tracking-widest">
+                            <p className="text-center text-[9px] text-white/40 font-mono uppercase tracking-widest">
                                 This briefing will not appear again after you close it.
                             </p>
                         </div>

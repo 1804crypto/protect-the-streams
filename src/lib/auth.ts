@@ -13,7 +13,7 @@ function getSecretKey(): Uint8Array {
         if (secret && secret.length < 32) {
             throw new Error('FATAL: JWT_SECRET must be at least 32 characters.');
         }
-        _secretKey = new TextEncoder().encode(secret || 'pts-dev-only-secret-key');
+        _secretKey = new TextEncoder().encode(secret || 'pts-dev-only-secret-key-do-not-use-in-production-32chars!');
     }
     return _secretKey;
 }

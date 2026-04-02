@@ -90,6 +90,16 @@ export async function POST(req: NextRequest) {
                 }, { status: 409 });
             }
 
+            // BUILT = transaction was built and signed but not yet confirmed on-chain.
+            // Client is retrying because confirmation timed out. Block rebuild so we don't
+            // generate a conflicting asset_id while the original tx may still land.
+            if (existing?.status === 'BUILT') {
+                return NextResponse.json({
+                    error: 'PENDING_CONFIRMATION',
+                    message: 'A transaction for this mint is already in-flight. Please wait for on-chain confirmation before retrying.',
+                }, { status: 409 });
+            }
+
             // Also check if this wallet+streamer combo already has a completed mint
             const { data: walletMint } = await supabase
                 .from('mint_attempts')
