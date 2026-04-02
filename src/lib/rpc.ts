@@ -37,8 +37,9 @@ export function getRpcUrl(): string {
     if (_cachedUrl) return _cachedUrl;
 
     // 1. Explicit env var — highest priority
-    if (process.env.SOLANA_RPC_URL) {
-        _cachedUrl = process.env.SOLANA_RPC_URL;
+    const explicitUrl = process.env.SOLANA_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+    if (explicitUrl) {
+        _cachedUrl = explicitUrl;
         console.log(`[RPC] Using configured SOLANA_RPC_URL`);
         return _cachedUrl;
     }
